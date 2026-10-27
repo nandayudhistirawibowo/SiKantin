@@ -1,0 +1,16 @@
+body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .dashboard-nav-link { white-space: nowrap; }
+        .dashboard-nav-link.is-active { background: #eff6ff; color: #1d4ed8; font-weight: 700; }
+        [data-page-content]:not(.hidden) { animation: page-enter .2s ease-out; }
+        @keyframes page-enter {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .student-sidebar { transition: transform .2s ease; }
+        @media (max-width: 1023px) {
+            .student-sidebar { transform: translateX(-100%); }
+            .student-sidebar.is-open { transform: translateX(0); }
+        }
+        @media (min-width: 1024px) {
+            .student-sidebar.is-closed { display: none; }
+        }

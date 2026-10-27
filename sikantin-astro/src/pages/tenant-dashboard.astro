@@ -1,79 +1,16 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#ffffff">
-    <title>Pesanan Masuk | SiKantin</title>
-    <link rel="icon" type="image/png" href="favicon-uym.png">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; }
-        .tenant-dashboard { background: #f5f7fb; color: #1e293b; }
-        .tenant-dashboard-header { border-bottom: 1px solid #e7ebf2; background: white; }
-        .tenant-logout-button, .tenant-sound-button {
-            display: inline-flex; align-items: center; justify-content: center; gap: .5rem;
-            border: 1px solid #e2e8f0; border-radius: 999px; background: white;
-            padding: .65rem .9rem; color: #334155; font-size: .8rem; font-weight: 700;
-        }
-        .tenant-logout-button:hover, .tenant-sound-button:hover { background: #f8fafc; }
-        .tenant-status-button {
-            display: inline-flex; align-items: center; gap: .6rem; border: 1px solid #bbf7d0;
-            border-radius: 999px; background: #f0fdf4; padding: .65rem .9rem;
-            color: #15803d; font-size: .8rem; font-weight: 800;
-        }
-        .tenant-status-button.is-closed { border-color: #fecaca; background: #fef2f2; color: #b91c1c; }
-        .status-dot { width: .55rem; height: .55rem; border-radius: 999px; background: #22c55e; }
-        .tenant-status-button.is-closed .status-dot { background: #ef4444; }
-        .tenant-stat-card, .tenant-panel {
-            border: 1px solid #e7ebf2; border-radius: 1.15rem; background: white;
-            box-shadow: 0 4px 16px rgba(15, 23, 42, .035);
-        }
-        .tenant-stat-card { padding: 1.2rem; }
-        .tenant-stat-icon {
-            display: inline-flex; width: 2.5rem; height: 2.5rem; align-items: center;
-            justify-content: center; border-radius: .8rem;
-        }
-        .tenant-dashboard-tabs { display: flex; gap: .5rem; overflow-x: auto; }
-        .tenant-tab {
-            display: inline-flex; align-items: center; gap: .5rem; white-space: nowrap;
-            border: 1px solid transparent; border-radius: .75rem; padding: .7rem 1rem;
-            color: #64748b; font-size: .875rem; font-weight: 700;
-        }
-        .tenant-tab.is-active { border-color: #dbeafe; background: #eff6ff; color: #1d4ed8; }
-        .tenant-orders-badge {
-            display: inline-flex; min-width: 1.25rem; height: 1.25rem; align-items: center;
-            justify-content: center; border-radius: 999px; background: #dc2626;
-            padding: 0 .35rem; color: white; font-size: .7rem; font-weight: 800;
-        }
-        .tenant-panel { overflow: hidden; }
-        .tenant-panel-heading {
-            display: flex; align-items: center; justify-content: space-between; gap: 1rem;
-            border-bottom: 1px solid #f1f5f9; padding: 1.25rem;
-        }
-        .tenant-order-row {
-            display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
-            gap: 1rem; padding: 1.15rem 1.25rem;
-        }
-        .tenant-order-action {
-            border-radius: .7rem; background: #1d4ed8; padding: .6rem .85rem;
-            color: white; font-size: .75rem; font-weight: 800;
-        }
-        .tenant-order-action:hover { background: #1e40af; }
-        .tenant-order-action:disabled { cursor: default; background: #e2e8f0; color: #64748b; }
-        .tenant-menu-item { display: flex; align-items: center; gap: .85rem; border: 1px solid #e7ebf2; border-radius: .9rem; padding: .85rem; }
-        .tenant-menu-item img { width: 3.5rem; height: 3.5rem; flex: 0 0 auto; border-radius: .7rem; object-fit: cover; }
-    </style>
-</head>
-<body class="tenant-dashboard min-h-screen">
-    <div class="min-h-screen">
+---
+import Layout from '../layouts/Layout.astro';
+import logo from '../assets/logo-uym.png';
+import '../styles/tenant-dashboard.css';
+---
+
+<Layout title="Pesanan Masuk | SiKantin" themeColor="#ffffff" bodyClass="tenant-dashboard min-h-screen">
+
+<div class="min-h-screen">
     <header class="tenant-dashboard-header">
         <div class="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-4 sm:px-6">
             <div class="flex min-w-0 items-center gap-3">
-                <img src="logo-uym.png" alt="Logo Universitas Yatsi Madani" class="h-10 w-10 rounded-full bg-white p-1">
+                <img src={logo.src} alt="Logo Universitas Yatsi Madani" class="h-10 w-10 rounded-full bg-white p-1">
                 <div>
                     <p class="font-extrabold text-slate-900">SiKantin <span class="font-medium text-slate-400">/ Tenant</span></p>
                     <p id="tenantName" class="text-xs text-slate-500">Memuat kantin...</p>
@@ -83,7 +20,7 @@
                 <button id="soundToggle" type="button" aria-pressed="false" class="tenant-sound-button">🔕 Aktifkan Suara</button>
                 <div class="relative">
                     <button id="tenantProfileMenuButton" type="button" aria-haspopup="true" aria-expanded="false" aria-label="Buka menu profil" class="flex items-center gap-2 rounded-xl bg-blue-800 p-2 pr-3 text-left text-white transition hover:bg-blue-900">
-                        <img id="tenantProfileAvatar" src="logo-uym.png" alt="" class="h-10 w-10 rounded-full border-2 border-white/80 bg-slate-100 object-cover">
+                        <img id="tenantProfileAvatar" src={logo.src} alt="" class="h-10 w-10 rounded-full border-2 border-white/80 bg-slate-100 object-cover">
                         <span class="text-left">
                             <span id="tenantProfileButtonName" class="block max-w-28 truncate text-xs font-bold text-white sm:max-w-36">Akun saya</span>
                             <span class="hidden text-[10px] text-blue-100 sm:block">Pemilik tenant</span>
@@ -91,7 +28,7 @@
                         <span aria-hidden="true" class="text-xs text-white">⌄</span>
                     </button>
                     <div id="tenantProfileMenu" class="absolute right-0 top-full z-20 mt-1 hidden w-56 overflow-hidden rounded-b-xl border border-slate-200 bg-white p-2 shadow-xl">
-                        <a href="profile.html" class="block rounded-lg px-3 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">Edit Profil</a>
+                        <a href="/profile" class="block rounded-lg px-3 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">Edit Profil</a>
                         <button id="logoutButton" type="button" class="w-full rounded-lg bg-slate-50 px-3 py-3 text-left text-sm font-bold text-rose-600 transition hover:bg-rose-50">Keluar</button>
                     </div>
                 </div>
@@ -153,7 +90,7 @@
             </button>
             <button type="button" class="tenant-tab" data-tenant-panel="menu"><span aria-hidden="true">♨</span> Menu saya</button>
             <button type="button" class="tenant-tab" data-tenant-panel="history"><span aria-hidden="true">◷</span> Riwayat Pesanan</button>
-        </section>
+        </nav>
 
         <section id="tenantOrdersPanel" class="tenant-panel">
             <div class="tenant-panel-heading">
@@ -195,11 +132,12 @@
         <p class="mt-5 text-center text-xs text-slate-400">Perubahan status pesanan disimpan ke database dan ditampilkan realtime.</p>
     </main>
     </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="js/supabase.js"></script>
-    <script src="js/notification-sound.js"></script>
     <script>
+	import { db } from '../scripts/supabase.js';
+	import '../scripts/notification-sound.js';
+</script>
+    <script>
+	import { db } from '../scripts/supabase.js';
         const ordersList = document.getElementById('ordersList');
         const message = document.getElementById('message');
         const connectionStatus = document.getElementById('connectionStatus');
@@ -209,6 +147,7 @@
         let tenantStatusChannel;
         let refreshTimer;
         let channel;
+        const logoUrl = document.getElementById('tenantProfileAvatar').src;
 
         function showMessage(text, isError) {
             message.textContent = text;
@@ -253,21 +192,21 @@
             if (messageText) showMessage(messageText, isError);
         }
 
-        function subscribeToTenantStatus() {
-            if (typeof activeTenantId !== 'string' || !activeTenantId.trim()) {
+        function subscribeToTenantStatus(ownerId) {
+            if (typeof ownerId !== 'string' || !ownerId.trim()) {
                 document.getElementById('tenantStatusRealtime').textContent = 'Tenant belum dimuat.';
                 return;
             }
 
             tenantStatusChannel = db
-                .channel(`tenant-status-${activeTenantId}`)
+                .channel(`tenant-status-${ownerId}`)
                 .on('postgres_changes', {
                     event: 'UPDATE',
                     schema: 'public',
                     table: 'tenants',
-                    filter: `id=eq.${activeTenantId}`
+                    filter: `pemilik_id=eq.${ownerId}`
                 }, (payload) => {
-                    if (payload.new?.id !== activeTenantId
+                    if (payload.new?.pemilik_id !== ownerId
                         || !Object.prototype.hasOwnProperty.call(payload.new, 'status_buka')) return;
                     setTenantOpenStatus(payload.new.status_buka);
                 })
@@ -277,6 +216,9 @@
                         : error
                             ? `Realtime status ${status}: ${error.message}`
                             : `Realtime status kantin: ${status}`;
+                    if (status !== 'SUBSCRIBED') {
+                        console.error('Realtime status tenant:', status, error);
+                    }
                 });
         }
 
@@ -605,7 +547,7 @@
             }
             if (!session) {
                 setTenantDashboardUnavailable('Silakan masuk', 'Realtime tidak aktif.', 'Sesi login tidak ditemukan. Silakan masuk kembali sebagai pemilik tenant.');
-                window.location.href = 'index.html';
+                window.location.href = '/';
                 return;
             }
 
@@ -628,13 +570,13 @@
             }
             const profileName = profile.nama || session.user.user_metadata?.full_name || 'Pemilik tenant';
             const avatar = document.getElementById('tenantProfileAvatar');
-            avatar.src = profile.avatar_url || 'logo-uym.png';
-            avatar.onerror = () => { avatar.src = 'logo-uym.png'; };
+            avatar.src = profile.avatar_url || logoUrl;
+            avatar.onerror = () => { avatar.src = logoUrl; };
             document.getElementById('tenantProfileButtonName').textContent = profileName;
 
             const { data: tenant, error: tenantError } = await db
                 .from('tenants')
-                .select('id, nama_tenant, status_buka')
+                .select('id, nama_tenant, slug, status_buka')
                 .eq('pemilik_id', session.user.id)
                 .maybeSingle();
             if (tenantError) {
@@ -649,6 +591,15 @@
                 );
                 return;
             }
+            const routeParts = window.location.pathname.split('/').filter(Boolean);
+            if (routeParts[0] === 'tenant' && routeParts[2] === 'dashboard' && routeParts[1] !== tenant.slug) {
+                setTenantDashboardUnavailable(
+                    'Tenant tidak cocok',
+                    'Realtime tidak aktif.',
+                    'Dashboard tenant ini tidak sesuai dengan akun yang sedang masuk.'
+                );
+                return;
+            }
             if (typeof tenant.id !== 'string' || !tenant.id.trim()) {
                 setTenantDashboardUnavailable('ID tenant tidak valid', 'Realtime tidak aktif.', 'Data tenant tidak memiliki ID yang valid. Status dan pesanan tidak dapat dimuat.');
                 return;
@@ -657,15 +608,8 @@
             document.getElementById('tenantName').textContent = tenant.nama_tenant;
             setTenantOpenStatus(tenant.status_buka);
             document.getElementById('tenantOpenStatus').disabled = false;
-            await loadOrders();
-            await loadTenantMenu();
-            subscribeToTenantStatus();
+            subscribeToTenantStatus(session.user.id);
 
-            if (typeof activeTenantId !== 'string' || !activeTenantId.trim()) {
-                showMessage('Realtime tidak dapat dimulai karena ID tenant belum tersedia.', true);
-                connectionStatus.textContent = 'Tenant belum dimuat';
-                return;
-            }
             channel = db
                 .channel(`tenant-orders-${activeTenantId}`)
                 .on('postgres_changes', {
@@ -685,7 +629,13 @@
                         : error
                             ? `Realtime ${status}: ${error.message}`
                             : `Realtime: ${status}`;
+                    if (status !== 'SUBSCRIBED') {
+                        console.error('Realtime pesanan tenant:', status, error);
+                    }
                 });
+
+            await loadOrders();
+            await loadTenantMenu();
         }
 
         document.getElementById('logoutButton').addEventListener('click', async () => {
@@ -694,7 +644,7 @@
                 showMessage(`Gagal logout: ${error.message}`, true);
                 return;
             }
-            window.location.href = 'index.html';
+            window.location.href = '/';
         });
 
         document.getElementById('tenantOpenStatus').addEventListener('click', toggleTenantOpenStatus);
@@ -726,7 +676,13 @@
             if (tenantStatusChannel) db.removeChannel(tenantStatusChannel);
         });
 
-        initialize();
+        initialize().catch((error) => {
+            console.error('Gagal menginisialisasi dashboard tenant:', error);
+            setTenantDashboardUnavailable(
+                'Dashboard gagal dimuat',
+                'Realtime tidak aktif.',
+                `Terjadi kesalahan saat memuat dashboard: ${error.message || error}`
+            );
+        });
     </script>
-</body>
-</html>
+</Layout>

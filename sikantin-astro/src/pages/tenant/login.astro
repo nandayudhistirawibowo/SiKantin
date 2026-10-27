@@ -1,0 +1,75 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import logo from '../../assets/logo-uym.png';
+import '../../styles/tenant-login.css';
+---
+
+<Layout title="Login Pemilik Tenant | SiKantin" themeColor="#172b40" bodyClass="login-screen flex min-h-screen items-center justify-center px-4 py-8 text-slate-100">
+	<main class="w-full max-w-md rounded-[1.75rem] border border-white/15 bg-slate-900/50 p-6 shadow-2xl backdrop-blur-xl sm:p-10">
+		<a href="/" class="mb-8 inline-flex items-center gap-2 text-sm font-semibold text-blue-100/75 hover:text-white">← Kembali ke katalog</a>
+		<div class="mb-7 text-center">
+			<img src={logo.src} alt="Logo Universitas Yatsi Madani" class="mx-auto mb-4 h-16 w-16 rounded-full bg-white p-1 shadow" />
+			<p class="text-xs font-bold uppercase tracking-[0.2em] text-blue-300">SiKantin UYM</p>
+			<h1 class="mt-2 text-3xl font-extrabold">Login Pemilik Tenant</h1>
+		</div>
+		<form id="tenantLoginForm" class="space-y-5">
+			<label class="block text-sm font-semibold" for="tenantEmail">
+				Email akun
+				<input id="tenantEmail" type="email" autocomplete="username" required class="login-input mt-2" placeholder="Email akun Supabase" />
+			</label>
+			<label class="block text-sm font-semibold" for="tenantPassword">
+				Password
+				<input id="tenantPassword" type="password" autocomplete="current-password" required class="login-input mt-2" placeholder="Masukkan password" />
+			</label>
+			<button id="tenantLoginButton" type="submit" class="w-full rounded-xl bg-blue-600 px-4 py-3 font-extrabold hover:bg-blue-500 disabled:opacity-60">
+				Masuk ke Dashboard Tenant <span aria-hidden="true">→</span>
+			</button>
+		</form>
+		<p id="tenantLoginMessage" role="status" aria-live="polite" class="mt-4 hidden text-center text-sm font-bold"></p>
+	</main>
+	<script>
+		import { db } from '../../scripts/supabase.js';
+
+		const form = document.getElementById('tenantLoginForm');
+		const message = document.getElementById('tenantLoginMessage');
+		form.addEventListener('submit', async (event) => {
+			event.preventDefault();
+			const button = document.getElementById('tenantLoginButton');
+			button.disabled = true;
+			message.textContent = 'Memeriksa akun...';
+			message.className = 'mt-4 text-center text-sm font-bold text-blue-200';
+			try {
+				const { data, error } = await db.auth.signInWithPassword({
+					email: document.getElementById('tenantEmail').value.trim(),
+					password: document.getElementById('tenantPassword').value,
+				});
+				if (error) throw new Error(error.message);
+
+				const { data: profile, error: profileError } = await db
+					.from('profiles')
+					.select('peran')
+					.eq('id', data.user.id)
+					.single();
+				if (profileError) throw new Error(`Profil gagal dimuat: ${profileError.message}`);
+				if (profile.peran !== 'pemilik_tenant') throw new Error('Akun ini bukan akun pemilik tenant.');
+
+				const { data: tenant, error: tenantError } = await db
+					.from('tenants')
+					.select('slug')
+					.eq('pemilik_id', data.user.id)
+					.maybeSingle();
+				if (tenantError) throw new Error(`Tenant gagal dimuat: ${tenantError.message}`);
+				if (!tenant?.slug) throw new Error('Belum ada tenant yang terhubung dengan akun ini.');
+				window.location.assign(`/tenant/${encodeURIComponent(tenant.slug)}/dashboard`);
+			} catch (error) {
+				const { error: signOutError } = await db.auth.signOut();
+				message.textContent = signOutError
+					? `${error.message} Sesi gagal ditutup: ${signOutError.message}`
+					: error.message;
+				message.className = 'mt-4 text-center text-sm font-bold text-red-300';
+			} finally {
+				button.disabled = false;
+			}
+		});
+	</script>
+</Layout>

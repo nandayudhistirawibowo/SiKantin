@@ -1,0 +1,42 @@
+.tenant-guest {
+	background:
+		radial-gradient(ellipse at 50% 12%, rgba(55, 100, 135, 0.3), transparent 42%),
+		linear-gradient(125deg, #26394f, #172b40 52%, #101b2c);
+}
+.tenant-menu-hero {
+	background:
+		radial-gradient(ellipse at 88% 18%, rgba(56, 189, 248, .16), transparent 36%),
+		linear-gradient(120deg, rgba(30, 64, 101, .85), rgba(15, 30, 50, .9));
+}
+.menu-tools { backdrop-filter: blur(12px); }
+.category-filter {
+	border: 1px solid rgba(255, 255, 255, .12);
+	background: rgba(255, 255, 255, .04);
+	color: rgba(219, 234, 254, .7);
+}
+.category-filter:hover { background: rgba(255, 255, 255, .1); color: white; }
+.category-filter.is-active {
+	border-color: rgba(125, 211, 252, .38);
+	background: rgba(14, 165, 233, .2);
+	color: #e0f2fe;
+}
+.menu-grid-single { grid-template-columns: minmax(0, 1fr); }
+.menu-grid-single .menu-card {
+	display: grid;
+	grid-template-columns: minmax(0, 1.1fr) minmax(260px, .9fr);
+	align-items: stretch;
+}
+.menu-grid-single .menu-photo { height: 100%; min-height: 20rem; }
+.menu-grid-single .menu-card > div { display: flex; flex-direction: column; justify-content: center; padding: 2rem; }
+.menu-grid-single .menu-card h3 { font-size: 1.5rem; }
+.menu-empty {
+	background:
+		radial-gradient(ellipse at 50% 0, rgba(56, 189, 248, .12), transparent 55%),
+		rgba(255, 255, 255, .035);
+}
+@media (max-width: 640px) {
+	.menu-grid-single .menu-card { grid-template-columns: minmax(0, 1fr); }
+	.menu-grid-single .menu-photo { height: 15rem; min-height: 0; }
+	.menu-grid-single .menu-card > div { padding: 1rem; }
+	.menu-grid-single .menu-card h3 { font-size: 1.125rem; }
+}

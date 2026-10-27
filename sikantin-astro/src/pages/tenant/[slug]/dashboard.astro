@@ -1,0 +1,21 @@
+---
+import { supabaseServer } from '../../../lib/supabase-server.js';
+
+const slug = Astro.params.slug || '';
+const { data: tenant, error } = await supabaseServer
+	.from('tenants')
+	.select('id')
+	.eq('slug', slug)
+	.maybeSingle();
+
+if (error) {
+	console.error('Gagal mencari tenant untuk dashboard:', error.message);
+	Astro.response.status = 500;
+	return Astro.rewrite('/tenant-dashboard');
+}
+if (!tenant) {
+	Astro.response.status = 404;
+	return Astro.rewrite('/tenant-dashboard');
+}
+return Astro.rewrite('/tenant-dashboard');
+---

@@ -1,27 +1,15 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#172b40">
-    <title>Login Mahasiswa | SiKantin</title>
-    <link rel="icon" type="image/png" href="favicon-uym.png">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; }
-        .login-screen { background: radial-gradient(ellipse at 50% 38%, rgba(55,100,135,.56), transparent 42%), linear-gradient(125deg,#26394f,#172b40 52%,#101b2c); }
-        .login-input { width:100%; border:1px solid rgba(177,198,222,.24); border-radius:.9rem; background:rgba(10,24,41,.5); padding:.85rem 1rem; color:#f8fafc; outline:none; }
-        .login-input:focus { border-color:#78aaff; box-shadow:0 0 0 3px rgba(120,170,255,.15); }
-    </style>
-</head>
-<body class="login-screen flex min-h-screen items-center justify-center px-4 py-8 text-slate-100">
-    <main class="w-full max-w-md rounded-[1.75rem] border border-white/15 bg-slate-900/50 p-6 shadow-2xl backdrop-blur-xl sm:p-10">
-        <a href="index.html" class="mb-8 inline-flex items-center gap-2 text-sm font-semibold text-blue-100/75 hover:text-white">← Kembali ke pilih peran</a>
+---
+import Layout from '../layouts/Layout.astro';
+import logo from '../assets/logo-uym.png';
+import '../styles/login.css';
+---
+
+<Layout title="Login Mahasiswa | SiKantin" themeColor="#172b40" bodyClass="login-screen flex min-h-screen items-center justify-center px-4 py-8 text-slate-100">
+
+<main class="w-full max-w-md rounded-[1.75rem] border border-white/15 bg-slate-900/50 p-6 shadow-2xl backdrop-blur-xl sm:p-10">
+        <a href="/" class="mb-8 inline-flex items-center gap-2 text-sm font-semibold text-blue-100/75 hover:text-white">← Kembali ke beranda</a>
         <div class="mb-7 text-center">
-            <img src="logo-uym.png" alt="Logo Universitas Yatsi Madani" class="mx-auto mb-4 h-16 w-16 rounded-full bg-white p-1 shadow">
+            <img src={logo.src} alt="Logo Universitas Yatsi Madani" class="mx-auto mb-4 h-16 w-16 rounded-full bg-white p-1 shadow">
             <p class="text-xs font-bold uppercase tracking-[0.2em] text-blue-300">SiKantin UYM</p>
             <h1 id="loginHeading" class="mt-2 text-3xl font-extrabold">Login Mahasiswa</h1>
         </div>
@@ -36,9 +24,8 @@
         </form>
         <p id="message" class="mt-4 hidden text-center text-sm font-bold" role="status" aria-live="polite"></p>
     </main>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="js/supabase.js"></script>
     <script>
+	import { db } from '../scripts/supabase.js';
         const message = document.getElementById('message');
         const loginForm = document.getElementById('loginForm');
         const adminLogin = new URLSearchParams(window.location.search).get('role') === 'admin';
@@ -89,7 +76,7 @@
             }
             if (profile.peran === 'admin') {
                 showMessage('Login berhasil. Membuka dashboard admin...', false);
-                window.location.assign('admin-dashboard.html');
+                window.location.assign('/admin/dashboard');
                 return;
             }
             if (profile.peran !== 'mahasiswa') {
@@ -99,8 +86,7 @@
                 return;
             }
             showMessage('Login berhasil. Membuka dashboard...', false);
-            window.location.assign('dashboard.html');
+            window.location.assign('/dashboard');
         });
     </script>
-</body>
-</html>
+</Layout>

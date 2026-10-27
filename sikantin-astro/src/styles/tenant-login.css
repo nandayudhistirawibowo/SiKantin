@@ -1,0 +1,4 @@
+body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .login-screen { background: radial-gradient(ellipse at 50% 38%, rgba(55,100,135,.56), transparent 42%), linear-gradient(125deg,#26394f,#172b40 52%,#101b2c); }
+        .login-input { width:100%; border:1px solid rgba(177,198,222,.24); border-radius:.9rem; background:rgba(10,24,41,.5); padding:.85rem 1rem; color:#f8fafc; outline:none; }
+        .login-input:focus { border-color:#78aaff; box-shadow:0 0 0 3px rgba(120,170,255,.15); }

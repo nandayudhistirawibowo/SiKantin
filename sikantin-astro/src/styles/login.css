@@ -1,0 +1,31 @@
+body { font-family: 'Plus Jakarta Sans', sans-serif; }
+.login-screen {
+	background:
+		radial-gradient(ellipse at 10% 12%, rgba(39, 93, 147, .3), transparent 38%),
+		radial-gradient(ellipse at 90% 92%, rgba(14, 116, 144, .2), transparent 35%),
+		linear-gradient(125deg, #26394f, #172b40 52%, #101b2c);
+}
+.login-input {
+	width: 100%;
+	border: 1px solid rgba(177, 198, 222, .24);
+	border-radius: .9rem;
+	background: rgba(10, 24, 41, .5);
+	padding: .85rem 1rem;
+	color: #f8fafc;
+	outline: none;
+}
+.login-input::placeholder { color: rgba(219, 234, 254, .35); }
+.login-input:focus { border-color: #78aaff; box-shadow: 0 0 0 3px rgba(120, 170, 255, .15); }
+.login-showcase {
+	background:
+		radial-gradient(ellipse at 72% 18%, rgba(56, 189, 248, .25), transparent 34%),
+		linear-gradient(150deg, rgba(30, 64, 101, .84), rgba(15, 30, 50, .96));
+}
+.login-orb {
+	position: absolute;
+	border: 1px solid rgba(186, 230, 253, .13);
+	border-radius: 9999px;
+	pointer-events: none;
+}
+.login-orb-one { top: 24%; right: -7rem; width: 22rem; height: 22rem; }
+.login-orb-two { top: 31%; right: -3rem; width: 14rem; height: 14rem; background: rgba(56, 189, 248, .035); }
