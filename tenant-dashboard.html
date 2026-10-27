@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#ffffff">
+    <title>Pesanan Masuk | SiKantin</title>
+    <link rel="icon" type="image/png" href="favicon-uym.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .tenant-dashboard { background: #f5f7fb; color: #1e293b; }
+        .tenant-dashboard-header { border-bottom: 1px solid #e7ebf2; background: white; }
+        .tenant-logout-button, .tenant-sound-button {
+            display: inline-flex; align-items: center; justify-content: center; gap: .5rem;
+            border: 1px solid #e2e8f0; border-radius: 999px; background: white;
+            padding: .65rem .9rem; color: #334155; font-size: .8rem; font-weight: 700;
+        }
+        .tenant-logout-button:hover, .tenant-sound-button:hover { background: #f8fafc; }
+        .tenant-status-button {
+            display: inline-flex; align-items: center; gap: .6rem; border: 1px solid #bbf7d0;
+            border-radius: 999px; background: #f0fdf4; padding: .65rem .9rem;
+            color: #15803d; font-size: .8rem; font-weight: 800;
+        }
+        .tenant-status-button.is-closed { border-color: #fecaca; background: #fef2f2; color: #b91c1c; }
+        .status-dot { width: .55rem; height: .55rem; border-radius: 999px; background: #22c55e; }
+        .tenant-status-button.is-closed .status-dot { background: #ef4444; }
+        .tenant-stat-card, .tenant-panel {
+            border: 1px solid #e7ebf2; border-radius: 1.15rem; background: white;
+            box-shadow: 0 4px 16px rgba(15, 23, 42, .035);
+        }
+        .tenant-stat-card { padding: 1.2rem; }
+        .tenant-stat-icon {
+            display: inline-flex; width: 2.5rem; height: 2.5rem; align-items: center;
+            justify-content: center; border-radius: .8rem;
+        }
+        .tenant-dashboard-tabs { display: flex; gap: .5rem; overflow-x: auto; }
+        .tenant-tab {
+            display: inline-flex; align-items: center; gap: .5rem; white-space: nowrap;
+            border: 1px solid transparent; border-radius: .75rem; padding: .7rem 1rem;
+            color: #64748b; font-size: .875rem; font-weight: 700;
+        }
+        .tenant-tab.is-active { border-color: #dbeafe; background: #eff6ff; color: #1d4ed8; }
+        .tenant-orders-badge {
+            display: inline-flex; min-width: 1.25rem; height: 1.25rem; align-items: center;
+            justify-content: center; border-radius: 999px; background: #dc2626;
+            padding: 0 .35rem; color: white; font-size: .7rem; font-weight: 800;
+        }
+        .tenant-panel { overflow: hidden; }
+        .tenant-panel-heading {
+            display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+            border-bottom: 1px solid #f1f5f9; padding: 1.25rem;
+        }
+        .tenant-order-row {
+            display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+            gap: 1rem; padding: 1.15rem 1.25rem;
+        }
+        .tenant-order-action {
+            border-radius: .7rem; background: #1d4ed8; padding: .6rem .85rem;
+            color: white; font-size: .75rem; font-weight: 800;
+        }
+        .tenant-order-action:hover { background: #1e40af; }
+        .tenant-order-action:disabled { cursor: default; background: #e2e8f0; color: #64748b; }
+        .tenant-menu-item { display: flex; align-items: center; gap: .85rem; border: 1px solid #e7ebf2; border-radius: .9rem; padding: .85rem; }
+        .tenant-menu-item img { width: 3.5rem; height: 3.5rem; flex: 0 0 auto; border-radius: .7rem; object-fit: cover; }
+    </style>
+</head>
+<body class="tenant-dashboard min-h-screen">
+    <div class="min-h-screen">
+    <header class="tenant-dashboard-header">
+        <div class="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-4 sm:px-6">
+            <div class="flex min-w-0 items-center gap-3">
+                <img src="logo-uym.png" alt="Logo Universitas Yatsi Madani" class="h-10 w-10 rounded-full bg-white p-1">
+                <div>
+                    <p class="font-extrabold text-slate-900">SiKantin <span class="font-medium text-slate-400">/ Tenant</span></p>
+                    <p id="tenantName" class="text-xs text-slate-500">Memuat kantin...</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <button id="soundToggle" type="button" aria-pressed="false" class="tenant-sound-button">🔕 Aktifkan Suara</button>
+                <div class="relative">
+                    <button id="tenantProfileMenuButton" type="button" aria-haspopup="true" aria-expanded="false" aria-label="Buka menu profil" class="flex items-center gap-2 rounded-xl bg-blue-800 p-2 pr-3 text-left text-white transition hover:bg-blue-900">
+                        <img id="tenantProfileAvatar" src="logo-uym.png" alt="" class="h-10 w-10 rounded-full border-2 border-white/80 bg-slate-100 object-cover">
+                        <span class="text-left">
+                            <span id="tenantProfileButtonName" class="block max-w-28 truncate text-xs font-bold text-white sm:max-w-36">Akun saya</span>
+                            <span class="hidden text-[10px] text-blue-100 sm:block">Pemilik tenant</span>
+                        </span>
+                        <span aria-hidden="true" class="text-xs text-white">⌄</span>
+                    </button>
+                    <div id="tenantProfileMenu" class="absolute right-0 top-full z-20 mt-1 hidden w-56 overflow-hidden rounded-b-xl border border-slate-200 bg-white p-2 shadow-xl">
+                        <a href="profile.html" class="block rounded-lg px-3 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">Edit Profil</a>
+                        <button id="logoutButton" type="button" class="w-full rounded-lg bg-slate-50 px-3 py-3 text-left text-sm font-bold text-rose-600 transition hover:bg-rose-50">Keluar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+        <section class="mb-7 flex flex-wrap items-end justify-between gap-4">
+            <div>
+                <p class="text-sm font-semibold text-blue-700">Ringkasan tenant</p>
+                <h1 class="mt-1 text-3xl font-black text-slate-900">Halo, pemilik tenant 👋</h1>
+                <p class="mt-2 text-sm text-slate-500">Pantau operasional kantin dan pesanan masuk hari ini.</p>
+            </div>
+            <div class="flex flex-wrap items-center gap-3">
+                <div class="flex flex-col items-end gap-1">
+                    <span id="connectionStatus" class="text-xs font-semibold text-slate-500">Menghubungkan realtime pesanan...</span>
+                    <span id="tenantStatusRealtime" class="text-xs font-semibold text-slate-500">Menghubungkan realtime status kantin...</span>
+                </div>
+                <button id="tenantOpenStatus" type="button" disabled class="tenant-status-button disabled:cursor-wait disabled:opacity-60">
+                    <span class="status-dot"></span><span id="tenantOpenStatusLabel">Memuat status</span><span aria-hidden="true">⌄</span>
+                </button>
+            </div>
+        </section>
+        <p id="message" role="status" aria-live="polite" class="mb-5 hidden rounded-lg p-4 text-sm"></p>
+        <p id="soundStatus" class="sr-only" aria-live="polite"></p>
+
+        <section class="mb-7 grid gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="Ringkasan penjualan">
+            <article class="tenant-stat-card">
+                <span class="tenant-stat-icon bg-blue-50 text-blue-700" aria-hidden="true">◉</span>
+                <p class="mt-4 text-sm text-slate-500">Penjualan pesanan tampil</p>
+                <p id="tenantSalesTotal" class="mt-1 text-2xl font-black text-slate-900">Rp 0</p>
+                <p class="mt-2 text-xs text-slate-500">Total dari database</p>
+            </article>
+            <article class="tenant-stat-card">
+                <span class="tenant-stat-icon bg-amber-50 text-amber-700" aria-hidden="true">▤</span>
+                <p class="mt-4 text-sm text-slate-500">Pesanan</p>
+                <p id="tenantOrderCount" class="mt-1 text-2xl font-black text-slate-900">0</p>
+                <p class="mt-2 text-xs text-slate-500">Total pesanan tenant</p>
+            </article>
+            <article class="tenant-stat-card">
+                <span class="tenant-stat-icon bg-orange-50 text-orange-700" aria-hidden="true">◷</span>
+                <p class="mt-4 text-sm text-slate-500">Perlu diproses</p>
+                <p id="tenantPendingCount" class="mt-1 text-2xl font-black text-slate-900">0</p>
+                <p class="mt-2 text-xs text-slate-500">Pesanan menunggu tindakan</p>
+            </article>
+            <article class="tenant-stat-card">
+                <span class="tenant-stat-icon bg-emerald-50 text-emerald-700" aria-hidden="true">✓</span>
+                <p class="mt-4 text-sm text-slate-500">Siap diambil</p>
+                <p id="tenantReadyCount" class="mt-1 text-2xl font-black text-slate-900">0</p>
+                <p class="mt-2 text-xs text-slate-500">Menunggu mahasiswa mengambil</p>
+            </article>
+        </section>
+
+        <nav class="tenant-dashboard-tabs mb-5" aria-label="Menu dashboard">
+            <button type="button" class="tenant-tab is-active" data-tenant-panel="orders">
+                <span aria-hidden="true">☷</span> Pesanan
+                <span id="tenantOrdersBadge" class="tenant-orders-badge hidden" aria-label="Pesanan belum diproses">0</span>
+            </button>
+            <button type="button" class="tenant-tab" data-tenant-panel="menu"><span aria-hidden="true">♨</span> Menu saya</button>
+            <button type="button" class="tenant-tab" data-tenant-panel="history"><span aria-hidden="true">◷</span> Riwayat Pesanan</button>
+        </section>
+
+        <section id="tenantOrdersPanel" class="tenant-panel">
+            <div class="tenant-panel-heading">
+                <div><h2 class="text-lg font-extrabold text-slate-900">Pesanan terbaru</h2><p class="mt-1 text-sm text-slate-500">Notifikasi realtime aktif; pembaruan otomatis.</p></div>
+                <span class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">Database</span>
+            </div>
+            <div id="ordersList" class="divide-y divide-slate-100"><p class="p-5 text-sm text-slate-500">Memuat pesanan...</p></div>
+        </section>
+
+        <section id="tenantMenuPanel" class="tenant-panel hidden">
+            <div class="tenant-panel-heading">
+                <div><h2 class="text-lg font-extrabold text-slate-900">Menu kantin</h2><p class="mt-1 text-sm text-slate-500">Daftar menu dari database.</p></div>
+                <span class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">Database</span>
+            </div>
+            <div id="tenantMenuList" class="grid gap-3 p-5 sm:grid-cols-2"><p class="text-sm text-slate-500">Memuat menu...</p></div>
+        </section>
+        <section id="tenantHistoryPanel" class="tenant-panel hidden">
+            <div class="tenant-panel-heading">
+                <div><h2 class="text-lg font-extrabold text-slate-900">Riwayat Pesanan</h2><p class="mt-1 text-sm text-slate-500">Pesanan dengan status selesai atau dibatalkan.</p></div>
+                <span class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">Database</span>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full min-w-[42rem] text-left text-sm">
+                    <thead class="bg-slate-50 text-xs font-bold uppercase tracking-wide text-slate-500">
+                        <tr>
+                            <th class="px-5 py-3">Nomor Pesanan</th>
+                            <th class="px-5 py-3">Tanggal</th>
+                            <th class="px-5 py-3">Nama Mahasiswa</th>
+                            <th class="px-5 py-3">Total</th>
+                            <th class="px-5 py-3">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tenantHistoryBody" class="divide-y divide-slate-100">
+                        <tr><td colspan="5" class="px-5 py-4 text-sm text-slate-500">Memuat riwayat pesanan...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+        <p class="mt-5 text-center text-xs text-slate-400">Perubahan status pesanan disimpan ke database dan ditampilkan realtime.</p>
+    </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase.js"></script>
+    <script src="js/notification-sound.js"></script>
+    <script>
+        const ordersList = document.getElementById('ordersList');
+        const message = document.getElementById('message');
+        const connectionStatus = document.getElementById('connectionStatus');
+        let activeTenantId;
+        let tenantIsOpen = false;
+        let tenantOrders = [];
+        let tenantStatusChannel;
+        let refreshTimer;
+        let channel;
+
+        function showMessage(text, isError) {
+            message.textContent = text;
+            message.className = `mb-5 rounded-lg p-4 text-sm ${isError ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`;
+        }
+
+        function formatRupiah(value) {
+            return new Intl.NumberFormat('id-ID', {
+                style: 'currency',
+                currency: 'IDR',
+                maximumFractionDigits: 0
+            }).format(value);
+        }
+
+        function addText(parent, tag, className, text) {
+            const element = document.createElement(tag);
+            element.className = className;
+            element.textContent = text ?? '';
+            parent.append(element);
+            return element;
+        }
+
+        function isTenantOpen(status) {
+            return status === true
+                || status === 1
+                || (typeof status === 'string' && ['true', '1'].includes(status.trim().toLowerCase()));
+        }
+
+        function setTenantOpenStatus(isOpen) {
+            tenantIsOpen = isTenantOpen(isOpen);
+            const button = document.getElementById('tenantOpenStatus');
+            button.classList.toggle('is-closed', !tenantIsOpen);
+            document.getElementById('tenantOpenStatusLabel').textContent = tenantIsOpen ? 'Tenant buka' : 'Tenant tutup';
+            button.setAttribute('aria-label', `Status tenant ${tenantIsOpen ? 'buka' : 'tutup'}. Klik untuk mengubah.`);
+        }
+
+        function setTenantDashboardUnavailable(statusLabel, connectionLabel, messageText, isError = true) {
+            document.getElementById('tenantOpenStatusLabel').textContent = statusLabel;
+            document.getElementById('tenantOpenStatus').disabled = true;
+            connectionStatus.textContent = connectionLabel;
+            document.getElementById('tenantStatusRealtime').textContent = 'Realtime status kantin tidak aktif.';
+            if (messageText) showMessage(messageText, isError);
+        }
+
+        function subscribeToTenantStatus() {
+            if (typeof activeTenantId !== 'string' || !activeTenantId.trim()) {
+                document.getElementById('tenantStatusRealtime').textContent = 'Tenant belum dimuat.';
+                return;
+            }
+
+            tenantStatusChannel = db
+                .channel(`tenant-status-${activeTenantId}`)
+                .on('postgres_changes', {
+                    event: 'UPDATE',
+                    schema: 'public',
+                    table: 'tenants',
+                    filter: `id=eq.${activeTenantId}`
+                }, (payload) => {
+                    if (payload.new?.id !== activeTenantId
+                        || !Object.prototype.hasOwnProperty.call(payload.new, 'status_buka')) return;
+                    setTenantOpenStatus(payload.new.status_buka);
+                })
+                .subscribe((status, error) => {
+                    document.getElementById('tenantStatusRealtime').textContent = status === 'SUBSCRIBED'
+                        ? 'Realtime status kantin aktif.'
+                        : error
+                            ? `Realtime status ${status}: ${error.message}`
+                            : `Realtime status kantin: ${status}`;
+                });
+        }
+
+        async function toggleTenantOpenStatus() {
+            if (typeof activeTenantId !== 'string' || !activeTenantId.trim()) {
+                showMessage('Status tenant belum dapat diperbarui karena data tenant belum dimuat.', true);
+                return;
+            }
+            const nextStatus = !tenantIsOpen;
+            const button = document.getElementById('tenantOpenStatus');
+            button.disabled = true;
+            const { error } = await db
+                .from('tenants')
+                .update({ status_buka: nextStatus })
+                .eq('id', activeTenantId);
+            button.disabled = false;
+            if (error) {
+                showMessage(`Status tenant gagal diperbarui: ${error.message}`, true);
+                return;
+            }
+            setTenantOpenStatus(nextStatus);
+            showMessage(`Tenant sekarang ${nextStatus ? 'buka' : 'tutup'}.`, false);
+        }
+
+        function showTenantPanel(panel) {
+            document.getElementById('tenantOrdersPanel').classList.toggle('hidden', panel !== 'orders');
+            document.getElementById('tenantMenuPanel').classList.toggle('hidden', panel !== 'menu');
+            document.getElementById('tenantHistoryPanel').classList.toggle('hidden', panel !== 'history');
+            document.querySelectorAll('[data-tenant-panel]').forEach((tab) => {
+                tab.classList.toggle('is-active', tab.dataset.tenantPanel === panel);
+            });
+        }
+
+        function formatOrderDate(value) {
+            const date = new Date(value);
+            return Number.isNaN(date.getTime())
+                ? '-'
+                : new Intl.DateTimeFormat('id-ID', { dateStyle: 'medium', timeStyle: 'short' }).format(date);
+        }
+
+        function renderTenantMenu(menuItems) {
+            const menuList = document.getElementById('tenantMenuList');
+            menuList.replaceChildren();
+            if (!menuItems.length) {
+                addText(menuList, 'p', 'text-sm text-slate-500', 'Belum ada menu yang terdaftar.');
+                return;
+            }
+            menuItems.forEach((item) => {
+                const row = document.createElement('article');
+                row.className = 'tenant-menu-item bg-white';
+                if (item.foto_url) {
+                    const image = document.createElement('img');
+                    image.src = item.foto_url;
+                    image.alt = item.nama_menu;
+                    image.loading = 'lazy';
+                    row.append(image);
+                } else {
+                    addText(row, 'span', 'flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-2xl', '🍱');
+                }
+                const details = document.createElement('div');
+                details.className = 'min-w-0 flex-1';
+                addText(details, 'p', 'truncate text-sm font-bold text-slate-800', item.nama_menu);
+                addText(details, 'p', 'mt-1 text-xs text-slate-500', item.kategori || 'Menu kantin');
+                addText(details, 'p', 'mt-1 text-xs font-semibold text-slate-700', formatRupiah(item.harga));
+                row.append(details);
+                addText(
+                    row,
+                    'span',
+                    `shrink-0 rounded-full px-2 py-1 text-[10px] font-bold ${item.tersedia ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'}`,
+                    item.tersedia ? 'Tersedia' : 'Habis'
+                );
+                menuList.append(row);
+            });
+        }
+
+        async function updateOrder(order, status, rejectionReason) {
+            if (typeof activeTenantId !== 'string' || !activeTenantId.trim() || typeof order?.id !== 'string' || !order.id.trim()) {
+                showMessage('Pesanan tidak dapat diperbarui karena data tenant belum dimuat.', true);
+                return;
+            }
+            const changes = { status };
+            if (status === 'Dibatalkan') changes.alasan_pembatalan = rejectionReason;
+            const { data: updatedOrder, error } = await db
+                .from('orders')
+                .update(changes)
+                .eq('id', order.id)
+                .eq('tenant_id', activeTenantId)
+                .eq('status', order.status)
+                .select('id')
+                .maybeSingle();
+            if (error) {
+                showMessage(`Status pesanan gagal diperbarui: ${error.message}`, true);
+                return;
+            }
+            if (!updatedOrder) {
+                showMessage('Pesanan sudah diperbarui atau akses perubahan ditolak. Muat ulang daftar pesanan.', true);
+                await loadOrders();
+                return;
+            }
+            showMessage(`Status pesanan ${order.nomor_pesanan} diperbarui menjadi ${status}.`, false);
+            await loadOrders();
+        }
+
+        function renderOrders(orders) {
+            tenantOrders = orders;
+            const pendingOrders = orders.filter((order) => order.status === 'Menunggu' || order.status === 'Menunggu Verifikasi');
+            const readyOrders = orders.filter((order) => order.status === 'Siap diambil');
+            document.getElementById('tenantOrderCount').textContent = String(orders.length);
+            document.getElementById('tenantPendingCount').textContent = String(pendingOrders.length);
+            document.getElementById('tenantReadyCount').textContent = String(readyOrders.length);
+            document.getElementById('tenantSalesTotal').textContent = formatRupiah(
+                orders.filter((order) => order.status !== 'Dibatalkan').reduce((total, order) => total + Number(order.total || 0), 0)
+            );
+            const badge = document.getElementById('tenantOrdersBadge');
+            badge.textContent = String(pendingOrders.length);
+            badge.classList.toggle('hidden', pendingOrders.length === 0);
+
+            ordersList.replaceChildren();
+            if (!orders.length) {
+                addText(ordersList, 'p', 'p-6 text-sm text-slate-500', 'Belum ada pesanan masuk.');
+                return;
+            }
+
+            orders.forEach((order) => {
+                const row = document.createElement('article');
+                row.className = 'tenant-order-row';
+                const identity = document.createElement('div');
+                identity.className = 'min-w-[12rem] flex-1';
+                addText(identity, 'h3', 'text-sm font-extrabold text-slate-900', `Pesanan ${order.nomor_pesanan}`);
+                addText(identity, 'p', 'mt-1 text-xs font-semibold text-slate-700', order.nama_mahasiswa || 'Mahasiswa');
+                if (order.phone) {
+                    addText(identity, 'p', 'mt-1 text-xs text-slate-500', order.phone);
+                }
+                const itemSummary = (order.order_items || [])
+                    .map((item) => `${item.nama_menu} × ${item.jumlah}${item.catatan ? ` (${item.catatan})` : ''}`)
+                    .join(', ');
+                addText(identity, 'p', 'mt-2 text-xs text-slate-600', itemSummary || 'Rincian menu tidak tersedia.');
+                addText(identity, 'p', 'mt-2 text-xs font-semibold text-slate-600', `Pembayaran: ${order.metode_pembayaran === 'tunai' ? 'Tunai (dibayar saat pengambilan)' : 'QRIS'}`);
+                if (order.status === 'Dibatalkan' && order.alasan_pembatalan) {
+                    addText(identity, 'p', 'mt-2 rounded-md bg-rose-50 p-2 text-xs text-rose-700', `Alasan penolakan: ${order.alasan_pembatalan}`);
+                }
+                if (order.status === 'Menunggu Verifikasi') {
+                    addText(identity, 'p', 'mt-3 text-xs text-slate-500', 'Periksa nominal dan detail bukti transfer sebelum memverifikasi pembayaran.');
+                    if (order.bukti_transfer) {
+                        const proofLink = document.createElement('a');
+                        proofLink.href = order.bukti_transfer;
+                        proofLink.target = '_blank';
+                        proofLink.rel = 'noopener noreferrer';
+                        proofLink.className = 'mt-3 inline-block';
+                        const proofImage = document.createElement('img');
+                        proofImage.src = order.bukti_transfer;
+                        proofImage.alt = `Bukti transfer pesanan ${order.nomor_pesanan}`;
+                        proofImage.loading = 'lazy';
+                        proofImage.className = 'max-h-48 max-w-full rounded-lg border border-slate-200 object-contain';
+                        proofLink.append(proofImage);
+                        identity.append(proofLink);
+                    } else {
+                        addText(identity, 'p', 'mt-3 text-xs font-semibold text-rose-600', 'Bukti transfer belum tersedia.');
+                    }
+                }
+                row.append(identity);
+                const statusColor = order.status === 'Siap diambil'
+                    ? 'bg-emerald-50 text-emerald-700'
+                    : order.status === 'Selesai'
+                        ? 'bg-slate-100 text-slate-600'
+                        : order.status === 'Dibatalkan'
+                            ? 'bg-rose-50 text-rose-700'
+                            : 'bg-amber-50 text-amber-800';
+                const status = addText(row, 'span', `rounded-full px-3 py-1 text-xs font-bold ${statusColor}`, order.status);
+                status.setAttribute('aria-label', `Status: ${order.status}`);
+                addText(row, 'p', 'min-w-24 text-sm font-extrabold text-slate-900', formatRupiah(order.total));
+                const actions = document.createElement('div');
+                actions.className = 'flex flex-wrap items-center gap-2';
+                if (order.status === 'Menunggu Verifikasi') {
+                    const verifyButton = document.createElement('button');
+                    verifyButton.type = 'button';
+                    verifyButton.className = 'tenant-order-action';
+                    verifyButton.textContent = 'Verifikasi Pembayaran';
+                    verifyButton.addEventListener('click', () => updateOrder(order, 'Diproses'));
+                    actions.append(verifyButton);
+
+                    const rejectButton = document.createElement('button');
+                    rejectButton.type = 'button';
+                    rejectButton.className = 'tenant-order-action bg-rose-600 hover:bg-rose-700';
+                    rejectButton.textContent = 'Tolak Pesanan';
+                    actions.append(rejectButton);
+
+                    const rejectionForm = document.createElement('form');
+                    rejectionForm.className = 'hidden basis-full space-y-2';
+                    const reason = document.createElement('textarea');
+                    reason.required = true;
+                    reason.maxLength = 500;
+                    reason.rows = 2;
+                    reason.placeholder = 'Tuliskan alasan penolakan, misalnya bukti tidak valid atau nominal tidak sesuai';
+                    reason.className = 'w-full rounded-lg border border-slate-200 p-2 text-sm outline-none focus:border-rose-400';
+                    reason.addEventListener('input', () => reason.setCustomValidity(''));
+                    const confirmReject = document.createElement('button');
+                    confirmReject.type = 'submit';
+                    confirmReject.className = 'tenant-order-action bg-rose-600 hover:bg-rose-700';
+                    confirmReject.textContent = 'Kirim Penolakan';
+                    rejectionForm.append(reason, confirmReject);
+                    rejectionForm.addEventListener('submit', async (event) => {
+                        event.preventDefault();
+                        const rejectionReason = reason.value.trim();
+                        if (!rejectionReason) {
+                            reason.setCustomValidity('Alasan penolakan wajib diisi.');
+                            reason.reportValidity();
+                            return;
+                        }
+                        confirmReject.disabled = true;
+                        await updateOrder(order, 'Dibatalkan', rejectionReason);
+                        confirmReject.disabled = false;
+                    });
+                    rejectButton.addEventListener('click', () => {
+                        rejectionForm.classList.toggle('hidden');
+                        if (!rejectionForm.classList.contains('hidden')) reason.focus();
+                    });
+                    actions.append(rejectionForm);
+                } else if (order.status === 'Menunggu') {
+                    const action = document.createElement('button');
+                    action.type = 'button';
+                    action.className = 'tenant-order-action';
+                    action.textContent = 'Terima Pesanan';
+                    action.addEventListener('click', () => updateOrder(order, 'Diproses'));
+                    actions.append(action);
+                } else if (order.status === 'Diproses') {
+                    const action = document.createElement('button');
+                    action.type = 'button';
+                    action.className = 'tenant-order-action';
+                    action.textContent = 'Siap Diambil';
+                    action.addEventListener('click', () => updateOrder(order, 'Siap diambil'));
+                    actions.append(action);
+                } else if (order.status === 'Siap diambil') {
+                    const action = document.createElement('button');
+                    action.type = 'button';
+                    action.className = 'tenant-order-action bg-emerald-600 hover:bg-emerald-700';
+                    action.textContent = 'Selesaikan Pesanan';
+                    action.addEventListener('click', () => updateOrder(order, 'Selesai'));
+                    actions.append(action);
+                }
+                row.append(actions);
+                ordersList.append(row);
+            });
+        }
+
+        async function loadOrders() {
+            if (typeof activeTenantId !== 'string' || !activeTenantId.trim()) return;
+            const { data: orders, error } = await db
+                .from('orders')
+                .select('id, tenant_id, nomor_pesanan, mahasiswa_id, nama_mahasiswa, phone, status, total, metode_pembayaran, bukti_transfer, alasan_pembatalan, order_items(id, nama_menu, harga_satuan, jumlah, subtotal, catatan)')
+                .eq('tenant_id', activeTenantId)
+                .order('id', { ascending: false });
+            if (error) {
+                showMessage(`Gagal memuat pesanan: ${error.message}`, true);
+                return;
+            }
+            renderOrders(orders || []);
+            await loadOrderHistory();
+        }
+
+        async function loadOrderHistory() {
+            if (typeof activeTenantId !== 'string' || !activeTenantId.trim()) return;
+            const historyBody = document.getElementById('tenantHistoryBody');
+            const { data: orders, error } = await db
+                .from('orders')
+                .select('nomor_pesanan, created_at, nama_mahasiswa, status, total')
+                .eq('tenant_id', activeTenantId)
+                .in('status', ['Selesai', 'Dibatalkan'])
+                .order('created_at', { ascending: false });
+            historyBody.replaceChildren();
+            if (error) {
+                const row = document.createElement('tr');
+                const cell = addText(row, 'td', 'px-5 py-4 text-sm text-rose-600', `Gagal memuat riwayat pesanan: ${error.message}`);
+                cell.colSpan = 5;
+                historyBody.append(row);
+                return;
+            }
+            if (!orders?.length) {
+                const row = document.createElement('tr');
+                const cell = addText(row, 'td', 'px-5 py-4 text-sm text-slate-500', 'Belum ada riwayat pesanan.');
+                cell.colSpan = 5;
+                historyBody.append(row);
+                return;
+            }
+            orders.forEach((order) => {
+                const row = document.createElement('tr');
+                addText(row, 'td', 'px-5 py-4 font-semibold text-slate-800', order.nomor_pesanan || '-');
+                addText(row, 'td', 'whitespace-nowrap px-5 py-4 text-slate-600', formatOrderDate(order.created_at));
+                addText(row, 'td', 'px-5 py-4 text-slate-600', order.nama_mahasiswa || 'Mahasiswa');
+                addText(row, 'td', 'whitespace-nowrap px-5 py-4 font-semibold text-slate-800', formatRupiah(order.total));
+                const statusCell = addText(row, 'td', 'px-5 py-4', '');
+                addText(
+                    statusCell,
+                    'span',
+                    `rounded-full px-2.5 py-1 text-xs font-bold ${order.status === 'Selesai' ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}`,
+                    order.status
+                );
+                historyBody.append(row);
+            });
+        }
+
+        async function loadTenantMenu() {
+            if (typeof activeTenantId !== 'string' || !activeTenantId.trim()) return;
+            const { data: menuItems, error } = await db
+                .from('menu_items')
+                .select('id, nama_menu, kategori, harga, tersedia, foto_url')
+                .eq('tenant_id', activeTenantId)
+                .order('nama_menu');
+            if (error) {
+                showMessage(`Gagal memuat menu kantin: ${error.message}`, true);
+                return;
+            }
+            renderTenantMenu(menuItems || []);
+        }
+
+        function scheduleRefresh() {
+            window.clearTimeout(refreshTimer);
+            refreshTimer = window.setTimeout(loadOrders, 200);
+        }
+
+        async function initialize() {
+            const { data: { session }, error: sessionError } = await db.auth.getSession();
+            if (sessionError) {
+                setTenantDashboardUnavailable('Sesi bermasalah', 'Realtime tidak aktif.', `Gagal memeriksa sesi: ${sessionError.message}`);
+                return;
+            }
+            if (!session) {
+                setTenantDashboardUnavailable('Silakan masuk', 'Realtime tidak aktif.', 'Sesi login tidak ditemukan. Silakan masuk kembali sebagai pemilik tenant.');
+                window.location.href = 'index.html';
+                return;
+            }
+
+            const { data: profile, error: profileError } = await db
+                .from('profiles')
+                .select('id, peran, nama, avatar_url')
+                .eq('id', session.user.id)
+                .single();
+            if (profileError) {
+                setTenantDashboardUnavailable('Profil tidak tersedia', 'Realtime tidak aktif.', `Gagal memuat profil: ${profileError.message}`);
+                return;
+            }
+            if (profile.peran !== 'pemilik_tenant') {
+                setTenantDashboardUnavailable(
+                    'Khusus pemilik tenant',
+                    'Realtime tidak aktif untuk akun ini.',
+                    'Sesi yang digunakan bukan akun pemilik tenant. Silakan masuk menggunakan akun pemilik tenant untuk melihat status kantin.'
+                );
+                return;
+            }
+            const profileName = profile.nama || session.user.user_metadata?.full_name || 'Pemilik tenant';
+            const avatar = document.getElementById('tenantProfileAvatar');
+            avatar.src = profile.avatar_url || 'logo-uym.png';
+            avatar.onerror = () => { avatar.src = 'logo-uym.png'; };
+            document.getElementById('tenantProfileButtonName').textContent = profileName;
+
+            const { data: tenant, error: tenantError } = await db
+                .from('tenants')
+                .select('id, nama_tenant, status_buka')
+                .eq('pemilik_id', session.user.id)
+                .maybeSingle();
+            if (tenantError) {
+                setTenantDashboardUnavailable('Tenant gagal dimuat', 'Realtime tidak aktif.', `Gagal memuat kantin milik akun ini: ${tenantError.message}`);
+                return;
+            }
+            if (!tenant) {
+                setTenantDashboardUnavailable(
+                    'Tenant tidak ditemukan',
+                    'Realtime tidak aktif.',
+                    'Belum ada data tenant yang terhubung dengan akun pemilik ini.'
+                );
+                return;
+            }
+            if (typeof tenant.id !== 'string' || !tenant.id.trim()) {
+                setTenantDashboardUnavailable('ID tenant tidak valid', 'Realtime tidak aktif.', 'Data tenant tidak memiliki ID yang valid. Status dan pesanan tidak dapat dimuat.');
+                return;
+            }
+            activeTenantId = tenant.id;
+            document.getElementById('tenantName').textContent = tenant.nama_tenant;
+            setTenantOpenStatus(tenant.status_buka);
+            document.getElementById('tenantOpenStatus').disabled = false;
+            await loadOrders();
+            await loadTenantMenu();
+            subscribeToTenantStatus();
+
+            if (typeof activeTenantId !== 'string' || !activeTenantId.trim()) {
+                showMessage('Realtime tidak dapat dimulai karena ID tenant belum tersedia.', true);
+                connectionStatus.textContent = 'Tenant belum dimuat';
+                return;
+            }
+            channel = db
+                .channel(`tenant-orders-${activeTenantId}`)
+                .on('postgres_changes', {
+                    event: '*',
+                    schema: 'public',
+                    table: 'orders',
+                    filter: `tenant_id=eq.${activeTenantId}`
+                }, (payload) => {
+                    if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+                        window.playNotificationSound?.();
+                    }
+                    scheduleRefresh();
+                })
+                .subscribe((status, error) => {
+                    connectionStatus.textContent = status === 'SUBSCRIBED'
+                        ? 'Realtime aktif'
+                        : error
+                            ? `Realtime ${status}: ${error.message}`
+                            : `Realtime: ${status}`;
+                });
+        }
+
+        document.getElementById('logoutButton').addEventListener('click', async () => {
+            const { error } = await db.auth.signOut();
+            if (error) {
+                showMessage(`Gagal logout: ${error.message}`, true);
+                return;
+            }
+            window.location.href = 'index.html';
+        });
+
+        document.getElementById('tenantOpenStatus').addEventListener('click', toggleTenantOpenStatus);
+        document.getElementById('tenantProfileMenuButton').addEventListener('click', () => {
+            const menu = document.getElementById('tenantProfileMenu');
+            const isOpen = menu.classList.toggle('hidden') === false;
+            document.getElementById('tenantProfileMenuButton').setAttribute('aria-expanded', String(isOpen));
+        });
+        document.addEventListener('click', (event) => {
+            const menu = document.getElementById('tenantProfileMenu');
+            if (!menu.contains(event.target) && !document.getElementById('tenantProfileMenuButton').contains(event.target)) {
+                menu.classList.add('hidden');
+                document.getElementById('tenantProfileMenuButton').setAttribute('aria-expanded', 'false');
+            }
+        });
+        document.querySelectorAll('[data-tenant-panel]').forEach((tab) => {
+            tab.addEventListener('click', () => showTenantPanel(tab.dataset.tenantPanel));
+        });
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') {
+                document.getElementById('tenantProfileMenu').classList.add('hidden');
+                document.getElementById('tenantProfileMenuButton').setAttribute('aria-expanded', 'false');
+            }
+        });
+
+        window.addEventListener('pagehide', () => {
+            window.clearTimeout(refreshTimer);
+            if (channel) db.removeChannel(channel);
+            if (tenantStatusChannel) db.removeChannel(tenantStatusChannel);
+        });
+
+        initialize();
+    </script>
+</body>
+</html>

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#172b40">
+    <title>Pilih Peran | SiKantin UYM</title>
+    <link rel="icon" type="image/png" href="favicon-uym.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .role-screen {
+            background:
+                radial-gradient(ellipse at 50% 38%, rgba(55, 100, 135, .56), transparent 42%),
+                radial-gradient(ellipse at 4% 100%, rgba(15, 73, 122, .55), transparent 54%),
+                linear-gradient(125deg, #26394f 0%, #172b40 52%, #101b2c 100%);
+        }
+        .glass { border: 1px solid rgba(177, 198, 222, .2); background: rgba(25, 43, 64, .68); backdrop-filter: blur(14px); }
+    </style>
+</head>
+<body class="role-screen min-h-screen px-4 py-6 text-slate-100 sm:px-6">
+    <main class="mx-auto max-w-6xl">
+        <header class="glass flex items-center justify-between rounded-3xl px-4 py-3 sm:px-6">
+            <a href="index.html" class="flex items-center gap-3" aria-label="SiKantin Universitas Yatsi Madani">
+                <img src="logo-uym.png" alt="" class="h-11 w-11 rounded-full bg-white p-1">
+                <span>
+                    <span class="block text-lg font-extrabold tracking-wide">SIKANTIN</span>
+                    <span class="block text-xs text-blue-100/75">Universitas Yatsi Madani</span>
+                </span>
+            </a>
+            <a href="mailto:admin@sikantin.uym.ac.id" class="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-bold hover:bg-white/10">Bantuan</a>
+        </header>
+
+        <section class="py-12 text-center sm:py-16">
+            <p id="greeting" class="mb-4 text-sm text-blue-100/75"></p>
+            <p class="mb-2 text-xs font-bold uppercase tracking-[0.28em] text-amber-300">Universitas Yatsi Madani</p>
+            <h1 class="text-4xl font-black tracking-tight sm:text-6xl">Masuk ke SiKantin</h1>
+            <p class="mt-4 text-base text-blue-100/75 sm:text-lg">Pilih peran Anda untuk melanjutkan</p>
+        </section>
+
+        <section class="grid gap-4 md:grid-cols-2" aria-label="Pilih peran">
+            <article class="glass rounded-[2rem] p-5 shadow-xl sm:p-6">
+                <div class="mb-6 flex items-center gap-4">
+                    <span class="flex h-16 w-16 items-center justify-center rounded-2xl border-2 border-blue-300 bg-blue-900/30 text-3xl text-blue-300" aria-hidden="true">🎓</span>
+                    <div>
+                        <h2 class="text-2xl font-extrabold">Mahasiswa</h2>
+                        <p class="mt-1 text-sm text-blue-100/65">Pesan makanan dan pantau pesanan kantin</p>
+                    </div>
+                </div>
+                <a href="login.html" class="flex w-full items-center gap-4 rounded-2xl border border-white/15 bg-white/5 p-4 text-left transition hover:-translate-y-0.5 hover:bg-white/10">
+                    <span class="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-400/20 text-xl text-blue-200" aria-hidden="true">🛍</span>
+                    <span class="min-w-0 flex-1">
+                        <span class="block font-bold">Masuk sebagai Mahasiswa</span>
+                        <span class="mt-1 block text-sm text-blue-100/65">Jelajahi menu dan pesan makanan</span>
+                    </span>
+                    <span class="text-2xl text-blue-200" aria-hidden="true">→</span>
+                </a>
+            </article>
+
+            <article class="glass rounded-[2rem] bg-blue-950/45 p-5 shadow-xl sm:p-6">
+                <div class="mb-6 flex items-center gap-4">
+                    <span class="flex h-16 w-16 items-center justify-center rounded-2xl border-2 border-orange-400 bg-orange-900/20 text-3xl text-orange-300" aria-hidden="true">🏪</span>
+                    <div>
+                        <h2 class="text-2xl font-extrabold">Pemilik Tenant</h2>
+                        <p class="mt-1 text-sm text-blue-100/65">Kelola kantin dan pesanan yang masuk</p>
+                    </div>
+                </div>
+                <a href="tenant-login.html" class="flex w-full items-center gap-4 rounded-2xl border border-white/15 bg-white/5 p-4 text-left transition hover:-translate-y-0.5 hover:bg-white/10">
+                    <span class="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-400/20 text-xl text-blue-200" aria-hidden="true">📋</span>
+                    <span class="min-w-0 flex-1">
+                        <span class="block font-bold">Dashboard Pemilik Tenant</span>
+                        <span class="mt-1 block text-sm text-blue-100/65">Lihat pesanan dan perbarui status</span>
+                    </span>
+                    <span class="text-2xl text-blue-200" aria-hidden="true">→</span>
+                </a>
+            </article>
+        </section>
+        <p class="mt-8 text-center text-xs text-blue-100/50">SiKantin UYM · Pesan dulu, ambil tanpa antre.</p>
+        <p class="mt-3 text-center text-xs"><a href="login.html?role=admin" class="text-blue-100/60 underline hover:text-white">Login administrator</a></p>
+    </main>
+    <script>
+        const now = new Date();
+        const greeting = now.getHours() < 11 ? 'Selamat Pagi' : now.getHours() < 15 ? 'Selamat Siang' : now.getHours() < 18 ? 'Selamat Sore' : 'Selamat Malam';
+        document.getElementById('greeting').textContent = `${greeting} · ${new Intl.DateTimeFormat('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(now)}`;
+    </script>
+</body>
+</html>

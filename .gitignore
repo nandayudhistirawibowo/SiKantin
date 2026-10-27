@@ -1,0 +1,17 @@
+# Node
+node_modules/
+npm-debug.log*
+
+# Environment (API Keys)
+.env
+.env.local
+
+# Session Baileys (PENTING!)
+auth_info_baileys/
+
+# VS Code
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db

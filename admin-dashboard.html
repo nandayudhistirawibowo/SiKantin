@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#ffffff">
+    <title>Dashboard Admin | SiKantin</title>
+    <link rel="icon" type="image/png" href="favicon-uym.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .admin-nav-link.is-active { background: #eff6ff; color: #1d4ed8; font-weight: 800; }
+        .form-label { display: block; }
+    </style>
+</head>
+<body class="min-h-screen bg-slate-50 text-slate-800">
+    <div class="min-h-screen lg:flex">
+        <aside id="adminSidebar" class="fixed inset-y-0 left-0 z-30 w-64 -translate-x-full border-r border-slate-200 bg-white p-5 transition-transform lg:static lg:min-h-screen lg:translate-x-0">
+            <a href="admin-dashboard.html" class="flex items-center gap-3">
+                <img src="logo-uym.png" alt="Logo Universitas Yatsi Madani" class="h-11 w-11 object-contain">
+                <span><span class="block font-extrabold text-slate-900">SiKantin</span><span class="text-xs text-slate-500">Administrator</span></span>
+            </a>
+            <nav class="mt-8 space-y-1" aria-label="Navigasi admin">
+                <a href="#adminHome" data-admin-nav class="admin-nav-link is-active block rounded-lg px-3 py-2.5 text-sm text-slate-600 hover:bg-slate-100">Dashboard</a>
+                <a href="#studentsSection" data-admin-nav class="admin-nav-link block rounded-lg px-3 py-2.5 text-sm text-slate-600 hover:bg-slate-100">Kelola Mahasiswa</a>
+                <a href="#tenantsSection" data-admin-nav class="admin-nav-link block rounded-lg px-3 py-2.5 text-sm text-slate-600 hover:bg-slate-100">Kelola Tenant</a>
+                <a href="#reportsSection" data-admin-nav class="admin-nav-link block rounded-lg px-3 py-2.5 text-sm text-slate-600 hover:bg-slate-100">Laporan</a>
+            </nav>
+        </aside>
+        <div id="adminOverlay" class="fixed inset-0 z-20 hidden bg-slate-900/50 lg:hidden"></div>
+        <div class="min-w-0 flex-1">
+            <header class="sticky top-0 z-10 border-b border-slate-200 bg-white/95 backdrop-blur">
+                <div class="flex items-center justify-between gap-3 px-4 py-4 sm:px-7">
+                    <div class="flex items-center gap-3">
+                        <button id="adminMenuButton" type="button" aria-label="Buka navigasi admin" aria-expanded="false" class="rounded-lg border border-slate-200 px-3 py-2 text-sm font-bold text-slate-700 lg:hidden">☰</button>
+                        <div><p class="text-xs font-bold uppercase tracking-wider text-blue-700">Panel Admin</p><h1 class="font-extrabold text-slate-900">Manajemen SiKantin</h1></div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <a href="profile.html" class="hidden rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 sm:inline-flex">Edit Profil</a>
+                        <button id="logoutButton" type="button" class="rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50">Keluar</button>
+                    </div>
+                </div>
+            </header>
+            <main id="adminHome" class="mx-auto max-w-7xl space-y-7 p-4 sm:p-7">
+                <p id="message" role="status" aria-live="polite" class="hidden rounded-lg p-3 text-sm"></p>
+                <section class="grid gap-4 sm:grid-cols-3" aria-label="Ringkasan admin">
+                    <article class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"><p class="text-sm font-semibold text-slate-500">Mahasiswa terdaftar</p><p id="studentCount" class="mt-2 text-3xl font-extrabold text-blue-700">—</p></article>
+                    <article class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"><p class="text-sm font-semibold text-slate-500">Tenant terdaftar</p><p id="tenantCount" class="mt-2 text-3xl font-extrabold text-emerald-700">—</p></article>
+                    <article class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"><p class="text-sm font-semibold text-slate-500">Tenant buka</p><p id="openTenantCount" class="mt-2 text-3xl font-extrabold text-amber-600">—</p></article>
+                </section>
+
+                <section id="studentsSection" class="scroll-mt-24 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 p-5">
+                        <div><h2 class="font-extrabold text-slate-900">Kelola Mahasiswa</h2><p class="mt-1 text-xs text-slate-500">Data dari profiles dengan role mahasiswa.</p></div>
+                        <button id="addUserButton" type="button" class="rounded-lg bg-blue-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-blue-800">Tambah User</button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full min-w-[640px] text-left text-sm">
+                            <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500"><tr><th class="px-5 py-3">Nama</th><th class="px-5 py-3">NIM</th><th class="px-5 py-3">WhatsApp</th><th class="px-5 py-3">User ID</th></tr></thead>
+                            <tbody id="studentsTable" class="divide-y divide-slate-100"><tr><td colspan="4" class="px-5 py-5 text-slate-500">Memuat mahasiswa...</td></tr></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section id="tenantsSection" class="scroll-mt-24 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                    <div class="border-b border-slate-100 p-5"><h2 class="font-extrabold text-slate-900">Kelola Tenant</h2><p class="mt-1 text-xs text-slate-500">Data dari tenants beserta profil pemiliknya.</p></div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full min-w-[640px] text-left text-sm">
+                            <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500"><tr><th class="px-5 py-3">Nama Tenant</th><th class="px-5 py-3">Pemilik</th><th class="px-5 py-3">WhatsApp</th><th class="px-5 py-3">Status</th></tr></thead>
+                            <tbody id="tenantsTable" class="divide-y divide-slate-100"><tr><td colspan="4" class="px-5 py-5 text-slate-500">Memuat tenant...</td></tr></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section id="reportsSection" class="scroll-mt-24 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+                    <h2 class="font-extrabold text-slate-900">Laporan</h2>
+                    <p class="mt-2 text-sm text-slate-600">Ringkasan akun dan tenant ditampilkan di panel ini. Rincian transaksi tetap mengikuti hak akses database.</p>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <div id="userModal" class="fixed inset-0 z-40 hidden items-center justify-center bg-slate-900/50 p-4" role="dialog" aria-modal="true" aria-labelledby="userModalTitle">
+        <form id="createUserForm" class="max-h-[90vh] w-full max-w-lg space-y-4 overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl">
+            <div class="flex items-start justify-between gap-3">
+                <div><h2 id="userModalTitle" class="text-xl font-extrabold text-slate-900">Tambah User</h2><p class="mt-1 text-sm text-slate-500">Akun dibuat melalui Edge Function create-user.</p></div>
+                <button id="closeUserModalButton" type="button" aria-label="Tutup" class="rounded-lg px-2 py-1 text-xl text-slate-500 hover:bg-slate-100">×</button>
+            </div>
+            <p id="modalMessage" role="status" aria-live="polite" class="hidden rounded-lg p-3 text-sm"></p>
+            <label class="block text-sm font-bold">Role<select id="newUserRole" name="peran" required class="mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 font-normal"><option value="mahasiswa">Mahasiswa</option><option value="pemilik_tenant">Pemilik tenant</option></select></label>
+            <label id="userIdentifierLabel" class="block text-sm font-bold" for="userIdentifier">NIM
+                <input id="userIdentifier" name="identifier" inputmode="numeric" pattern="[0-9]{6,20}" autocomplete="username" required class="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal">
+            </label>
+            <p id="identifierHelp" class="-mt-2 text-xs text-slate-500">Login menggunakan NIM ini; email akun dibuat otomatis.</p>
+            <label class="block text-sm font-bold" for="newUserPassword">Password
+                <input id="newUserPassword" name="password" type="password" required minlength="8" maxlength="128" autocomplete="new-password" class="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal">
+            </label>
+            <div class="flex justify-end gap-2 pt-2">
+                <button id="cancelUserButton" type="button" class="rounded-lg border border-slate-200 px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50">Batal</button>
+                <button id="createUserSubmit" type="submit" class="rounded-lg bg-blue-700 px-4 py-2 text-sm font-bold text-white hover:bg-blue-800 disabled:opacity-60">Buat User</button>
+            </div>
+        </form>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase.js"></script>
+    <script>
+        const message = document.getElementById('message');
+        const modal = document.getElementById('userModal');
+        const createUserForm = document.getElementById('createUserForm');
+        let adminUser;
+
+        function setMessage(element, text, isError) {
+            element.textContent = text;
+            element.className = `rounded-lg p-3 text-sm ${isError ? 'bg-rose-50 text-rose-700' : 'bg-emerald-50 text-emerald-700'}`;
+        }
+
+        function appendCell(row, value, className = 'px-5 py-4 text-slate-700') {
+            const cell = document.createElement('td');
+            cell.className = className;
+            cell.textContent = value || '—';
+            row.append(cell);
+        }
+
+        function renderStudents(students) {
+            const table = document.getElementById('studentsTable');
+            table.replaceChildren();
+            if (!students.length) {
+                const row = table.insertRow();
+                const cell = row.insertCell();
+                cell.colSpan = 4;
+                cell.className = 'px-5 py-5 text-slate-500';
+                cell.textContent = 'Belum ada data mahasiswa.';
+                return;
+            }
+            students.forEach((student) => {
+                const row = table.insertRow();
+                appendCell(row, student.nama);
+                appendCell(row, student.nim);
+                appendCell(row, student.no_telepon);
+                appendCell(row, student.id, 'max-w-48 truncate px-5 py-4 font-mono text-xs text-slate-500');
+            });
+        }
+
+        function renderTenants(tenants, profiles) {
+            const profileById = new Map(profiles.map((profile) => [profile.id, profile]));
+            const table = document.getElementById('tenantsTable');
+            table.replaceChildren();
+            if (!tenants.length) {
+                const row = table.insertRow();
+                const cell = row.insertCell();
+                cell.colSpan = 4;
+                cell.className = 'px-5 py-5 text-slate-500';
+                cell.textContent = 'Belum ada data tenant.';
+                return;
+            }
+            tenants.forEach((tenant) => {
+                const owner = profileById.get(tenant.pemilik_id);
+                const row = table.insertRow();
+                appendCell(row, tenant.nama_tenant);
+                appendCell(row, owner?.nama || tenant.pemilik_id);
+                appendCell(row, owner?.no_telepon);
+                appendCell(row, tenant.status_buka ? 'Buka' : 'Tutup', `px-5 py-4 font-bold ${tenant.status_buka ? 'text-emerald-700' : 'text-slate-500'}`);
+            });
+        }
+
+        async function loadAdminData() {
+            const [studentsResult, tenantsResult] = await Promise.all([
+                db.from('profiles').select('id, nama, nim, no_telepon').eq('peran', 'mahasiswa').order('nama'),
+                db.from('tenants').select('id, nama_tenant, pemilik_id, status_buka').order('nama_tenant')
+            ]);
+            const queryErrors = [];
+            if (studentsResult.error) queryErrors.push(`Gagal memuat mahasiswa: ${studentsResult.error.message}`);
+            if (tenantsResult.error) queryErrors.push(`Gagal memuat tenant: ${tenantsResult.error.message}`);
+            if (queryErrors.length) setMessage(message, queryErrors.join(' '), true);
+
+            const students = studentsResult.data || [];
+            const tenants = tenantsResult.data || [];
+            document.getElementById('studentCount').textContent = studentsResult.error ? '—' : String(students.length);
+            document.getElementById('tenantCount').textContent = tenantsResult.error ? '—' : String(tenants.length);
+            document.getElementById('openTenantCount').textContent = tenantsResult.error ? '—' : String(tenants.filter((tenant) => tenant.status_buka).length);
+            if (!studentsResult.error) renderStudents(students);
+            if (!tenantsResult.error) {
+                const ownerIds = [...new Set(tenants.map((tenant) => tenant.pemilik_id).filter(Boolean))];
+                let owners = [];
+                if (ownerIds.length) {
+                    const { data, error } = await db.from('profiles').select('id, nama, no_telepon').in('id', ownerIds);
+                    if (error) {
+                        setMessage(message, `Gagal memuat profil pemilik tenant: ${error.message}`, true);
+                        return;
+                    }
+                    owners = data || [];
+                }
+                renderTenants(tenants, owners);
+            }
+        }
+
+        async function initialize() {
+            const { data: { session }, error: sessionError } = await db.auth.getSession();
+            if (sessionError) {
+                setMessage(message, `Gagal memeriksa sesi: ${sessionError.message}`, true);
+                return;
+            }
+            if (!session) {
+                window.location.replace('index.html');
+                return;
+            }
+            const { data: profile, error: profileError } = await db
+                .from('profiles')
+                .select('id, peran')
+                .eq('id', session.user.id)
+                .single();
+            if (profileError) {
+                setMessage(message, `Gagal memuat profil: ${profileError.message}`, true);
+                return;
+            }
+            if (profile.peran !== 'admin') {
+                setMessage(message, 'Halaman ini hanya untuk akun admin.', true);
+                window.setTimeout(() => window.location.replace('index.html'), 1500);
+                return;
+            }
+            adminUser = session.user;
+            await loadAdminData();
+        }
+
+        function openModal() {
+            createUserForm.reset();
+            updateNewUserRoleFields();
+            document.getElementById('modalMessage').className = 'hidden rounded-lg p-3 text-sm';
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            document.getElementById('newUserRole').focus();
+        }
+
+        function updateNewUserRoleFields() {
+            const isTenant = document.getElementById('newUserRole').value === 'pemilik_tenant';
+            const identifier = document.getElementById('userIdentifier');
+            document.getElementById('userIdentifierLabel').firstChild.textContent = isTenant ? 'Email' : 'NIM';
+            document.getElementById('identifierHelp').textContent = isTenant
+                ? 'Pemilik tenant login menggunakan email ini.'
+                : 'Login menggunakan NIM ini; email akun dibuat otomatis.';
+            identifier.type = isTenant ? 'email' : 'text';
+            identifier.inputMode = isTenant ? 'email' : 'numeric';
+            if (isTenant) identifier.removeAttribute('pattern');
+            else identifier.pattern = '[0-9]{6,20}';
+            identifier.placeholder = isTenant ? 'nama@email.com' : '';
+            identifier.value = '';
+        }
+
+        function closeModal() {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        document.getElementById('addUserButton').addEventListener('click', openModal);
+        document.getElementById('closeUserModalButton').addEventListener('click', closeModal);
+        document.getElementById('cancelUserButton').addEventListener('click', closeModal);
+        modal.addEventListener('click', (event) => {
+            if (event.target === modal) closeModal();
+        });
+        document.getElementById('newUserRole').addEventListener('change', updateNewUserRoleFields);
+        document.querySelectorAll('[data-admin-nav]').forEach((link) => {
+            link.addEventListener('click', () => {
+                document.querySelectorAll('[data-admin-nav]').forEach((navLink) => navLink.classList.toggle('is-active', navLink === link));
+                document.getElementById('adminSidebar').classList.add('-translate-x-full');
+                document.getElementById('adminOverlay').classList.add('hidden');
+                document.getElementById('adminMenuButton').setAttribute('aria-expanded', 'false');
+            });
+        });
+        document.getElementById('adminMenuButton').addEventListener('click', () => {
+            const sidebar = document.getElementById('adminSidebar');
+            const isOpen = sidebar.classList.toggle('-translate-x-full') === false;
+            document.getElementById('adminOverlay').classList.toggle('hidden', !isOpen);
+            document.getElementById('adminMenuButton').setAttribute('aria-expanded', String(isOpen));
+        });
+        document.getElementById('adminOverlay').addEventListener('click', () => {
+            document.getElementById('adminSidebar').classList.add('-translate-x-full');
+            document.getElementById('adminOverlay').classList.add('hidden');
+            document.getElementById('adminMenuButton').setAttribute('aria-expanded', 'false');
+        });
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && !modal.classList.contains('hidden')) closeModal();
+        });
+        createUserForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            if (!adminUser) return;
+            const formData = new FormData(createUserForm);
+            const peran = formData.get('peran');
+            const identifier = String(formData.get('identifier') || '').trim();
+            const body = {
+                password: formData.get('password'),
+                peran
+            };
+            if (peran === 'mahasiswa') body.nim = identifier;
+            else body.email = identifier;
+            const submitButton = document.getElementById('createUserSubmit');
+            submitButton.disabled = true;
+            const { data, error } = await db.functions.invoke('create-user', { body });
+            submitButton.disabled = false;
+            if (error || data?.error || data?.success === false) {
+                setMessage(document.getElementById('modalMessage'), `User gagal dibuat: ${error?.message || data?.error || 'Edge Function menolak permintaan.'}`, true);
+                return;
+            }
+            setMessage(document.getElementById('modalMessage'), data?.message || 'User berhasil dibuat.', false);
+            await loadAdminData();
+            window.setTimeout(closeModal, 1000);
+        });
+        document.getElementById('logoutButton').addEventListener('click', async () => {
+            const { error } = await db.auth.signOut();
+            if (error) {
+                setMessage(message, `Gagal logout: ${error.message}`, true);
+                return;
+            }
+            window.location.replace('index.html');
+        });
+        initialize();
+    </script>
+</body>
+</html>
