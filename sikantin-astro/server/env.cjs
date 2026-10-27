@@ -2,7 +2,7 @@ const path = require('path');
 const dotenv = require('dotenv');
 
 // Memaksa Node.js membaca file .env secara absolut (mutlak)
-const envPath = path.resolve('D:/SiKantin V2/sikantin-astro/.env');
+const envPath = path.resolve(__dirname, '../.env');
 
 // Load file .env
 const result = dotenv.config({ path: envPath });
