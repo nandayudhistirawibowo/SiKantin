@@ -4,6 +4,8 @@ interface Props {
 	themeColor?: string;
 	bodyClass?: string;
 	description?: string;
+	keywords?: string;
+	ogImage?: string;
 }
 
 import '../styles/global.css';
@@ -15,7 +17,11 @@ const {
 	themeColor = '#172b40',
 	bodyClass = '',
 	description = 'SiKantin Universitas Yatsi Madani.',
+	keywords = 'SiKantin, kantin kampus, Universitas Yatsi Madani, pesan makanan',
+	ogImage,
 } = Astro.props;
+
+const socialImage = new URL(ogImage || logo.src, Astro.url).href;
 ---
 
 <!doctype html>
@@ -25,6 +31,11 @@ const {
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<meta name="theme-color" content={themeColor} />
 		<meta name="description" content={description} />
+		<meta name="keywords" content={keywords} />
+		<meta property="og:title" content={title} />
+		<meta property="og:description" content={description} />
+		<meta property="og:image" content={socialImage} />
+		<meta property="og:type" content="website" />
 		<link rel="icon" type="image/png" href={favicon.src} />
 		<link rel="preconnect" href="https://fonts.googleapis.com" />
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />

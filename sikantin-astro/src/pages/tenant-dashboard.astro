@@ -333,6 +333,12 @@ import '../styles/tenant-dashboard.css';
                 row.className = 'tenant-order-row';
                 const identity = document.createElement('div');
                 identity.className = 'min-w-[12rem] flex-1';
+                addText(
+                    identity,
+                    'p',
+                    'mb-2 inline-flex items-center rounded-lg border border-amber-200 bg-amber-100 px-3 py-1.5 text-base font-black tracking-wide text-amber-900',
+                    `ANTREAN ${order.nomor_antrean || 'Belum tersedia'}`
+                );
                 addText(identity, 'h3', 'text-sm font-extrabold text-slate-900', `Pesanan ${order.nomor_pesanan}`);
                 addText(identity, 'p', 'mt-1 text-xs font-semibold text-slate-700', order.nama_mahasiswa || 'Mahasiswa');
                 if (order.phone) {
@@ -454,7 +460,7 @@ import '../styles/tenant-dashboard.css';
             if (typeof activeTenantId !== 'string' || !activeTenantId.trim()) return;
             const { data: orders, error } = await db
                 .from('orders')
-                .select('id, tenant_id, nomor_pesanan, mahasiswa_id, nama_mahasiswa, phone, status, total, metode_pembayaran, bukti_transfer, alasan_pembatalan, order_items(id, nama_menu, harga_satuan, jumlah, subtotal, catatan)')
+                .select('id, tenant_id, nomor_pesanan, nomor_antrean, mahasiswa_id, nama_mahasiswa, phone, status, total, metode_pembayaran, bukti_transfer, alasan_pembatalan, order_items(id, nama_menu, harga_satuan, jumlah, subtotal, catatan)')
                 .eq('tenant_id', activeTenantId)
                 .order('id', { ascending: false });
             if (error) {

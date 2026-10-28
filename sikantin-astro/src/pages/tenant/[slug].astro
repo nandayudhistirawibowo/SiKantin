@@ -53,6 +53,10 @@ const menuCategories = [...new Set((menuItems ?? []).map((item) => item.kategori
   description={tenant
     ? `Jelajahi menu ${tenant.nama_tenant}, pilih add-on, dan pesan melalui SiKantin.`
     : 'Tenant yang Anda cari tidak ditemukan di SiKantin.'}
+  keywords={tenant
+    ? `SiKantin, ${tenant.nama_tenant}, menu ${tenant.nama_tenant}, pesan makanan kampus, kantin UYM`
+    : 'SiKantin, kantin UYM, menu kantin kampus'}
+  ogImage={tenant ? menuItems?.find((item) => item.foto_url)?.foto_url : undefined}
   themeColor="#172b40"
   bodyClass="tenant-guest min-h-screen"
 >
