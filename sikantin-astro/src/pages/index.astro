@@ -139,7 +139,7 @@ tenantMenuPrices?.forEach(({ tenant_id, foto_url }) => {
 											</div>
 										</div>
 										<div class="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 text-xs font-semibold text-blue-100/80">
-											<span class="inline-flex items-center gap-1.5 rounded-full bg-amber-300/10 px-2.5 py-1 text-amber-200" aria-label="Rating 4,5 dari 5">
+											<span class="inline-flex items-center gap-1.5 rounded-full border border-yellow-200 bg-yellow-400 px-2.5 py-1 font-extrabold text-yellow-950 shadow-sm" aria-label="Rating 4,5 dari 5">
 												<span aria-hidden="true">★</span> 4.5
 											</span>
 											{cheapestPriceByTenant.has(tenant.id) && <span class="whitespace-nowrap text-emerald-300">Mulai Rp {cheapestPriceByTenant.get(tenant.id).toLocaleString('id-ID')}</span>}

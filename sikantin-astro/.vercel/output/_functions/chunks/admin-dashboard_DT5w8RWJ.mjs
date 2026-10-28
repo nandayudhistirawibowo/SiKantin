@@ -1,6 +1,6 @@
 import { n as createComponent, r as __exportAll } from "./compiler_BOdqOS3r.mjs";
 import { d as renderTemplate, f as maybeRenderHead, i as renderComponent, m as addAttribute } from "./server_B1Vq6yng.mjs";
-import { n as logo_uym_default, r as renderScript, t as $$Layout } from "./Layout_C7781X1q.mjs";
+import { n as logo_uym_default, r as renderScript, t as $$Layout } from "./Layout_DawDZcx9.mjs";
 // src/pages/admin-dashboard.astro
 var admin_dashboard_exports = /* @__PURE__ */ __exportAll({
 	default: () => $$AdminDashboard,
