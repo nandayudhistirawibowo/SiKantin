@@ -22,6 +22,8 @@ Guest QRIS checkout requires a JPG/PNG proof image up to 5 MB. The `create-guest
 
 Order tracking uses a cryptographically random token as a bearer credential. Guest order rows are not readable through the public database API; `lookup-guest-order` returns only the order summary for a valid token. Realtime status updates are broadcast on a token-specific public channel and contain only the token, status, and update time. Treat the token as private.
 
+After an order reaches `Selesai`, its token can be used to submit a 1–5 star rating for each menu item in that order. Ratings are stored in `menu_reviews`; direct table access is disabled, and the `submit_guest_menu_rating` RPC verifies the token, completed status, and purchased item before saving. Public catalog pages read only aggregated averages through `get_public_menu_ratings`. Apply `../supabase/migrations/20261029000000_menu_reviews.sql` to enable this feature.
+
 ## WhatsApp order notifications
 
 The guest-order Edge Function sends a receipt to `orders.phone` through the local Baileys gateway over an ngrok HTTPS tunnel. Set `WA_GATEWAY_URL` and `WA_API_KEY` as Supabase Edge Function secrets. If the gateway is not configured or a send fails, the order is still saved and the returned response indicates the notification result.

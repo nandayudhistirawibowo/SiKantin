@@ -18,8 +18,16 @@ if (menuPriceError) {
 	console.error('Gagal memuat harga menu untuk katalog tenant:', menuPriceError.message);
 }
 
+const { data: menuRatings, error: ratingsError } = await supabaseServer
+	.rpc('get_public_menu_ratings', { p_tenant_id: null });
+
+if (ratingsError) {
+	console.error('Gagal memuat rating menu tenant:', ratingsError.message);
+}
+
 const cheapestPriceByTenant = new Map<string, number>();
 const coverImageByTenant = new Map<string, string>();
+const tenantRatingTotals = new Map<string, { total: number; count: number }>();
 tenantMenuPrices?.forEach(({ tenant_id, harga }) => {
 	const price = Number(harga);
 	if (!Number.isFinite(price)) return;
@@ -29,6 +37,16 @@ tenantMenuPrices?.forEach(({ tenant_id, harga }) => {
 
 tenantMenuPrices?.forEach(({ tenant_id, foto_url }) => {
 	if (foto_url && !coverImageByTenant.has(tenant_id)) coverImageByTenant.set(tenant_id, foto_url);
+});
+
+menuRatings?.forEach((rating) => {
+	const tenantId = rating.tenant_id;
+	const count = Number(rating.review_count) || 0;
+	if (!tenantId || count <= 0) return;
+	const current = tenantRatingTotals.get(tenantId) ?? { total: 0, count: 0 };
+	current.total += Number(rating.rating_total) || 0;
+	current.count += count;
+	tenantRatingTotals.set(tenantId, current);
 });
 ---
 
@@ -139,9 +157,16 @@ tenantMenuPrices?.forEach(({ tenant_id, foto_url }) => {
 											</div>
 										</div>
 										<div class="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 text-xs font-semibold text-blue-100/80">
-											<span class="inline-flex items-center gap-1.5 rounded-full border border-yellow-200 bg-yellow-400 px-2.5 py-1 font-extrabold text-yellow-950 shadow-sm" aria-label="Rating 4,5 dari 5">
-												<span aria-hidden="true">★</span> 4.5
-											</span>
+											{(() => {
+												const rating = tenantRatingTotals.get(tenant.id);
+												return rating ? (
+													<span class="inline-flex items-center gap-1.5 rounded-full border border-yellow-200 bg-yellow-400 px-2.5 py-1 font-extrabold text-yellow-950 shadow-sm" aria-label={`Rating ${(rating.total / rating.count).toFixed(1)} dari 5`}>
+														<span aria-hidden="true">★</span> {(rating.total / rating.count).toFixed(1)}
+													</span>
+												) : (
+													<span class="inline-flex items-center rounded-full border border-white/15 bg-white/5 px-2.5 py-1 text-[11px] font-semibold text-blue-100/70">Belum ada rating</span>
+												);
+											})()}
 											{cheapestPriceByTenant.has(tenant.id) && <span class="whitespace-nowrap text-emerald-300">Mulai Rp {cheapestPriceByTenant.get(tenant.id).toLocaleString('id-ID')}</span>}
 										</div>
 										<a href={`/tenant/${encodeURIComponent(tenant.slug)}`} class="mt-5 inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-400 px-4 py-3 text-sm font-extrabold text-emerald-950 shadow-lg shadow-emerald-950/20 transition hover:bg-emerald-300">

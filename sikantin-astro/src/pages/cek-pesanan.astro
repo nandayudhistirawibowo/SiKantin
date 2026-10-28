@@ -65,6 +65,11 @@ import '../styles/cek-pesanan.css';
 				<h3 class="font-extrabold text-slate-900">Rincian menu</h3>
 			</div>
 			<ul id="orderItems" class="mt-5 space-y-3"></ul>
+			<section id="menuReviewSection" class="mt-6 hidden border-t border-slate-100 pt-5" aria-labelledby="menuReviewHeading">
+				<h3 id="menuReviewHeading" class="text-lg font-extrabold text-slate-900">Beri rating menu</h3>
+				<p class="mt-1 text-sm text-slate-500">Pesanan selesai. Bagikan penilaian untuk menu yang kamu pesan.</p>
+				<div id="menuReviewForms" class="mt-4 space-y-3"></div>
+			</section>
 			<div class="mt-5 flex justify-between border-t border-slate-100 pt-4 font-extrabold text-slate-900">
 				<span>Total</span><span id="orderTotal"></span>
 			</div>
@@ -141,8 +146,90 @@ import '../styles/cek-pesanan.css';
 				row.append(name, subtotal);
 				items.append(row);
 			});
+			renderMenuReviewForms(order);
 			document.getElementById('orderTotal').textContent = formatRupiah(order.total);
 			document.getElementById('orderCard').classList.remove('hidden');
+		}
+
+		function renderMenuReviewForms(order) {
+			const section = document.getElementById('menuReviewSection');
+			const container = document.getElementById('menuReviewForms');
+			const isCompleted = order.status === 'Selesai';
+			section.classList.toggle('hidden', !isCompleted);
+			container.replaceChildren();
+			if (!isCompleted) return;
+
+			const distinctItems = new Map();
+			(order.order_items || []).forEach((item) => {
+				if (typeof item.menu_item_id === 'string' && !distinctItems.has(item.menu_item_id)) {
+					distinctItems.set(item.menu_item_id, item);
+				}
+			});
+
+			if (!distinctItems.size) {
+				const message = document.createElement('p');
+				message.className = 'rounded-lg bg-slate-50 p-3 text-sm text-slate-500';
+				message.textContent = 'Rating tidak tersedia untuk rincian menu pesanan ini.';
+				container.append(message);
+				return;
+			}
+
+			distinctItems.forEach((item) => {
+				const reviewForm = document.createElement('form');
+				reviewForm.dataset.menuReviewForm = '';
+				reviewForm.dataset.menuItemId = item.menu_item_id;
+				reviewForm.className = 'flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4';
+
+				const itemName = document.createElement('p');
+				itemName.className = 'min-w-0 flex-1 font-bold text-slate-800';
+				itemName.textContent = item.nama_menu;
+				reviewForm.append(itemName);
+
+				const ratingGroup = document.createElement('fieldset');
+				ratingGroup.className = 'flex items-center gap-1';
+				const legend = document.createElement('legend');
+				legend.className = 'sr-only';
+				legend.textContent = `Rating untuk ${item.nama_menu}`;
+				ratingGroup.append(legend);
+
+				for (let rating = 1; rating <= 5; rating += 1) {
+					const label = document.createElement('label');
+					label.className = 'cursor-pointer rounded p-1 text-2xl leading-none text-amber-400 transition hover:scale-110 has-[:checked]:text-yellow-500';
+					const input = document.createElement('input');
+					input.type = 'radio';
+					input.name = 'rating';
+					input.value = String(rating);
+					input.setAttribute('aria-label', `${rating} bintang`);
+					input.required = true;
+					input.checked = Number(item.review_rating) === rating;
+					input.className = 'sr-only';
+					const star = document.createElement('span');
+					star.textContent = '★';
+					star.setAttribute('aria-hidden', 'true');
+					label.append(input, star);
+					ratingGroup.append(label);
+				}
+
+				const ratingValue = document.createElement('span');
+				ratingValue.className = 'sr-only';
+				ratingValue.textContent = 'Pilih rating 1 sampai 5 bintang';
+				ratingGroup.append(ratingValue);
+				reviewForm.append(ratingGroup);
+
+				const submitButton = document.createElement('button');
+				submitButton.type = 'submit';
+				submitButton.className = 'rounded-lg bg-blue-700 px-4 py-2 text-sm font-bold text-white transition hover:bg-blue-800 disabled:cursor-wait disabled:opacity-60';
+				submitButton.textContent = item.review_rating ? 'Perbarui' : 'Kirim rating';
+				reviewForm.append(submitButton);
+
+				const result = document.createElement('p');
+				result.dataset.reviewResult = '';
+				result.className = 'w-full text-xs text-slate-500';
+				result.setAttribute('aria-live', 'polite');
+				if (item.review_rating) result.textContent = `Rating tersimpan: ${item.review_rating} dari 5`;
+				reviewForm.append(result);
+				container.append(reviewForm);
+			});
 		}
 
 		async function lookupOrder(token) {
@@ -163,7 +250,10 @@ import '../styles/cek-pesanan.css';
 				tenant_nama: tenantName,
 				tenants: order.tenants || { nama_tenant: tenantName },
 				items,
-				order_items: order.order_items || items,
+				order_items: (order.order_items || items).map((item) => ({
+					...item,
+					review_rating: item.review_rating ?? null,
+				})),
 			};
 		}
 
@@ -222,6 +312,52 @@ import '../styles/cek-pesanan.css';
 				showMessage(`Pesanan gagal dimuat: ${error.message}`, true);
 			} finally {
 				button.disabled = false;
+			}
+		});
+
+		document.getElementById('menuReviewForms').addEventListener('submit', async (event) => {
+			const reviewForm = event.target.closest('[data-menu-review-form]');
+			if (!reviewForm) return;
+			event.preventDefault();
+
+			const selectedRating = reviewForm.querySelector('input[name="rating"]:checked');
+			const submitButton = reviewForm.querySelector('button[type="submit"]');
+			const result = reviewForm.querySelector('[data-review-result]');
+			if (!activeToken || !selectedRating) {
+				result.textContent = 'Pilih rating 1 sampai 5 bintang terlebih dahulu.';
+				result.className = 'w-full text-xs text-rose-700';
+				return;
+			}
+
+			submitButton.disabled = true;
+			result.textContent = 'Menyimpan rating...';
+			result.className = 'w-full text-xs text-slate-500';
+			try {
+				const rating = Number(selectedRating.value);
+				const { data, error } = await db.rpc('submit_guest_menu_rating', {
+					p_token: activeToken,
+					p_menu_item_id: reviewForm.dataset.menuItemId,
+					p_rating: rating,
+				});
+				if (error || data?.error || data?.success !== true) {
+					throw new Error(error?.message || data?.error || 'Rating gagal disimpan.');
+				}
+
+				currentOrder = {
+					...currentOrder,
+					order_items: currentOrder.order_items.map((item) => item.menu_item_id === reviewForm.dataset.menuItemId
+						? { ...item, review_rating: rating }
+						: item),
+				};
+				result.textContent = `Terima kasih! Rating ${rating} dari 5 berhasil disimpan.`;
+				result.className = 'w-full text-xs font-semibold text-emerald-700';
+				submitButton.textContent = 'Perbarui';
+				document.getElementById('realtimeMessage').textContent = 'Rating menu berhasil disimpan.';
+			} catch (error) {
+				result.textContent = `Rating gagal disimpan: ${error.message}`;
+				result.className = 'w-full text-xs text-rose-700';
+			} finally {
+				submitButton.disabled = false;
 			}
 		});
 
