@@ -12,10 +12,14 @@ import '../styles/cek-pesanan.css';
 	<header class="border-b border-slate-200 bg-white">
 		<div class="mx-auto flex max-w-3xl items-center justify-between px-4 py-4">
 			<a href="/" class="text-sm font-bold text-blue-700 hover:underline">← Katalog Kantin</a>
-			<span class="font-extrabold text-slate-900">Cek Pesanan</span>
+			<div class="flex items-center gap-3">
+				<button id="soundToggle" type="button" aria-pressed="false" class="rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50">🔕 Aktifkan Suara</button>
+				<span class="font-extrabold text-slate-900">Cek Pesanan</span>
+			</div>
 		</div>
 	</header>
 	<main class="mx-auto max-w-3xl px-4 py-10">
+		<p id="soundStatus" class="sr-only" aria-live="polite"></p>
 		<section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8">
 			<p class="text-sm font-bold text-blue-700">Pesanan Guest</p>
 			<h1 class="mt-1 text-2xl font-extrabold text-slate-900">Lacak status pesanan</h1>
@@ -83,6 +87,7 @@ import '../styles/cek-pesanan.css';
 	</main>
 	<script>
 		import { db } from '../scripts/supabase.js';
+		import '../scripts/notification-sound.js';
 
 		const form = document.getElementById('lookupForm');
 		const tokenInput = document.getElementById('orderToken');
@@ -91,6 +96,19 @@ import '../styles/cek-pesanan.css';
 		let statusChannel;
 		let activeToken = '';
 		let currentOrder;
+
+		function applyRealtimeStatus(nextStatus, updatedAt) {
+			if (!currentOrder || !nextStatus) return;
+			const previousStatus = currentOrder.status;
+			if (previousStatus === nextStatus) return;
+			currentOrder = {
+				...currentOrder,
+				status: nextStatus,
+				updated_at: updatedAt || currentOrder.updated_at,
+			};
+			renderOrder(currentOrder);
+			if (nextStatus === 'Siap Diambil') window.playNotificationSound?.();
+		}
 
 		function showMessage(text, isError) {
 			message.textContent = text;
@@ -262,19 +280,23 @@ import '../styles/cek-pesanan.css';
 			};
 		}
 
-		async function subscribeToStatus(token) {
+		async function subscribeToStatus(token, orderId) {
 			if (statusChannel) await db.removeChannel(statusChannel);
 			const topic = `guest-order:${token}`;
 			statusChannel = db
 				.channel(topic, { config: { private: false } })
 				.on('broadcast', { event: 'order_status' }, ({ payload }) => {
 					if (payload?.token_pesanan !== activeToken || !currentOrder) return;
-					currentOrder = {
-						...currentOrder,
-						status: payload.status,
-						updated_at: payload.updated_at,
-					};
-					renderOrder(currentOrder);
+					applyRealtimeStatus(payload.status, payload.updated_at);
+				})
+				.on('postgres_changes', {
+					event: 'UPDATE',
+					schema: 'public',
+					table: 'orders',
+					filter: `id=eq.${orderId}`,
+				}, ({ new: updatedOrder }) => {
+					if (updatedOrder?.id !== orderId || !currentOrder) return;
+					applyRealtimeStatus(updatedOrder.status, updatedOrder.updated_at);
 				})
 				.subscribe((status) => {
 					document.getElementById('realtimeMessage').textContent = status === 'SUBSCRIBED'
@@ -311,7 +333,7 @@ import '../styles/cek-pesanan.css';
 				currentOrder = order;
 				renderOrder(order);
 				showMessage('Pesanan ditemukan.', false);
-				await subscribeToStatus(activeToken);
+				await subscribeToStatus(activeToken, order.id);
 			} catch (error) {
 				document.getElementById('orderCard').classList.add('hidden');
 				showMessage(`Pesanan gagal dimuat: ${error.message}`, true);
