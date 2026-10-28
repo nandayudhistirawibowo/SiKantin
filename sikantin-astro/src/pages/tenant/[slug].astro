@@ -5,11 +5,20 @@ import { supabaseServer } from '../../lib/supabase-server.js';
 import '../../styles/tenant-guest.css';
 
 const slug = Astro.params.slug || '';
-const { data: tenant, error: tenantError } = await supabaseServer
+function isTenantOpen(value: unknown): boolean {
+  if (value === true || value === 1) return true;
+  if (typeof value !== 'string') return false;
+  return ['true', '1'].includes(value.trim().toLowerCase());
+}
+
+const { data: tenantRow, error: tenantError } = await supabaseServer
   .from('tenants')
   .select('id, nama_tenant, slug, lokasi, jam_operasional, status_buka, qris_image_url')
   .eq('slug', slug)
   .maybeSingle();
+const tenant = tenantRow
+  ? { ...tenantRow, status_buka: isTenantOpen(tenantRow.status_buka) }
+  : null;
 
 if (tenantError) {
   console.error('Gagal memuat tenant berdasarkan slug:', tenantError.message);
@@ -70,7 +79,7 @@ const menuCategories = [...new Set((menuItems ?? []).map((item) => item.kategori
       <a href="/" class="mt-7 inline-flex rounded-xl bg-blue-600 px-5 py-3 font-bold hover:bg-blue-500">Kembali ke daftar kantin</a>
     </main>
   ) : (
-    <main class="mx-auto max-w-7xl space-y-8 px-4 py-8 sm:px-6">
+    <main data-tenant-id={tenant.id} class="mx-auto max-w-7xl space-y-8 px-4 py-8 sm:px-6">
       <section class="tenant-menu-hero relative overflow-hidden rounded-3xl border border-white/10 p-6 text-white shadow-xl sm:p-8">
         <a href="/" class="text-sm font-bold text-blue-200 hover:text-white">← Semua kantin</a>
         <div class="mt-5 flex flex-wrap items-end justify-between gap-4">
@@ -90,7 +99,7 @@ const menuCategories = [...new Set((menuItems ?? []).map((item) => item.kategori
             ) : (
               <span class="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-xs font-semibold text-blue-100/70">Belum ada rating</span>
             )}
-            <span class:list={[
+            <span id="tenantOpenBadge" class:list={[
               'rounded-full px-4 py-2 text-sm font-extrabold',
               tenant.status_buka ? 'bg-emerald-400/15 text-emerald-200' : 'bg-slate-400/15 text-slate-200',
             ]}>
@@ -98,6 +107,7 @@ const menuCategories = [...new Set((menuItems ?? []).map((item) => item.kategori
             </span>
           </div>
         </div>
+        <p id="tenantStatusRealtime" class="mt-4 text-xs text-blue-100/70" role="status" aria-live="polite">Menghubungkan status kantin realtime...</p>
       </section>
 
       {menuError ? (
@@ -230,9 +240,7 @@ const menuCategories = [...new Set((menuItems ?? []).map((item) => item.kategori
             <div class="mt-4 flex justify-between border-t border-slate-200 pt-4 font-extrabold text-slate-900">
               <span>Total</span><span id="guestCartTotal">Rp 0</span>
             </div>
-            {!tenant.status_buka && (
-              <p class="mt-4 rounded-lg bg-amber-50 p-3 text-xs font-semibold text-amber-800">Tenant sedang tutup. Pesanan baru belum dapat dibuat.</p>
-            )}
+            <p id="tenantClosedMessage" class:list={['mt-4 rounded-lg bg-amber-50 p-3 text-xs font-semibold text-amber-800', tenant.status_buka ? 'hidden' : '']}>Tenant sedang tutup. Pesanan baru belum dapat dibuat.</p>
             <form id="guestCheckoutForm" data-tenant-open={tenant.status_buka ? 'true' : 'false'} class="mt-5 space-y-4">
               <label class="block text-sm font-bold text-slate-700" for="guestNim">
                 NIM mahasiswa
@@ -308,7 +316,7 @@ const menuCategories = [...new Set((menuItems ?? []).map((item) => item.kategori
     const checkoutButton = document.getElementById('guestCheckoutButton');
     const proofInput = document.getElementById('guestTransferProof');
     const tenantSlug = window.location.pathname.split('/').filter(Boolean).at(-1);
-    const tenantIsOpen = checkoutForm?.dataset.tenantOpen === 'true';
+    let tenantIsOpen = checkoutForm?.dataset.tenantOpen === 'true';
     const menuSearch = document.getElementById('menuSearch');
     const menuGrid = document.getElementById('menuGrid');
     const menuCards = [...document.querySelectorAll('[data-menu-card]')];
@@ -320,6 +328,77 @@ const menuCategories = [...new Set((menuItems ?? []).map((item) => item.kategori
     let sortByCheapest = false;
     let nimIsValid = false;
     let validatingNim = false;
+    let tenantStatusChannel;
+    let tenantStatusRevision = 0;
+
+    function parseTenantOpenStatus(value) {
+      if (value === true || value === 1) return true;
+      if (value === false || value === 0) return false;
+      if (typeof value === 'string') {
+        const normalized = value.trim().toLowerCase();
+        if (normalized === 'true' || normalized === '1') return true;
+        if (normalized === 'false' || normalized === '0') return false;
+      }
+      return null;
+    }
+
+    function applyTenantOpenStatus(value) {
+      const isOpen = parseTenantOpenStatus(value);
+      if (isOpen === null) return;
+      tenantIsOpen = isOpen;
+      checkoutForm.dataset.tenantOpen = String(isOpen);
+      const badge = document.getElementById('tenantOpenBadge');
+      badge.textContent = isOpen ? 'Sedang buka' : 'Sedang tutup';
+      badge.classList.toggle('bg-emerald-400/15', isOpen);
+      badge.classList.toggle('text-emerald-200', isOpen);
+      badge.classList.toggle('bg-slate-400/15', !isOpen);
+      badge.classList.toggle('text-slate-200', !isOpen);
+      document.getElementById('tenantClosedMessage').classList.toggle('hidden', isOpen);
+      checkoutButton.disabled = !isOpen || menuCards.length === 0;
+      menuCards.forEach(updateCardQuantity);
+    }
+
+    function subscribeToTenantStatus() {
+      const tenantId = document.querySelector('[data-tenant-id]')?.dataset.tenantId;
+      if (!tenantId) return;
+
+      tenantStatusChannel = db
+        .channel(`guest-tenant-status-${tenantId}`)
+        .on('postgres_changes', {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'tenants',
+          filter: `id=eq.${tenantId}`,
+        }, ({ new: updatedTenant }) => {
+          if (updatedTenant?.id !== tenantId || !Object.prototype.hasOwnProperty.call(updatedTenant, 'status_buka')) return;
+          tenantStatusRevision += 1;
+          applyTenantOpenStatus(updatedTenant.status_buka);
+        })
+        .subscribe((status, error) => {
+          const statusMessage = document.getElementById('tenantStatusRealtime');
+          statusMessage.textContent = status === 'SUBSCRIBED'
+            ? 'Status kantin diperbarui realtime.'
+            : error
+              ? `Realtime status kantin gagal: ${error.message}`
+              : `Realtime status kantin: ${status}`;
+          if (status !== 'SUBSCRIBED') console.error('Realtime status tenant:', status, error);
+          if (status === 'SUBSCRIBED') {
+            const revisionAtRequest = tenantStatusRevision;
+            db.from('tenants')
+              .select('status_buka')
+              .eq('id', tenantId)
+              .single()
+              .then(({ data, error: snapshotError }) => {
+                if (snapshotError) {
+                  statusMessage.textContent = `Gagal menyegarkan status kantin: ${snapshotError.message}`;
+                  console.error('Gagal menyegarkan status tenant:', snapshotError);
+                  return;
+                }
+                if (revisionAtRequest === tenantStatusRevision) applyTenantOpenStatus(data.status_buka);
+              });
+          }
+        });
+    }
 
     function filterMenuCards() {
       const searchTerm = menuSearch?.value.trim().toLocaleLowerCase('id-ID') || '';
@@ -666,5 +745,10 @@ const menuCategories = [...new Set((menuItems ?? []).map((item) => item.kategori
         checkoutButton.textContent = 'Buat Pesanan';
       }
     });
+
+    subscribeToTenantStatus();
+    window.addEventListener('pagehide', () => {
+      if (tenantStatusChannel) db.removeChannel(tenantStatusChannel);
+    }, { once: true });
   </script>
 </Layout>

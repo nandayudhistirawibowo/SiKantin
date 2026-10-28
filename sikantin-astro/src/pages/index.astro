@@ -4,10 +4,20 @@ import logo from '../assets/logo-uym.png';
 import { supabaseServer } from '../lib/supabase-server.js';
 import '../styles/index.css';
 
-const { data: tenants, error } = await supabaseServer
+function isTenantOpen(value: unknown): boolean {
+	if (value === true || value === 1) return true;
+	if (typeof value !== 'string') return false;
+	return ['true', '1'].includes(value.trim().toLowerCase());
+}
+
+const { data: tenantRows, error } = await supabaseServer
 	.from('tenants')
 	.select('id, nama_tenant, slug, lokasi, status_buka')
 	.order('nama_tenant');
+const tenants = tenantRows?.map((tenant) => ({
+	...tenant,
+	status_buka: isTenantOpen(tenant.status_buka),
+}));
 
 const { data: tenantMenuPrices, error: menuPriceError } = await supabaseServer
 	.from('menu_items')
@@ -91,7 +101,7 @@ tenantRatings?.forEach((rating) => {
 				<h2 class="mt-1 text-xl font-black">Cari kantin</h2>
 				<nav class="mt-5 grid grid-cols-2 gap-2 lg:grid-cols-1" aria-label="Filter tenant">
 					<button type="button" data-tenant-filter="all" aria-pressed="true" class="tenant-filter is-active rounded-xl px-3 py-2.5 text-left text-sm font-bold transition">Semua kantin <span class="float-right text-xs opacity-70">{tenants?.length ?? 0}</span></button>
-					<button type="button" data-tenant-filter="open" aria-pressed="false" class="tenant-filter rounded-xl px-3 py-2.5 text-left text-sm font-bold transition">Sedang buka <span class="float-right text-xs opacity-70">{tenants?.filter((tenant) => tenant.status_buka).length ?? 0}</span></button>
+					<button type="button" data-tenant-filter="open" aria-pressed="false" class="tenant-filter rounded-xl px-3 py-2.5 text-left text-sm font-bold transition">Sedang buka <span id="openTenantCount" class="float-right text-xs opacity-70">{tenants?.filter((tenant) => tenant.status_buka).length ?? 0}</span></button>
 					<button type="button" data-tenant-filter="cheapest" aria-pressed="false" class="tenant-filter rounded-xl px-3 py-2.5 text-left text-sm font-bold transition">Termurah <span class="float-right text-xs opacity-70">↓</span></button>
 				</nav>
 				<div class="mt-6 border-t border-white/10 pt-5">
@@ -102,7 +112,7 @@ tenantRatings?.forEach((rating) => {
 								<li>
 									<a href={`/tenant/${encodeURIComponent(tenant.slug)}`} class="flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm text-blue-50/80 transition hover:bg-white/10 hover:text-white">
 										<span class="truncate">{tenant.nama_tenant}</span>
-										<span class:list={['h-2 w-2 shrink-0 rounded-full', tenant.status_buka ? 'bg-emerald-300' : 'bg-slate-400']} aria-label={tenant.status_buka ? 'Buka' : 'Tutup'}></span>
+										<span data-tenant-status-indicator={tenant.id} class:list={['h-2 w-2 shrink-0 rounded-full', tenant.status_buka ? 'bg-emerald-300' : 'bg-slate-400']} aria-label={tenant.status_buka ? 'Buka' : 'Tutup'}></span>
 									</a>
 								</li>
 							))}
@@ -125,6 +135,7 @@ tenantRatings?.forEach((rating) => {
 					</div>
 					<p class="text-sm text-blue-100/70"><span id="tenantCount">{tenants?.length ?? 0}</span> tenant</p>
 				</div>
+				<p id="tenantRealtimeStatus" class="mb-4 text-xs text-blue-100/60" role="status" aria-live="polite">Menghubungkan status kantin realtime...</p>
 				{error ? (
 					<p role="alert" class="rounded-xl border border-rose-300/30 bg-rose-950/30 p-4 text-sm text-rose-100">
 						Daftar tenant gagal dimuat. Coba muat ulang halaman.
@@ -135,6 +146,7 @@ tenantRatings?.forEach((rating) => {
 							{tenants.map((tenant, index) => (
 								<article
 									data-tenant-card
+									data-tenant-id={tenant.id}
 									data-tenant-open={tenant.status_buka ? 'true' : 'false'}
 									data-cheapest-price={cheapestPriceByTenant.has(tenant.id) ? String(cheapestPriceByTenant.get(tenant.id)) : ''}
 									data-original-order={index}
@@ -149,9 +161,9 @@ tenantRatings?.forEach((rating) => {
 												<span class="tenant-card-cover-emoji" aria-hidden="true">{index % 3 === 0 ? '🍱' : index % 3 === 1 ? '🥤' : '🍜'}</span>
 											</>
 										)}
-										<span class:list={['absolute right-3 top-3 rounded-full px-3 py-1.5 text-xs font-extrabold shadow-sm', tenant.status_buka ? 'bg-emerald-300 text-emerald-950' : 'bg-white/90 text-slate-700']}>
-											<span class:list={['mr-1 inline-block h-1.5 w-1.5 rounded-full align-middle', tenant.status_buka ? 'bg-emerald-700' : 'bg-slate-400']}></span>
-											{tenant.status_buka ? 'Buka sekarang' : 'Sedang tutup'}
+										<span data-tenant-status-badge={tenant.id} class:list={['absolute right-3 top-3 rounded-full px-3 py-1.5 text-xs font-extrabold shadow-sm', tenant.status_buka ? 'bg-emerald-300 text-emerald-950' : 'bg-white/90 text-slate-700']}>
+											<span data-tenant-status-dot class:list={['mr-1 inline-block h-1.5 w-1.5 rounded-full align-middle', tenant.status_buka ? 'bg-emerald-700' : 'bg-slate-400']}></span>
+											<span data-tenant-status-label>{tenant.status_buka ? 'Buka sekarang' : 'Sedang tutup'}</span>
 										</span>
 										<span class="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-slate-950/60 to-transparent" aria-hidden="true"></span>
 									</a>
@@ -215,35 +227,87 @@ tenantRatings?.forEach((rating) => {
 		</footer>
 	</main>
 	<script>
+		import { db } from '../scripts/supabase.js';
+
 		const tenantFilterButtons = document.querySelectorAll('[data-tenant-filter]');
 		const tenantCards = document.querySelectorAll('[data-tenant-card]');
 		const tenantCardGrid = document.getElementById('tenantCardGrid');
 		const tenantCount = document.getElementById('tenantCount');
+		const openTenantCount = document.getElementById('openTenantCount');
 		const tenantEmptyFilter = document.getElementById('tenantEmptyFilter');
+		const tenantRealtimeStatus = document.getElementById('tenantRealtimeStatus');
 		let activeTenantFilter = 'all';
+		let tenantStatusChannel;
+		const tenantStatusRevisions = new Map();
+
+		function parseTenantOpenStatus(value) {
+			if (value === true || value === 1) return true;
+			if (value === false || value === 0) return false;
+			if (typeof value === 'string') {
+				const normalized = value.trim().toLowerCase();
+				if (normalized === 'true' || normalized === '1') return true;
+				if (normalized === 'false' || normalized === '0') return false;
+			}
+			return null;
+		}
+
+		function refreshTenantCards() {
+			if (tenantCardGrid) {
+				const sortedCards = [...tenantCards].sort((a, b) => {
+					if (activeTenantFilter !== 'cheapest') {
+						return Number(a.dataset.originalOrder) - Number(b.dataset.originalOrder);
+					}
+					const priceA = a.dataset.cheapestPrice === '' ? Number.POSITIVE_INFINITY : Number(a.dataset.cheapestPrice);
+					const priceB = b.dataset.cheapestPrice === '' ? Number.POSITIVE_INFINITY : Number(b.dataset.cheapestPrice);
+					return priceA - priceB;
+				});
+				sortedCards.forEach((card) => tenantCardGrid.append(card));
+			}
+
+			let visibleCount = 0;
+			let openCount = 0;
+			tenantCards.forEach((card) => {
+				const isOpen = card.dataset.tenantOpen === 'true';
+				const visible = activeTenantFilter !== 'open' || isOpen;
+				card.classList.toggle('hidden', !visible);
+				if (visible) visibleCount += 1;
+				if (isOpen) openCount += 1;
+			});
+			if (tenantCount) tenantCount.textContent = String(visibleCount);
+			if (openTenantCount) openTenantCount.textContent = String(openCount);
+			if (tenantEmptyFilter) tenantEmptyFilter.classList.toggle('hidden', visibleCount > 0);
+		}
+
+		function applyTenantStatus(tenantId, statusValue) {
+			const isOpen = parseTenantOpenStatus(statusValue);
+			if (isOpen === null) return;
+
+			const card = [...tenantCards].find((item) => item.dataset.tenantId === tenantId);
+			if (card) {
+				card.dataset.tenantOpen = String(isOpen);
+				const badge = card.querySelector('[data-tenant-status-badge]');
+				const dot = badge?.querySelector('[data-tenant-status-dot]');
+				const label = badge?.querySelector('[data-tenant-status-label]');
+				badge?.classList.toggle('bg-emerald-300', isOpen);
+				badge?.classList.toggle('text-emerald-950', isOpen);
+				badge?.classList.toggle('bg-white/90', !isOpen);
+				badge?.classList.toggle('text-slate-700', !isOpen);
+				dot?.classList.toggle('bg-emerald-700', isOpen);
+				dot?.classList.toggle('bg-slate-400', !isOpen);
+				if (label) label.textContent = isOpen ? 'Buka sekarang' : 'Sedang tutup';
+			}
+
+			const indicator = document.querySelector(`[data-tenant-status-indicator="${CSS.escape(tenantId)}"]`);
+			indicator?.classList.toggle('bg-emerald-300', isOpen);
+			indicator?.classList.toggle('bg-slate-400', !isOpen);
+			indicator?.setAttribute('aria-label', isOpen ? 'Buka' : 'Tutup');
+			refreshTenantCards();
+		}
 
 		tenantFilterButtons.forEach((button) => {
 			button.addEventListener('click', () => {
 				activeTenantFilter = button.dataset.tenantFilter;
-				if (tenantCardGrid) {
-					const sortedCards = [...tenantCards].sort((a, b) => {
-						if (activeTenantFilter !== 'cheapest') {
-							return Number(a.dataset.originalOrder) - Number(b.dataset.originalOrder);
-						}
-						const priceA = a.dataset.cheapestPrice === '' ? Number.POSITIVE_INFINITY : Number(a.dataset.cheapestPrice);
-						const priceB = b.dataset.cheapestPrice === '' ? Number.POSITIVE_INFINITY : Number(b.dataset.cheapestPrice);
-						return priceA - priceB;
-					});
-					sortedCards.forEach((card) => tenantCardGrid.append(card));
-				}
-				let visibleCount = 0;
-				tenantCards.forEach((card) => {
-					const visible = activeTenantFilter !== 'open' || card.dataset.tenantOpen === 'true';
-					card.classList.toggle('hidden', !visible);
-					if (visible) visibleCount += 1;
-				});
-				if (tenantCount) tenantCount.textContent = String(visibleCount);
-				if (tenantEmptyFilter) tenantEmptyFilter.classList.toggle('hidden', visibleCount > 0);
+				refreshTenantCards();
 				tenantFilterButtons.forEach((filterButton) => {
 					const active = filterButton === button;
 					filterButton.classList.toggle('is-active', active);
@@ -251,5 +315,53 @@ tenantRatings?.forEach((rating) => {
 				});
 			});
 		});
+
+		const tenantIds = [...tenantCards].map((card) => card.dataset.tenantId).filter(Boolean);
+		if (tenantIds.length) {
+			tenantStatusChannel = db
+				.channel('tenant-directory-status')
+				.on('postgres_changes', {
+					event: 'UPDATE',
+					schema: 'public',
+					table: 'tenants',
+				}, ({ new: tenant }) => {
+					if (tenant?.id && Object.prototype.hasOwnProperty.call(tenant, 'status_buka')) {
+						tenantStatusRevisions.set(tenant.id, (tenantStatusRevisions.get(tenant.id) || 0) + 1);
+						applyTenantStatus(tenant.id, tenant.status_buka);
+					}
+				})
+				.subscribe((status, error) => {
+					tenantRealtimeStatus.textContent = status === 'SUBSCRIBED'
+						? 'Status kantin diperbarui realtime.'
+						: error
+							? `Realtime status kantin gagal: ${error.message}`
+							: `Realtime status kantin: ${status}`;
+					if (status !== 'SUBSCRIBED') console.error('Realtime status tenant:', status, error);
+					if (status === 'SUBSCRIBED') {
+						const revisionsAtRequest = new Map(tenantStatusRevisions);
+						db.from('tenants')
+							.select('id, status_buka')
+							.in('id', tenantIds)
+							.then(({ data, error: snapshotError }) => {
+								if (snapshotError) {
+									tenantRealtimeStatus.textContent = `Gagal menyegarkan status kantin: ${snapshotError.message}`;
+									console.error('Gagal menyegarkan status tenant:', snapshotError);
+									return;
+								}
+								data?.forEach((tenant) => {
+									if ((revisionsAtRequest.get(tenant.id) || 0) === (tenantStatusRevisions.get(tenant.id) || 0)) {
+										applyTenantStatus(tenant.id, tenant.status_buka);
+									}
+								});
+							});
+					}
+				});
+		} else if (tenantRealtimeStatus) {
+			tenantRealtimeStatus.textContent = 'Belum ada tenant untuk dipantau.';
+		}
+
+		window.addEventListener('pagehide', () => {
+			if (tenantStatusChannel) db.removeChannel(tenantStatusChannel);
+		}, { once: true });
 	</script>
 </Layout>

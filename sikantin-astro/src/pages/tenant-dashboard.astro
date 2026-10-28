@@ -644,13 +644,21 @@ import '../styles/tenant-dashboard.css';
             if (tenantStatusChannel) db.removeChannel(tenantStatusChannel);
         });
 
-        initialize().catch((error) => {
-            console.error('Gagal menginisialisasi dashboard tenant:', error);
-            setTenantDashboardUnavailable(
-                'Dashboard gagal dimuat',
-                'Realtime tidak aktif.',
-                `Terjadi kesalahan saat memuat dashboard: ${error.message || error}`
-            );
-        });
+        function startDashboard() {
+            initialize().catch((error) => {
+                console.error('Gagal menginisialisasi dashboard tenant:', error);
+                setTenantDashboardUnavailable(
+                    'Dashboard gagal dimuat',
+                    'Realtime tidak aktif.',
+                    `Terjadi kesalahan saat memuat dashboard: ${error.message || error}`
+                );
+            });
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', startDashboard, { once: true });
+        } else {
+            startDashboard();
+        }
     </script>
 </Layout>
