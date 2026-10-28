@@ -164,6 +164,28 @@ import '../styles/cek-pesanan.css';
 			return `Rp ${Number(value).toLocaleString('id-ID')}`;
 		}
 
+		function updateStepperUI(status) {
+			const normalizedStatus = typeof status === 'string' ? status.trim().toLocaleLowerCase('id-ID') : '';
+			const activeStep = normalizedStatus === 'selesai'
+				? 3
+				: normalizedStatus === 'siap diambil'
+					? 2
+					: ['disiapkan', 'diproses'].includes(normalizedStatus)
+						? 1
+						: 0;
+			const cancelled = normalizedStatus === 'dibatalkan';
+			const stepper = document.getElementById('orderStepper');
+			stepper.classList.toggle('hidden', cancelled);
+			document.getElementById('cancelledOrderMessage').classList.toggle('hidden', !cancelled);
+			stepper.querySelectorAll('[data-order-step]').forEach((step, index) => {
+				step.classList.toggle('is-complete', !cancelled && index < activeStep);
+				step.classList.toggle('is-current', !cancelled && index === activeStep);
+				step.removeAttribute('aria-current');
+				if (!cancelled && index === activeStep) step.setAttribute('aria-current', 'step');
+				step.querySelector('[data-step-indicator]').textContent = index < activeStep ? '✓' : String(index + 1);
+			});
+		}
+
 		function renderOrder(order) {
 			document.getElementById('queueNumber').textContent = order.nomor_antrean || '—';
 			document.getElementById('orderNumber').textContent = order.nomor_pesanan;
@@ -177,23 +199,7 @@ import '../styles/cek-pesanan.css';
 						? 'bg-rose-50 text-rose-800'
 						: 'bg-amber-50 text-amber-800'
 			}`;
-			const cancelled = order.status === 'Dibatalkan';
-			document.getElementById('orderStepper').classList.toggle('hidden', cancelled);
-			document.getElementById('cancelledOrderMessage').classList.toggle('hidden', !cancelled);
-			const activeStep = order.status === 'Selesai'
-				? 3
-				: order.status === 'Siap Diambil'
-				? 2
-				: order.status === 'Diproses'
-					? 1
-					: 0;
-			document.querySelectorAll('[data-order-step]').forEach((step, index) => {
-				step.classList.toggle('is-complete', !cancelled && index < activeStep);
-				step.classList.toggle('is-current', !cancelled && index === activeStep);
-				step.removeAttribute('aria-current');
-				if (!cancelled && index === activeStep) step.setAttribute('aria-current', 'step');
-				step.querySelector('[data-step-indicator]').textContent = index < activeStep ? '✓' : String(index + 1);
-			});
+			updateStepperUI(order.status);
 			const items = document.getElementById('orderItems');
 			items.replaceChildren();
 			(order.order_items || []).forEach((item) => {
