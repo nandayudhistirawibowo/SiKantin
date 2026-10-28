@@ -74,10 +74,16 @@ import '../styles/cek-pesanan.css';
 				<h3 class="font-extrabold text-slate-900">Rincian menu</h3>
 			</div>
 			<ul id="orderItems" class="mt-5 space-y-3"></ul>
-			<section id="menuReviewSection" class="mt-6 hidden border-t border-slate-100 pt-5" aria-labelledby="menuReviewHeading">
-				<h3 id="menuReviewHeading" class="text-lg font-extrabold text-slate-900">Beri rating menu</h3>
-				<p class="mt-1 text-sm text-slate-500">Pesanan selesai. Bagikan penilaian untuk menu yang kamu pesan.</p>
-				<div id="menuReviewForms" class="mt-4 space-y-3"></div>
+			<section id="tenantReviewSection" class="mt-6 hidden border-t border-slate-100 pt-5" aria-labelledby="tenantReviewHeading">
+				<h3 id="tenantReviewHeading" class="text-lg font-extrabold text-slate-900">Beri rating untuk pesanan ini</h3>
+				<p class="mt-1 text-sm text-slate-500">Pesanan selesai. Bagikan penilaianmu untuk pengalaman di tenant ini.</p>
+				<form id="tenantReviewForm" class="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+					<fieldset id="tenantRatingStars" class="tenant-rating-stars">
+						<legend class="sr-only">Pilih rating 1 sampai 5 bintang</legend>
+					</fieldset>
+					<button id="tenantReviewSubmit" type="submit" class="mt-4 rounded-lg bg-blue-700 px-4 py-2 text-sm font-bold text-white transition hover:bg-blue-800 disabled:cursor-wait disabled:opacity-60">Kirim Rating</button>
+					<p id="tenantReviewResult" class="mt-3 text-xs text-slate-500" aria-live="polite"></p>
+				</form>
 			</section>
 			<div class="mt-5 flex justify-between border-t border-slate-100 pt-4 font-extrabold text-slate-900">
 				<span>Total</span><span id="orderTotal"></span>
@@ -93,9 +99,48 @@ import '../styles/cek-pesanan.css';
 		const tokenInput = document.getElementById('orderToken');
 		const button = document.getElementById('lookupButton');
 		const message = document.getElementById('lookupMessage');
+		const tenantRatingStars = document.getElementById('tenantRatingStars');
 		let statusChannel;
 		let activeToken = '';
 		let currentOrder;
+		let hoveredRating = 0;
+
+		function updateRatingStars(rating) {
+			tenantRatingStars.querySelectorAll('[data-rating-option]').forEach((label) => {
+				const value = Number(label.dataset.ratingOption);
+				const isActive = value <= rating;
+				label.dataset.active = String(isActive);
+				label.querySelector('[data-rating-star]').textContent = isActive ? '★' : '☆';
+			});
+		}
+
+		for (let rating = 1; rating <= 5; rating += 1) {
+			const label = document.createElement('label');
+			label.className = 'tenant-rating-star';
+			label.dataset.ratingOption = String(rating);
+			const input = document.createElement('input');
+			input.type = 'radio';
+			input.name = 'rating';
+			input.value = String(rating);
+			input.required = true;
+			input.className = 'sr-only';
+			input.setAttribute('aria-label', `${rating} bintang`);
+			input.addEventListener('change', () => updateRatingStars(rating));
+			const star = document.createElement('span');
+			star.dataset.ratingStar = '';
+			star.setAttribute('aria-hidden', 'true');
+			star.textContent = '☆';
+			label.append(input, star);
+			label.addEventListener('mouseenter', () => {
+				hoveredRating = rating;
+				updateRatingStars(rating);
+			});
+			tenantRatingStars.append(label);
+		}
+		tenantRatingStars.addEventListener('mouseleave', () => {
+			hoveredRating = 0;
+			updateRatingStars(Number(tenantRatingStars.querySelector('input:checked')?.value) || 0);
+		});
 
 		function applyRealtimeStatus(nextStatus, updatedAt) {
 			if (!currentOrder || !nextStatus) return;
@@ -169,90 +214,28 @@ import '../styles/cek-pesanan.css';
 				row.append(name, subtotal);
 				items.append(row);
 			});
-			renderMenuReviewForms(order);
+			renderTenantReviewForm(order);
 			document.getElementById('orderTotal').textContent = formatRupiah(order.total);
 			document.getElementById('orderCard').classList.remove('hidden');
 		}
 
-		function renderMenuReviewForms(order) {
-			const section = document.getElementById('menuReviewSection');
-			const container = document.getElementById('menuReviewForms');
+		function renderTenantReviewForm(order) {
+			const section = document.getElementById('tenantReviewSection');
+			const reviewForm = document.getElementById('tenantReviewForm');
+			const result = document.getElementById('tenantReviewResult');
+			const submitButton = document.getElementById('tenantReviewSubmit');
 			const isCompleted = order.status === 'Selesai';
 			section.classList.toggle('hidden', !isCompleted);
-			container.replaceChildren();
-			if (!isCompleted) return;
-
-			const distinctItems = new Map();
-			(order.order_items || []).forEach((item) => {
-				if (typeof item.menu_item_id === 'string' && !distinctItems.has(item.menu_item_id)) {
-					distinctItems.set(item.menu_item_id, item);
-				}
-			});
-
-			if (!distinctItems.size) {
-				const message = document.createElement('p');
-				message.className = 'rounded-lg bg-slate-50 p-3 text-sm text-slate-500';
-				message.textContent = 'Rating tidak tersedia untuk rincian menu pesanan ini.';
-				container.append(message);
-				return;
-			}
-
-			distinctItems.forEach((item) => {
-				const reviewForm = document.createElement('form');
-				reviewForm.dataset.menuReviewForm = '';
-				reviewForm.dataset.menuItemId = item.menu_item_id;
-				reviewForm.className = 'flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4';
-
-				const itemName = document.createElement('p');
-				itemName.className = 'min-w-0 flex-1 font-bold text-slate-800';
-				itemName.textContent = item.nama_menu;
-				reviewForm.append(itemName);
-
-				const ratingGroup = document.createElement('fieldset');
-				ratingGroup.className = 'flex items-center gap-1';
-				const legend = document.createElement('legend');
-				legend.className = 'sr-only';
-				legend.textContent = `Rating untuk ${item.nama_menu}`;
-				ratingGroup.append(legend);
-
-				for (let rating = 1; rating <= 5; rating += 1) {
-					const label = document.createElement('label');
-					label.className = 'cursor-pointer rounded p-1 text-2xl leading-none text-amber-400 transition hover:scale-110 has-[:checked]:text-yellow-500';
-					const input = document.createElement('input');
-					input.type = 'radio';
-					input.name = 'rating';
-					input.value = String(rating);
-					input.setAttribute('aria-label', `${rating} bintang`);
-					input.required = true;
-					input.checked = Number(item.review_rating) === rating;
-					input.className = 'sr-only';
-					const star = document.createElement('span');
-					star.textContent = '★';
-					star.setAttribute('aria-hidden', 'true');
-					label.append(input, star);
-					ratingGroup.append(label);
-				}
-
-				const ratingValue = document.createElement('span');
-				ratingValue.className = 'sr-only';
-				ratingValue.textContent = 'Pilih rating 1 sampai 5 bintang';
-				ratingGroup.append(ratingValue);
-				reviewForm.append(ratingGroup);
-
-				const submitButton = document.createElement('button');
-				submitButton.type = 'submit';
-				submitButton.className = 'rounded-lg bg-blue-700 px-4 py-2 text-sm font-bold text-white transition hover:bg-blue-800 disabled:cursor-wait disabled:opacity-60';
-				submitButton.textContent = item.review_rating ? 'Perbarui' : 'Kirim rating';
-				reviewForm.append(submitButton);
-
-				const result = document.createElement('p');
-				result.dataset.reviewResult = '';
-				result.className = 'w-full text-xs text-slate-500';
-				result.setAttribute('aria-live', 'polite');
-				if (item.review_rating) result.textContent = `Rating tersimpan: ${item.review_rating} dari 5`;
-				reviewForm.append(result);
-				container.append(reviewForm);
-			});
+			const savedRating = Number(order.review_rating) || 0;
+			hoveredRating = 0;
+			const selectedInput = tenantRatingStars.querySelector(`input[value="${savedRating}"]`);
+			if (selectedInput) selectedInput.checked = true;
+			else tenantRatingStars.querySelectorAll('input').forEach((input) => { input.checked = false; });
+			updateRatingStars(savedRating);
+			submitButton.textContent = savedRating ? 'Perbarui Rating' : 'Kirim Rating';
+			result.textContent = savedRating ? `Rating tersimpan: ${savedRating} dari 5` : '';
+			result.className = 'mt-3 text-xs text-slate-500';
+			submitButton.disabled = false;
 		}
 
 		async function lookupOrder(token) {
@@ -272,11 +255,9 @@ import '../styles/cek-pesanan.css';
 				...order,
 				tenant_nama: tenantName,
 				tenants: order.tenants || { nama_tenant: tenantName },
+				review_rating: order.review_rating ?? null,
 				items,
-				order_items: (order.order_items || items).map((item) => ({
-					...item,
-					review_rating: item.review_rating ?? null,
-				})),
+				order_items: order.order_items || items,
 			};
 		}
 
@@ -342,14 +323,12 @@ import '../styles/cek-pesanan.css';
 			}
 		});
 
-		document.getElementById('menuReviewForms').addEventListener('submit', async (event) => {
-			const reviewForm = event.target.closest('[data-menu-review-form]');
-			if (!reviewForm) return;
+		document.getElementById('tenantReviewForm').addEventListener('submit', async (event) => {
 			event.preventDefault();
 
-			const selectedRating = reviewForm.querySelector('input[name="rating"]:checked');
-			const submitButton = reviewForm.querySelector('button[type="submit"]');
-			const result = reviewForm.querySelector('[data-review-result]');
+			const selectedRating = tenantRatingStars.querySelector('input[name="rating"]:checked');
+			const submitButton = document.getElementById('tenantReviewSubmit');
+			const result = document.getElementById('tenantReviewResult');
 			if (!activeToken || !selectedRating) {
 				result.textContent = 'Pilih rating 1 sampai 5 bintang terlebih dahulu.';
 				result.className = 'w-full text-xs text-rose-700';
@@ -361,9 +340,8 @@ import '../styles/cek-pesanan.css';
 			result.className = 'w-full text-xs text-slate-500';
 			try {
 				const rating = Number(selectedRating.value);
-				const { data, error } = await db.rpc('submit_guest_menu_rating', {
+				const { data, error } = await db.rpc('submit_guest_order_rating', {
 					p_token: activeToken,
-					p_menu_item_id: reviewForm.dataset.menuItemId,
 					p_rating: rating,
 				});
 				if (error || data?.error || data?.success !== true) {
@@ -372,14 +350,13 @@ import '../styles/cek-pesanan.css';
 
 				currentOrder = {
 					...currentOrder,
-					order_items: currentOrder.order_items.map((item) => item.menu_item_id === reviewForm.dataset.menuItemId
-						? { ...item, review_rating: rating }
-						: item),
+					review_rating: rating,
 				};
 				result.textContent = `Terima kasih! Rating ${rating} dari 5 berhasil disimpan.`;
 				result.className = 'w-full text-xs font-semibold text-emerald-700';
-				submitButton.textContent = 'Perbarui';
-				document.getElementById('realtimeMessage').textContent = 'Rating menu berhasil disimpan.';
+				submitButton.textContent = 'Perbarui Rating';
+				updateRatingStars(rating);
+				document.getElementById('realtimeMessage').textContent = 'Rating tenant berhasil disimpan.';
 			} catch (error) {
 				result.textContent = `Rating gagal disimpan: ${error.message}`;
 				result.className = 'w-full text-xs text-rose-700';

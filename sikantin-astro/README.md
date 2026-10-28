@@ -22,7 +22,9 @@ Guest QRIS checkout requires a JPG/PNG proof image up to 5 MB. The `create-guest
 
 Order tracking uses a cryptographically random token as a bearer credential. Guest order rows are not readable through the public database API; `lookup-guest-order` returns only the order summary for a valid token. Realtime status updates are broadcast on a token-specific public channel and contain only the token, status, and update time. Treat the token as private.
 
-After an order reaches `Selesai`, its token can be used to submit a 1–5 star rating for each menu item in that order. Ratings are stored in `menu_reviews`; direct table access is disabled, and the `submit_guest_menu_rating` RPC verifies the token, completed status, and purchased item before saving. Public catalog pages read only aggregated averages through `get_public_menu_ratings`. Apply `../supabase/migrations/20261029000000_menu_reviews.sql` to enable this feature.
+After an order reaches `Selesai`, its token can be used to submit one 1–5 star rating for the order's tenant. Ratings are stored in `tenant_reviews`; direct table access is disabled, and the `submit_guest_order_rating` RPC verifies the token and completed status before saving. Public catalog pages read aggregated averages through `get_public_tenant_ratings`. Apply `../supabase/migrations/20261029000001_tenant_reviews.sql` after the existing menu-review migration to enable this feature. Existing per-menu ratings are migrated to one rounded average per order.
+
+Daily queue numbers restart at `A-01` when every order in the tenant's current queue cycle is `Selesai` or `Dibatalkan`. The cycle identifier is persisted with each order to allow the visible queue number to be reused without violating uniqueness. Apply `../supabase/migrations/20261029000002_queue_cycles.sql`; the `create-guest-order` Edge Function now stores the cycle returned by `next_tenant_queue_number`.
 
 ## WhatsApp order notifications
 
