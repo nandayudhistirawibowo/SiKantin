@@ -11,7 +11,7 @@ const { data: tenants, error } = await supabaseServer
 
 const { data: tenantMenuPrices, error: menuPriceError } = await supabaseServer
 	.from('menu_items')
-	.select('tenant_id, harga')
+	.select('tenant_id, harga, foto_url')
 	.eq('tersedia', true);
 
 if (menuPriceError) {
@@ -19,6 +19,7 @@ if (menuPriceError) {
 }
 
 const cheapestPriceByTenant = new Map<string, number>();
+const coverImageByTenant = new Map<string, string>();
 tenantMenuPrices?.forEach(({ tenant_id, harga }) => {
 	const price = Number(harga);
 	if (!Number.isFinite(price)) return;
@@ -26,7 +27,9 @@ tenantMenuPrices?.forEach(({ tenant_id, harga }) => {
 	if (currentPrice === undefined || price < currentPrice) cheapestPriceByTenant.set(tenant_id, price);
 });
 
-const featuredTenant = tenants?.find((tenant) => tenant.status_buka) ?? tenants?.[0];
+tenantMenuPrices?.forEach(({ tenant_id, foto_url }) => {
+	if (foto_url && !coverImageByTenant.has(tenant_id)) coverImageByTenant.set(tenant_id, foto_url);
+});
 ---
 
 <Layout title="Pilih Kantin | SiKantin UYM" themeColor="#172b40" bodyClass="role-screen min-h-screen px-4 py-6 text-slate-100 sm:px-6">
@@ -104,18 +107,6 @@ const featuredTenant = tenants?.find((tenant) => tenant.status_buka) ?? tenants?
 					</p>
 				) : tenants?.length ? (
 					<>
-						{featuredTenant && (
-							<a href={`/tenant/${encodeURIComponent(featuredTenant.slug)}`} data-tenant-open={featuredTenant.status_buka ? 'true' : 'false'} class="featured-tenant mb-5 flex min-h-36 items-end justify-between gap-4 overflow-hidden rounded-3xl border border-white/10 p-5 shadow-xl transition hover:border-sky-200/30 sm:p-6">
-								<div class="relative z-10">
-									<p class="text-xs font-extrabold uppercase tracking-[0.18em] text-amber-200">Mulai dari sini</p>
-									<h3 class="mt-2 text-2xl font-black">{featuredTenant.nama_tenant}</h3>
-									<p class="mt-1 text-sm text-blue-100/70">{featuredTenant.lokasi || 'Temukan menu favoritmu'}</p>
-								</div>
-								<span class:list={['relative z-10 shrink-0 rounded-full px-3 py-1.5 text-xs font-extrabold', featuredTenant.status_buka ? 'bg-emerald-300/15 text-emerald-100' : 'bg-slate-300/15 text-slate-100']}>
-									{featuredTenant.status_buka ? '● Sedang buka' : '● Sedang tutup'}
-								</span>
-							</a>
-						)}
 						<div id="tenantCardGrid" class="grid gap-4 sm:grid-cols-2">
 							{tenants.map((tenant, index) => (
 								<article
@@ -123,32 +114,38 @@ const featuredTenant = tenants?.find((tenant) => tenant.status_buka) ?? tenants?
 									data-tenant-open={tenant.status_buka ? 'true' : 'false'}
 									data-cheapest-price={cheapestPriceByTenant.has(tenant.id) ? String(cheapestPriceByTenant.get(tenant.id)) : ''}
 									data-original-order={index}
-									class="tenant-card glass flex min-h-72 flex-col overflow-hidden rounded-3xl shadow-xl transition duration-200 hover:-translate-y-1 hover:border-sky-200/30 hover:shadow-2xl"
+									class="tenant-card glass flex min-h-80 flex-col overflow-hidden rounded-3xl shadow-xl transition duration-200 hover:-translate-y-1 hover:border-sky-200/30 hover:shadow-2xl"
 								>
-									<a href={`/tenant/${encodeURIComponent(tenant.slug)}`} class="tenant-card-cover group relative block h-36 overflow-hidden" aria-label={`Lihat menu ${tenant.nama_tenant}`}>
-										<span class="tenant-card-cover-art" aria-hidden="true"></span>
-										<span class="tenant-card-cover-emoji" aria-hidden="true">{index % 3 === 0 ? '🍱' : index % 3 === 1 ? '🥤' : '🍜'}</span>
+									<a href={`/tenant/${encodeURIComponent(tenant.slug)}`} class="tenant-card-cover group relative block h-44 overflow-hidden" aria-label={`Lihat menu ${tenant.nama_tenant}`}>
+										{coverImageByTenant.get(tenant.id) ? (
+											<img src={coverImageByTenant.get(tenant.id)} alt="" loading="lazy" class="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105" />
+										) : (
+											<>
+												<span class="tenant-card-cover-art" aria-hidden="true"></span>
+												<span class="tenant-card-cover-emoji" aria-hidden="true">{index % 3 === 0 ? '🍱' : index % 3 === 1 ? '🥤' : '🍜'}</span>
+											</>
+										)}
 										<span class:list={['absolute right-3 top-3 rounded-full px-3 py-1.5 text-xs font-extrabold shadow-sm', tenant.status_buka ? 'bg-emerald-300 text-emerald-950' : 'bg-white/90 text-slate-700']}>
 											<span class:list={['mr-1 inline-block h-1.5 w-1.5 rounded-full align-middle', tenant.status_buka ? 'bg-emerald-700' : 'bg-slate-400']}></span>
 											{tenant.status_buka ? 'Buka sekarang' : 'Sedang tutup'}
 										</span>
-										<span class="absolute bottom-3 left-3 rounded-full border border-white/30 bg-slate-950/30 px-3 py-1 text-[10px] font-extrabold uppercase tracking-wider text-white backdrop-blur">Kantin kampus</span>
+										<span class="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-slate-950/60 to-transparent" aria-hidden="true"></span>
 									</a>
 									<div class="flex flex-1 flex-col p-5">
 										<div class="flex items-start justify-between gap-3">
 											<div>
-												<h3 class="text-lg font-extrabold">{tenant.nama_tenant}</h3>
+												<h3 class="text-xl font-extrabold tracking-tight">{tenant.nama_tenant}</h3>
 												<p class="mt-1 text-sm text-blue-100/70">{tenant.lokasi || 'Lokasi belum diisi'}</p>
 											</div>
 										</div>
-										<div class="mt-4 flex items-center gap-3 text-xs font-semibold text-blue-100/80">
-											<span class="inline-flex items-center gap-1"><span class="text-amber-300" aria-hidden="true">★</span> 4.5</span>
-											<span aria-hidden="true">·</span>
-											<span>± {((index + 2) * 0.15).toFixed(1)} km</span>
-											{cheapestPriceByTenant.has(tenant.id) && <span class="ml-auto whitespace-nowrap text-emerald-300">Mulai Rp {cheapestPriceByTenant.get(tenant.id).toLocaleString('id-ID')}</span>}
+										<div class="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 text-xs font-semibold text-blue-100/80">
+											<span class="inline-flex items-center gap-1.5 rounded-full bg-amber-300/10 px-2.5 py-1 text-amber-200" aria-label="Rating 4,5 dari 5">
+												<span aria-hidden="true">★</span> 4.5
+											</span>
+											{cheapestPriceByTenant.has(tenant.id) && <span class="whitespace-nowrap text-emerald-300">Mulai Rp {cheapestPriceByTenant.get(tenant.id).toLocaleString('id-ID')}</span>}
 										</div>
-										<a href={`/tenant/${encodeURIComponent(tenant.slug)}`} class="mt-4 inline-flex items-center justify-between rounded-xl bg-blue-600 px-4 py-3 text-sm font-extrabold text-white transition hover:bg-blue-500">
-											Lihat menu <span aria-hidden="true">→</span>
+										<a href={`/tenant/${encodeURIComponent(tenant.slug)}`} class="mt-5 inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-400 px-4 py-3 text-sm font-extrabold text-emerald-950 shadow-lg shadow-emerald-950/20 transition hover:bg-emerald-300">
+											Pesan Sekarang <span aria-hidden="true">→</span>
 										</a>
 									</div>
 								</article>
@@ -189,32 +186,30 @@ const featuredTenant = tenants?.find((tenant) => tenant.status_buka) ?? tenants?
 		const tenantCardGrid = document.getElementById('tenantCardGrid');
 		const tenantCount = document.getElementById('tenantCount');
 		const tenantEmptyFilter = document.getElementById('tenantEmptyFilter');
-		const featuredTenant = document.querySelector('.featured-tenant');
+		let activeTenantFilter = 'all';
 
 		tenantFilterButtons.forEach((button) => {
 			button.addEventListener('click', () => {
-				const filter = button.dataset.tenantFilter;
-				if (filter === 'cheapest' && tenantCardGrid) {
+				activeTenantFilter = button.dataset.tenantFilter;
+				if (tenantCardGrid) {
 					const sortedCards = [...tenantCards].sort((a, b) => {
+						if (activeTenantFilter !== 'cheapest') {
+							return Number(a.dataset.originalOrder) - Number(b.dataset.originalOrder);
+						}
 						const priceA = a.dataset.cheapestPrice === '' ? Number.POSITIVE_INFINITY : Number(a.dataset.cheapestPrice);
 						const priceB = b.dataset.cheapestPrice === '' ? Number.POSITIVE_INFINITY : Number(b.dataset.cheapestPrice);
 						return priceA - priceB;
 					});
 					sortedCards.forEach((card) => tenantCardGrid.append(card));
-				} else if (filter === 'all' && tenantCardGrid) {
-					[...tenantCards]
-						.sort((a, b) => Number(a.dataset.originalOrder) - Number(b.dataset.originalOrder))
-						.forEach((card) => tenantCardGrid.append(card));
 				}
 				let visibleCount = 0;
 				tenantCards.forEach((card) => {
-					const visible = filter !== 'open' || card.dataset.tenantOpen === 'true';
+					const visible = activeTenantFilter !== 'open' || card.dataset.tenantOpen === 'true';
 					card.classList.toggle('hidden', !visible);
 					if (visible) visibleCount += 1;
 				});
 				if (tenantCount) tenantCount.textContent = String(visibleCount);
 				if (tenantEmptyFilter) tenantEmptyFilter.classList.toggle('hidden', visibleCount > 0);
-				if (featuredTenant) featuredTenant.classList.toggle('hidden', filter === 'open' && featuredTenant.dataset.tenantOpen !== 'true');
 				tenantFilterButtons.forEach((filterButton) => {
 					const active = filterButton === button;
 					filterButton.classList.toggle('is-active', active);

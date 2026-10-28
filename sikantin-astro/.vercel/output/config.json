@@ -1,0 +1,164 @@
+{
+	"version": 3,
+	"routes": [
+		{
+			"src": "^/admin-dashboard\\.html$",
+			"headers": {
+				"Location": "/admin-dashboard"
+			},
+			"status": 301
+		},
+		{
+			"src": "^/dashboard\\.html$",
+			"headers": {
+				"Location": "/dashboard"
+			},
+			"status": 301
+		},
+		{
+			"src": "^/index\\.html$",
+			"headers": {
+				"Location": "/"
+			},
+			"status": 301
+		},
+		{
+			"src": "^/login\\.html$",
+			"headers": {
+				"Location": "/login"
+			},
+			"status": 301
+		},
+		{
+			"src": "^/profile\\.html$",
+			"headers": {
+				"Location": "/profile"
+			},
+			"status": 301
+		},
+		{
+			"src": "^/tenant-dashboard\\.html$",
+			"headers": {
+				"Location": "/tenant-dashboard"
+			},
+			"status": 301
+		},
+		{
+			"src": "^/tenant-login\\.html$",
+			"headers": {
+				"Location": "/tenant/login"
+			},
+			"status": 301
+		},
+		{
+			"src": "^/_astro(?:/(.*))$",
+			"headers": {
+				"cache-control": "public, max-age=31536000, immutable"
+			},
+			"continue": true
+		},
+		{
+			"handle": "filesystem"
+		},
+		{
+			"src": "^/_server-islands/([^/]+?)/?$",
+			"dest": "_render"
+		},
+		{
+			"src": "^/_image/?$",
+			"dest": "_render"
+		},
+		{
+			"src": "^/admin/dashboard/?$",
+			"dest": "_render"
+		},
+		{
+			"src": "^/admin/login/?$",
+			"dest": "_render"
+		},
+		{
+			"src": "^/admin/?$",
+			"dest": "_render"
+		},
+		{
+			"src": "^/admin-dashboard/?$",
+			"dest": "_render"
+		},
+		{
+			"src": "^/admin-dashboard\\.html/?$",
+			"dest": "_render"
+		},
+		{
+			"src": "^/cek-pesanan/?$",
+			"dest": "_render"
+		},
+		{
+			"src": "^/dashboard/?$",
+			"dest": "_render"
+		},
+		{
+			"src": "^/dashboard\\.html/?$",
+			"dest": "_render"
+		},
+		{
+			"src": "^/index\\.html/?$",
+			"dest": "_render"
+		},
+		{
+			"src": "^/login/?$",
+			"dest": "_render"
+		},
+		{
+			"src": "^/login\\.html/?$",
+			"dest": "_render"
+		},
+		{
+			"src": "^/profile/?$",
+			"dest": "_render"
+		},
+		{
+			"src": "^/profile\\.html/?$",
+			"dest": "_render"
+		},
+		{
+			"src": "^/tenant/login/?$",
+			"dest": "_render"
+		},
+		{
+			"src": "^/tenant/([^/]+?)/dashboard/?$",
+			"dest": "_render"
+		},
+		{
+			"src": "^/tenant/([^/]+?)/?$",
+			"dest": "_render"
+		},
+		{
+			"src": "^/tenant-dashboard/?$",
+			"dest": "_render"
+		},
+		{
+			"src": "^/tenant-dashboard\\.html/?$",
+			"dest": "_render"
+		},
+		{
+			"src": "^/tenant-login/?$",
+			"dest": "_render"
+		},
+		{
+			"src": "^/tenant-login\\.html/?$",
+			"dest": "_render"
+		},
+		{
+			"src": "^/$",
+			"dest": "_render"
+		},
+		{
+			"src": "^/404/?$",
+			"dest": "_render"
+		},
+		{
+			"src": "^/.*$",
+			"dest": "_render"
+		}
+	]
+}
