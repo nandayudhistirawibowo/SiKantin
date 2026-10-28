@@ -28,7 +28,7 @@ Daily queue numbers restart at `A-01` when every order in the tenant's current q
 
 ## WhatsApp order notifications
 
-The guest-order Edge Function sends a receipt to `orders.phone` through the local Baileys gateway over an ngrok HTTPS tunnel. Set `WA_GATEWAY_URL` and `WA_API_KEY` as Supabase Edge Function secrets. If the gateway is not configured or a send fails, the order is still saved and the returned response indicates the notification result.
+The guest-order Edge Function sends a receipt to `orders.phone` through the local Baileys gateway over an ngrok HTTPS tunnel. Set `WA_GATEWAY_URL`, `WA_API_KEY`, and the public application base URL in `APP_URL` as Supabase Edge Function secrets. The WhatsApp receipt includes the tenant, queue number, saved menu details, order total, and a token link to `/cek-pesanan`. If the gateway or `APP_URL` is not configured, or a send fails, the order is still saved and the returned response indicates the notification result.
 
 To run the local gateway, set `WA_API_KEY` to a random secret with at least 32 characters in the Astro server environment, then run `npm run wa:server`. The server binds to `127.0.0.1` by default. Keep the WhatsApp session files outside the repository.
 
