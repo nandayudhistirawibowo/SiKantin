@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@astrojs/node": "^11.1.9",
+    "@astrojs/vercel": "^11.0.17",
     "@supabase/supabase-js": "^2.118.0",
     "@tailwindcss/vite": "^4.3.3",
     "@whiskeysockets/baileys": "^7.0.0-rc14",
