@@ -139,6 +139,20 @@ function populateSelect(select, items, placeholder, getValue, getLabel, selected
     select.value = selectedValue || '';
 }
 
+function populateMenuCategories(selectedValue = '') {
+    const select = document.getElementById('menuCategory');
+    const categories = new Set(['Makanan', 'Minuman', 'Snack', 'Paket Hemat']);
+    menuItems.forEach((item) => {
+        const category = item.kategori?.trim();
+        if (category) categories.add(category);
+    });
+    if (selectedValue && !categories.has(selectedValue)) categories.add(selectedValue);
+
+    select.replaceChildren(new Option('Pilih kategori', ''));
+    [...categories].forEach((category) => select.add(new Option(category, category)));
+    select.value = selectedValue || '';
+}
+
 function renderUsers() {
     const table = document.getElementById('studentsTable');
     if (!profiles.length) {
@@ -313,6 +327,7 @@ async function initialize() {
 function updateNewUserRoleFields() {
     const isTenant = document.getElementById('newUserRole').value === 'pemilik_tenant';
     const identifier = document.getElementById('userIdentifier');
+    const phoneField = document.getElementById('newUserPhoneField');
     document.getElementById('userIdentifierLabel').firstChild.textContent = isTenant ? 'Email' : 'NIM';
     document.getElementById('identifierHelp').textContent = isTenant
         ? 'Pemilik tenant login menggunakan email ini.'
@@ -323,6 +338,9 @@ function updateNewUserRoleFields() {
     else identifier.pattern = '[0-9]{6,20}';
     identifier.placeholder = isTenant ? 'nama@email.com' : '';
     identifier.value = '';
+    phoneField.classList.toggle('hidden', !isTenant);
+    phoneField.classList.toggle('block', isTenant);
+    if (!isTenant) document.getElementById('newUserPhone').value = '';
 }
 
 function openUserEdit(profile) {
@@ -382,6 +400,7 @@ function openTenantEdit(tenant) {
 function openMenuCreate() {
     menuForm.reset();
     setMenuAddons();
+    populateMenuCategories();
     document.getElementById('menuId').value = '';
     document.getElementById('menuModalTitle').textContent = 'Tambah Menu';
     document.getElementById('menuPhotoHelp').textContent = 'Format PNG, JPEG, atau WebP, maksimal 5 MB.';
@@ -399,11 +418,11 @@ function openMenuCreate() {
 function openMenuEdit(item) {
     menuForm.reset();
     setMenuAddons(item.add_ons || []);
+    populateMenuCategories(item.kategori || '');
     clearMessage(document.getElementById('menuModalMessage'));
     document.getElementById('menuId').value = item.id;
     document.getElementById('menuModalTitle').textContent = 'Edit Menu';
     document.getElementById('menuName').value = item.nama_menu || '';
-    document.getElementById('menuCategory').value = item.kategori || '';
     document.getElementById('menuPrice').value = item.harga ?? '';
     document.getElementById('menuPreparation').value = item.waktu_persiapan ?? 0;
     document.getElementById('menuPhotoHelp').textContent = item.foto_url
@@ -560,7 +579,10 @@ createUserForm.addEventListener('submit', async (event) => {
     const identifier = String(formData.get('identifier') || '').trim();
     const body = { password: formData.get('password'), peran };
     if (peran === 'mahasiswa') body.nim = identifier;
-    else body.email = identifier;
+    else {
+        body.email = identifier;
+        body.no_telepon = String(formData.get('no_telepon') || '').trim();
+    }
     const submitButton = document.getElementById('createUserSubmit');
     submitButton.disabled = true;
     try {

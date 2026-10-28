@@ -317,6 +317,32 @@ Deno.serve(async (request: Request): Promise<Response> => {
   const { data: proofUrlData } = serviceClient.storage.from("bukti-transfer").getPublicUrl(proofPath);
   const proofUrl = proofUrlData.publicUrl;
 
+  const { data: queueData, error: queueError } = await serviceClient.rpc("next_tenant_queue_number", {
+    p_tenant_id: tenant.id,
+  });
+  if (queueError) {
+    const { error: cleanupError } = await serviceClient.storage.from("bukti-transfer").remove([proofPath]);
+    return jsonResponse({
+      error: `Gagal membuat nomor antrean: ${queueError.message}`,
+      ...(cleanupError ? { proof_cleanup_error: cleanupError.message } : {}),
+    }, 500);
+  }
+  if (
+    !isRecord(queueData)
+    || typeof queueData.nomor_antrean !== "string"
+    || !/^A-\d{2,}$/.test(queueData.nomor_antrean)
+    || typeof queueData.tanggal_antrean !== "string"
+    || !/^\d{4}-\d{2}-\d{2}$/.test(queueData.tanggal_antrean)
+  ) {
+    const { error: cleanupError } = await serviceClient.storage.from("bukti-transfer").remove([proofPath]);
+    return jsonResponse({
+      error: "Database tidak mengembalikan nomor antrean yang valid.",
+      ...(cleanupError ? { proof_cleanup_error: cleanupError.message } : {}),
+    }, 500);
+  }
+  const nomorAntrean = queueData.nomor_antrean;
+  const tanggalAntrean = queueData.tanggal_antrean;
+
   const { data: order, error: orderError } = await serviceClient
     .from("orders")
     .insert({
@@ -326,6 +352,8 @@ Deno.serve(async (request: Request): Promise<Response> => {
       phone,
       nama_mahasiswa: profile.nama,
       nomor_pesanan: nomorPesanan,
+      nomor_antrean: nomorAntrean,
+      tanggal_antrean: tanggalAntrean,
       token_pesanan: tokenPesanan,
       status: "Menunggu Verifikasi",
       total,
@@ -361,6 +389,8 @@ Deno.serve(async (request: Request): Promise<Response> => {
     order: {
       token_pesanan: tokenPesanan,
       nomor_pesanan: nomorPesanan,
+      nomor_antrean: nomorAntrean,
+      tanggal_antrean: tanggalAntrean,
       tenant_nama: tenant.nama_tenant,
       status: "Menunggu Verifikasi",
       total,

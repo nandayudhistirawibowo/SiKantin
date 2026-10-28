@@ -94,6 +94,7 @@ const menuCategories = [...new Set((menuItems ?? []).map((item) => item.kategori
                     {menuCategories.map((category) => (
                       <button type="button" data-category-filter={category.toLowerCase()} aria-pressed="false" class="category-filter rounded-full px-4 py-2 text-xs font-extrabold transition">{category}</button>
                     ))}
+                    <button type="button" data-menu-sort="cheapest" aria-pressed="false" class="category-filter rounded-full px-4 py-2 text-xs font-extrabold transition">Termurah</button>
                   </div>
                 </div>
 
@@ -104,6 +105,7 @@ const menuCategories = [...new Set((menuItems ?? []).map((item) => item.kategori
                     data-menu-card
                     data-menu-category={(item.kategori || 'Menu kantin').trim().toLowerCase()}
                     data-menu-search={`${item.nama_menu} ${item.kategori || 'Menu kantin'}`.toLowerCase()}
+                    data-menu-price={item.harga}
                   >
                     <img
                       src={item.foto_url || logo.src}
@@ -122,18 +124,53 @@ const menuCategories = [...new Set((menuItems ?? []).map((item) => item.kategori
                         </p>
                       </div>
                       <p class="mt-2 text-xs text-slate-500">Persiapan {item.waktu_persiapan ?? 0} menit</p>
-                      <button
-                        type="button"
-                        data-add-menu
-                        data-menu-id={item.id}
-                        data-menu-name={item.nama_menu}
-                        data-menu-price={item.harga}
-                        data-menu-addons={JSON.stringify(item.add_ons || [])}
-                        class="mt-4 w-full rounded-lg bg-blue-700 px-3 py-2.5 text-sm font-bold text-white hover:bg-blue-800"
-                        disabled={!tenant.status_buka}
-                      >
-                        Tambah ke pesanan
-                      </button>
+                      {item.add_ons?.length ? (
+                        <fieldset class="mt-4 border-t border-slate-100 pt-3">
+                          <legend class="text-xs font-bold text-slate-600">Add-on (opsional)</legend>
+                          <div class="mt-2 space-y-2">
+                            {item.add_ons.map((addon) => (
+                              <label class="flex cursor-pointer items-center justify-between gap-3 text-xs text-slate-600">
+                                <span class="flex min-w-0 items-center gap-2">
+                                  <input
+                                    type="checkbox"
+                                    data-menu-addon
+                                    data-addon-id={addon.id}
+                                    data-addon-name={addon.name}
+                                    data-addon-price={addon.price}
+                                    disabled={!tenant.status_buka}
+                                    class="h-4 w-4 rounded accent-blue-700"
+                                  />
+                                  <span>{addon.name}</span>
+                                </span>
+                                <span class="shrink-0 font-semibold text-blue-700">
+                                  {addon.price ? `+ Rp ${Number(addon.price).toLocaleString('id-ID')}` : 'Gratis'}
+                                </span>
+                              </label>
+                            ))}
+                          </div>
+                        </fieldset>
+                      ) : null}
+                      <div class="mt-4 flex items-center justify-between gap-3 border-t border-slate-100 pt-3">
+                        <span class="text-xs font-semibold text-slate-500">Jumlah</span>
+                        <div class="flex items-center gap-3">
+                          <button
+                            type="button"
+                            data-quantity-decrement
+                            aria-label={`Kurangi ${item.nama_menu}`}
+                            disabled={!tenant.status_buka}
+                            class="menu-quantity-button"
+                          >−</button>
+                          <output data-quantity-value aria-live="polite" class="min-w-5 text-center text-sm font-extrabold text-slate-900">0</output>
+                          <button
+                            type="button"
+                            data-quantity-increment
+                            aria-label={`Tambah ${item.nama_menu}`}
+                            disabled={!tenant.status_buka}
+                            class="menu-quantity-button"
+                          >+</button>
+                        </div>
+                      </div>
+                      <div class="sr-only" data-menu-id={item.id} data-menu-name={item.nama_menu} data-menu-price={item.harga}></div>
                     </div>
                   </article>
                 ))}
@@ -198,17 +235,21 @@ const menuCategories = [...new Set((menuItems ?? []).map((item) => item.kategori
                 </label>
               </section>
               <p id="checkoutMessage" role="status" aria-live="polite" class="hidden rounded-lg p-3 text-sm"></p>
-              <button
-                id="guestCheckoutButton"
-                type="submit"
-                class="w-full rounded-lg bg-emerald-600 px-4 py-3 font-extrabold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
-                disabled={!tenant.status_buka || !menuItems?.length}
-              >
-                Buat Pesanan
-              </button>
+              <div class="sticky bottom-0 z-10 -mx-1 bg-white/95 py-2 backdrop-blur">
+                <button
+                  id="guestCheckoutButton"
+                  type="submit"
+                  class="w-full rounded-lg bg-emerald-500 px-4 py-3 font-extrabold text-emerald-950 shadow-md transition hover:bg-emerald-400 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-60"
+                  disabled={!tenant.status_buka || !menuItems?.length}
+                >
+                  Buat Pesanan
+                </button>
+              </div>
             </form>
             <section id="orderConfirmation" class="mt-5 hidden rounded-xl border border-emerald-200 bg-emerald-50 p-4" aria-live="polite">
               <h3 class="font-extrabold text-emerald-900">Pesanan berhasil dibuat</h3>
+              <p class="mt-3 text-xs font-bold uppercase tracking-wide text-emerald-800">Nomor antrean</p>
+              <p id="confirmationQueueNumber" class="mt-1 text-4xl font-black tracking-tight text-emerald-950"></p>
               <p class="mt-2 text-sm text-emerald-800">Nomor pesanan: <strong id="confirmationNumber"></strong></p>
               <p class="mt-2 text-sm text-emerald-800">Token cek pesanan:</p>
               <code id="confirmationToken" class="mt-1 block break-all rounded bg-white p-2 text-sm font-extrabold text-emerald-900"></code>
@@ -220,27 +261,6 @@ const menuCategories = [...new Set((menuItems ?? []).map((item) => item.kategori
       )}
     </main>
   )}
-  <div id="addonModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/70 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="addonModalTitle">
-    <form id="addonForm" class="w-full max-w-md rounded-2xl bg-white p-5 shadow-2xl sm:p-6">
-      <div class="flex items-start justify-between gap-3">
-        <div>
-          <p class="text-xs font-extrabold uppercase tracking-wide text-blue-700">Sesuaikan menu</p>
-          <h2 id="addonModalTitle" class="mt-1 text-xl font-black text-slate-900">Pilih Add-On</h2>
-        </div>
-        <button id="closeAddonModal" type="button" class="rounded-lg px-2 py-1 text-xl text-slate-500 hover:bg-slate-100" aria-label="Tutup">×</button>
-      </div>
-      <p class="mt-2 text-sm text-slate-500">Pilihan bersifat opsional. Harga add-on ditambahkan ke total menu.</p>
-      <div id="addonOptions" class="mt-4 space-y-2"></div>
-      <div class="mt-5 flex items-center justify-between border-t border-slate-200 pt-4">
-        <span class="text-sm font-bold text-slate-600">Tambahan</span>
-        <strong id="addonSelectionTotal" class="text-slate-900">Rp 0</strong>
-      </div>
-      <div class="mt-5 flex justify-end gap-2">
-        <button id="cancelAddonModal" type="button" class="rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50">Batal</button>
-        <button type="submit" class="rounded-lg bg-blue-700 px-4 py-2.5 text-sm font-extrabold text-white hover:bg-blue-800">Tambah ke pesanan</button>
-      </div>
-    </form>
-  </div>
   <script>
     import { db } from '../../scripts/supabase.js';
 
@@ -251,19 +271,17 @@ const menuCategories = [...new Set((menuItems ?? []).map((item) => item.kategori
     const checkoutMessage = document.getElementById('checkoutMessage');
     const checkoutButton = document.getElementById('guestCheckoutButton');
     const proofInput = document.getElementById('guestTransferProof');
-    const addonModal = document.getElementById('addonModal');
-    const addonForm = document.getElementById('addonForm');
-    const addonOptions = document.getElementById('addonOptions');
-    const addonSelectionTotal = document.getElementById('addonSelectionTotal');
     const tenantSlug = window.location.pathname.split('/').filter(Boolean).at(-1);
     const tenantIsOpen = checkoutForm?.dataset.tenantOpen === 'true';
     const menuSearch = document.getElementById('menuSearch');
+    const menuGrid = document.getElementById('menuGrid');
     const menuCards = [...document.querySelectorAll('[data-menu-card]')];
     const categoryFilters = [...document.querySelectorAll('[data-category-filter]')];
+    const menuSortButtons = [...document.querySelectorAll('[data-menu-sort]')];
     const visibleMenuCount = document.getElementById('visibleMenuCount');
     const menuNoResults = document.getElementById('menuNoResults');
     let activeCategory = 'all';
-    let pendingMenu = null;
+    let sortByCheapest = false;
     let nimIsValid = false;
     let validatingNim = false;
 
@@ -291,6 +309,18 @@ const menuCategories = [...new Set((menuItems ?? []).map((item) => item.kategori
           filterButton.setAttribute('aria-pressed', String(active));
         });
         filterMenuCards();
+      });
+    });
+
+    menuSortButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        sortByCheapest = !sortByCheapest;
+        button.classList.toggle('is-active', sortByCheapest);
+        button.setAttribute('aria-pressed', String(sortByCheapest));
+        const sortedCards = [...menuCards].sort((a, b) => sortByCheapest
+          ? Number(a.dataset.menuPrice) - Number(b.dataset.menuPrice)
+          : menuCards.indexOf(a) - menuCards.indexOf(b));
+        sortedCards.forEach((card) => menuGrid?.append(card));
       });
     });
 
@@ -333,9 +363,30 @@ const menuCategories = [...new Set((menuItems ?? []).map((item) => item.kategori
       return item.price + item.addons.reduce((sum, addon) => sum + addon.price, 0);
     }
 
-    function addMenuToCart(menu, selectedAddons = []) {
+    function getCartKey(menu, selectedAddons) {
       const addonKey = selectedAddons.map((addon) => addon.id).sort().join(',');
-      const key = `${menu.id}:${addonKey}`;
+      return `${menu.id}:${addonKey}`;
+    }
+
+    function getSelectedAddons(card) {
+      return [...card.querySelectorAll('[data-menu-addon]:checked')].map((input) => ({
+        id: input.dataset.addonId,
+        name: input.dataset.addonName,
+        price: Number(input.dataset.addonPrice),
+      }));
+    }
+
+    function getMenuFromCard(card) {
+      const details = card.querySelector('[data-menu-id]');
+      return {
+        id: details.dataset.menuId,
+        name: details.dataset.menuName,
+        price: Number(details.dataset.menuPrice),
+      };
+    }
+
+    function addMenuToCart(menu, selectedAddons) {
+      const key = getCartKey(menu, selectedAddons);
       const item = guestCart.get(key) || {
         key,
         id: menu.id,
@@ -349,63 +400,30 @@ const menuCategories = [...new Set((menuItems ?? []).map((item) => item.kategori
       renderCart();
     }
 
-    function closeAddonDialog() {
-      addonModal.classList.add('hidden');
-      addonModal.classList.remove('flex');
-      pendingMenu = null;
+    function updateCardQuantity(card) {
+      const menu = getMenuFromCard(card);
+      const key = getCartKey(menu, getSelectedAddons(card));
+      const quantity = guestCart.get(key)?.quantity || 0;
+      const decrement = card.querySelector('[data-quantity-decrement]');
+      const increment = card.querySelector('[data-quantity-increment]');
+      card.querySelector('[data-quantity-value]').textContent = String(quantity);
+      decrement.disabled = !tenantIsOpen || quantity === 0;
+      increment.disabled = !tenantIsOpen || quantity >= 50;
     }
 
-    function showAddonDialog(menu, addons) {
-      pendingMenu = menu;
-      document.getElementById('addonModalTitle').textContent = `Add-On untuk ${menu.name}`;
-      addonOptions.replaceChildren();
-      addons.forEach((addon) => {
-        const label = document.createElement('label');
-        label.className = 'flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-slate-200 p-3 transition hover:border-blue-300 hover:bg-blue-50/50';
-        const option = document.createElement('span');
-        option.className = 'flex min-w-0 items-center gap-3';
-        const checkbox = document.createElement('input');
-        checkbox.type = 'checkbox';
-        checkbox.name = 'addon';
-        checkbox.value = addon.id;
-        checkbox.dataset.price = String(addon.price);
-        checkbox.className = 'h-4 w-4 accent-blue-700';
-        const name = document.createElement('span');
-        name.className = 'font-bold text-slate-800';
-        name.textContent = addon.name;
-        const price = document.createElement('span');
-        price.className = 'whitespace-nowrap text-sm font-bold text-blue-700';
-        price.textContent = addon.price ? `+ ${formatRupiah(addon.price)}` : 'Gratis';
-        option.append(checkbox, name);
-        label.append(option, price);
-        addonOptions.append(label);
-        checkbox.addEventListener('change', updateAddonSelectionTotal);
-      });
-      updateAddonSelectionTotal();
-      addonModal.classList.remove('hidden');
-      addonModal.classList.add('flex');
-      addonOptions.querySelector('input')?.focus();
+    function changeCardQuantity(card, change) {
+      const menu = getMenuFromCard(card);
+      const selectedAddons = getSelectedAddons(card);
+      const key = getCartKey(menu, selectedAddons);
+      const item = guestCart.get(key);
+      if (change > 0) {
+        addMenuToCart(menu, selectedAddons);
+      } else if (item) {
+        if (item.quantity <= 1) guestCart.delete(key);
+        else item.quantity -= 1;
+        renderCart();
+      }
     }
-
-    function updateAddonSelectionTotal() {
-      const total = [...addonOptions.querySelectorAll('input:checked')]
-        .reduce((sum, input) => sum + Number(input.dataset.price), 0);
-      addonSelectionTotal.textContent = formatRupiah(total);
-    }
-
-    document.getElementById('closeAddonModal').addEventListener('click', closeAddonDialog);
-    document.getElementById('cancelAddonModal').addEventListener('click', closeAddonDialog);
-    addonModal.addEventListener('click', (event) => {
-      if (event.target === addonModal) closeAddonDialog();
-    });
-    addonForm.addEventListener('submit', (event) => {
-      event.preventDefault();
-      if (!pendingMenu) return;
-      const selectedIds = new Set([...addonOptions.querySelectorAll('input:checked')].map((input) => input.value));
-      const selectedAddons = pendingMenu.addons.filter((addon) => selectedIds.has(addon.id));
-      addMenuToCart(pendingMenu, selectedAddons);
-      closeAddonDialog();
-    });
 
     function renderCart() {
       cartList.replaceChildren();
@@ -441,12 +459,11 @@ const menuCategories = [...new Set((menuItems ?? []).map((item) => item.kategori
         price.textContent = formatRupiah(unitPrice * item.quantity);
         const remove = document.createElement('button');
         remove.type = 'button';
-        remove.className = 'rounded px-2 py-1 text-rose-700 hover:bg-rose-50';
-        remove.textContent = '−';
-        remove.setAttribute('aria-label', `Kurangi ${item.name}`);
+        remove.className = 'rounded p-1.5 text-rose-600 transition hover:bg-rose-50 hover:text-rose-700';
+        remove.innerHTML = '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="h-4 w-4"><path stroke-linecap="round" stroke-linejoin="round" d="M4 7h16M10 11v6m4-6v6M5.5 7l1 13h11l1-13M9 7V4h6v3"/></svg>';
+        remove.setAttribute('aria-label', `Hapus ${item.name} dari pesanan`);
         remove.addEventListener('click', () => {
-          if (item.quantity <= 1) guestCart.delete(item.key);
-          else item.quantity -= 1;
+          guestCart.delete(item.key);
           renderCart();
         });
         const add = document.createElement('button');
@@ -458,34 +475,23 @@ const menuCategories = [...new Set((menuItems ?? []).map((item) => item.kategori
           if (item.quantity < 50) item.quantity += 1;
           renderCart();
         });
-        controls.append(remove, price, add);
+        controls.append(price, remove, add);
         row.append(details, controls);
         cartList.append(row);
       }
       totalElement.textContent = formatRupiah(total);
       checkoutButton.disabled = !guestCart.size || !tenantIsOpen;
+      menuCards.forEach(updateCardQuantity);
     }
 
-    document.querySelectorAll('[data-add-menu]').forEach((button) => {
-      button.addEventListener('click', () => {
-        const menu = {
-          id: button.dataset.menuId,
-          name: button.dataset.menuName,
-          price: Number(button.dataset.menuPrice),
-        };
-        let addons;
-        try {
-          addons = JSON.parse(button.dataset.menuAddons || '[]');
-        } catch (error) {
-          console.error('Add-on menu tidak dapat dibaca:', error);
-          showCheckoutMessage('Pilihan add-on menu gagal dimuat. Muat ulang halaman.', true);
-          return;
-        }
-        menu.addons = Array.isArray(addons) ? addons : [];
-        if (menu.addons.length) showAddonDialog(menu, menu.addons);
-        else addMenuToCart(menu);
+    menuCards.forEach((card) => {
+      card.querySelector('[data-quantity-decrement]').addEventListener('click', () => changeCardQuantity(card, -1));
+      card.querySelector('[data-quantity-increment]').addEventListener('click', () => changeCardQuantity(card, 1));
+      card.querySelectorAll('[data-menu-addon]').forEach((input) => {
+        input.addEventListener('change', () => updateCardQuantity(card));
       });
     });
+    menuCards.forEach(updateCardQuantity);
 
     const nimInput = document.getElementById('guestNim');
     const nimStatus = document.getElementById('nimValidationMessage');
@@ -596,9 +602,18 @@ const menuCategories = [...new Set((menuItems ?? []).map((item) => item.kategori
         }
 
         document.getElementById('confirmationNumber').textContent = order.nomor_pesanan;
+        const validQueueNumber = typeof order.nomor_antrean === 'string' && /^A-\d{2,}$/.test(order.nomor_antrean);
+        document.getElementById('confirmationQueueNumber').textContent = validQueueNumber
+          ? order.nomor_antrean
+          : 'Belum tersedia';
+        if (!validQueueNumber) {
+          console.error('Pesanan berhasil dibuat tanpa nomor antrean yang valid:', order);
+        }
         document.getElementById('confirmationToken').textContent = order.token_pesanan;
         document.getElementById('trackOrderLink').href = `/cek-pesanan?token=${encodeURIComponent(order.token_pesanan)}`;
-        document.getElementById('whatsappNotice').textContent = data.whatsapp === 'sent'
+        document.getElementById('whatsappNotice').textContent = !validQueueNumber
+          ? 'Pesanan tersimpan. Nomor antrean belum tersedia; gunakan token di halaman cek pesanan.'
+          : data.whatsapp === 'sent'
           ? 'Token pesanan juga dikirim ke WhatsApp Anda.'
           : data.whatsapp === 'not_configured'
             ? 'Simpan token ini untuk mengecek status pesanan; notifikasi WhatsApp belum dikonfigurasi.'

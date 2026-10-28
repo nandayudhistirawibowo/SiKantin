@@ -33,6 +33,11 @@ import '../styles/cek-pesanan.css';
 			<p id="lookupMessage" role="status" aria-live="polite" class="mt-4 hidden rounded-lg p-3 text-sm"></p>
 		</section>
 		<section id="orderCard" class="mt-6 hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8">
+			<div class="queue-number-hero rounded-2xl px-5 py-7 text-center">
+				<p class="text-xs font-extrabold uppercase tracking-[0.2em] text-emerald-800">Nomor antrean</p>
+				<p id="queueNumber" class="mt-2 text-6xl font-black leading-none tracking-tight text-emerald-950 sm:text-8xl"></p>
+				<p class="mt-3 text-sm font-medium text-emerald-900">Tunjukkan nomor ini saat mengambil pesanan</p>
+			</div>
 			<div class="flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 pb-5">
 				<div>
 					<p class="text-xs font-bold uppercase tracking-wide text-slate-500">Nomor Pesanan</p>
@@ -40,6 +45,24 @@ import '../styles/cek-pesanan.css';
 					<p id="tenantName" class="mt-1 text-sm text-slate-500"></p>
 				</div>
 				<span id="orderStatus" class="rounded-full bg-amber-50 px-3 py-1.5 text-sm font-extrabold text-amber-800"></span>
+			</div>
+			<ol id="orderStepper" class="order-stepper my-6 grid grid-cols-3 gap-2" aria-label="Tahapan pesanan">
+				<li data-order-step class="order-step">
+					<span data-step-indicator class="order-step-indicator">1</span>
+					<span class="mt-2 block text-center text-xs font-bold sm:text-sm">Diterima</span>
+				</li>
+				<li data-order-step class="order-step">
+					<span data-step-indicator class="order-step-indicator">2</span>
+					<span class="mt-2 block text-center text-xs font-bold sm:text-sm">Disiapkan</span>
+				</li>
+				<li data-order-step class="order-step">
+					<span data-step-indicator class="order-step-indicator">3</span>
+					<span class="mt-2 block text-center text-xs font-bold sm:text-sm">Siap Diambil</span>
+				</li>
+			</ol>
+			<p id="cancelledOrderMessage" class="hidden rounded-xl bg-rose-50 p-4 text-sm font-semibold text-rose-700">Pesanan ini dibatalkan.</p>
+			<div class="mt-5 border-t border-slate-100 pt-4">
+				<h3 class="font-extrabold text-slate-900">Rincian menu</h3>
 			</div>
 			<ul id="orderItems" class="mt-5 space-y-3"></ul>
 			<div class="mt-5 flex justify-between border-t border-slate-100 pt-4 font-extrabold text-slate-900">
@@ -69,6 +92,7 @@ import '../styles/cek-pesanan.css';
 		}
 
 		function renderOrder(order) {
+			document.getElementById('queueNumber').textContent = order.nomor_antrean || '—';
 			document.getElementById('orderNumber').textContent = order.nomor_pesanan;
 			document.getElementById('tenantName').textContent = order.tenants?.nama_tenant || '-';
 			const status = document.getElementById('orderStatus');
@@ -80,18 +104,40 @@ import '../styles/cek-pesanan.css';
 						? 'bg-rose-50 text-rose-800'
 						: 'bg-amber-50 text-amber-800'
 			}`;
+			const cancelled = order.status === 'Dibatalkan';
+			document.getElementById('orderStepper').classList.toggle('hidden', cancelled);
+			document.getElementById('cancelledOrderMessage').classList.toggle('hidden', !cancelled);
+			const activeStep = order.status === 'Selesai'
+				? 3
+				: order.status === 'Siap Diambil'
+				? 2
+				: order.status === 'Diproses'
+					? 1
+					: 0;
+			document.querySelectorAll('[data-order-step]').forEach((step, index) => {
+				step.classList.toggle('is-complete', !cancelled && index < activeStep);
+				step.classList.toggle('is-current', !cancelled && index === activeStep);
+				step.removeAttribute('aria-current');
+				if (!cancelled && index === activeStep) step.setAttribute('aria-current', 'step');
+				step.querySelector('[data-step-indicator]').textContent = index < activeStep ? '✓' : String(index + 1);
+			});
 			const items = document.getElementById('orderItems');
 			items.replaceChildren();
-			// PAKE order_items (BUKAN items)
 			(order.order_items || []).forEach((item) => {
 				const row = document.createElement('li');
 				row.className = 'flex justify-between gap-4 text-sm';
 				const name = document.createElement('span');
 				name.className = 'text-slate-600';
 				name.textContent = `${item.nama_menu} × ${item.jumlah}`;
+				const detail = document.createElement('span');
+				detail.className = 'mt-1 block text-xs text-slate-500';
+				detail.textContent = Array.isArray(item.add_ons) && item.add_ons.length
+					? `Add-on: ${item.add_ons.map((addon) => `${addon.name}${Number.isFinite(Number(addon.price)) ? ` (${formatRupiah(addon.price)})` : ''}`).join(', ')}`
+					: '';
 				const subtotal = document.createElement('span');
 				subtotal.className = 'font-semibold text-slate-800';
 				subtotal.textContent = formatRupiah(item.subtotal);
+				name.append(detail);
 				row.append(name, subtotal);
 				items.append(row);
 			});
@@ -100,15 +146,14 @@ import '../styles/cek-pesanan.css';
 		}
 
 		async function lookupOrder(token) {
-			const { data, error } = await db.functions.invoke('lookup-guest-order', {
-				body: { token, token_pesanan: token },
-				timeout: 10000,
+			const { data, error } = await db.rpc('lookup_guest_order_with_queue', {
+				p_token: token,
 			});
 			if (error || data?.error || data?.success === false) {
 				console.error('Supabase guest order lookup failed:', error || data);
 				throw new Error(error?.message || data?.error || data?.message || 'Pencarian pesanan gagal.');
 			}
-			if (!data?.order) throw new Error('Respons pencarian tidak berisi data pesanan.');
+			if (!data?.order) throw new Error('Pesanan tidak ditemukan. Periksa kembali token.');
 
 			const order = data.order;
 			const items = order.items || order.order_items || [];

@@ -91,12 +91,16 @@ Deno.serve(async (request: Request): Promise<Response> => {
   const peran = payload.peran;
   const nim = typeof payload.nim === "string" ? payload.nim.trim() : "";
   const submittedEmail = typeof payload.email === "string" ? payload.email.trim().toLowerCase() : "";
+  const submittedPhone = typeof payload.no_telepon === "string" ? payload.no_telepon.trim() : "";
 
   if (password.length < 8 || password.length > 128) {
     return jsonResponse({ error: "Password harus berisi 8 sampai 128 karakter." }, 400);
   }
   if (peran !== "mahasiswa" && peran !== "pemilik_tenant") {
     return jsonResponse({ error: "Role yang diizinkan hanya mahasiswa atau pemilik tenant." }, 400);
+  }
+  if (peran === "pemilik_tenant" && submittedPhone && !/^628\d{8,13}$/.test(submittedPhone)) {
+    return jsonResponse({ error: "Nomor WhatsApp harus memakai format 628 yang valid." }, 400);
   }
   let email: string;
   let nama: string;
@@ -127,7 +131,7 @@ Deno.serve(async (request: Request): Promise<Response> => {
   const profile: Record<string, string> = {
     id: createdAuthUser.user.id,
     nama,
-    no_telepon: "",
+    no_telepon: peran === "pemilik_tenant" ? submittedPhone : "",
     peran,
   };
   if (peran === "mahasiswa") profile.nim = nim;
@@ -146,6 +150,7 @@ Deno.serve(async (request: Request): Promise<Response> => {
       nama_tenant: `Tenant ${submittedEmail.split("@")[0]}`.slice(0, 120),
       pemilik_id: createdAuthUser.user.id,
       status_buka: false,
+      no_telepon: submittedPhone,
     });
     if (tenantInsertError) {
       const { error: tenantCleanupError } = await serviceClient

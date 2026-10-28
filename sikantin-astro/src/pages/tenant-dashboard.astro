@@ -18,20 +18,7 @@ import '../styles/tenant-dashboard.css';
             </div>
             <div class="flex items-center gap-2">
                 <button id="soundToggle" type="button" aria-pressed="false" class="tenant-sound-button">🔕 Aktifkan Suara</button>
-                <div class="relative">
-                    <button id="tenantProfileMenuButton" type="button" aria-haspopup="true" aria-expanded="false" aria-label="Buka menu profil" class="flex items-center gap-2 rounded-xl bg-blue-800 p-2 pr-3 text-left text-white transition hover:bg-blue-900">
-                        <img id="tenantProfileAvatar" src={logo.src} alt="" class="h-10 w-10 rounded-full border-2 border-white/80 bg-slate-100 object-cover">
-                        <span class="text-left">
-                            <span id="tenantProfileButtonName" class="block max-w-28 truncate text-xs font-bold text-white sm:max-w-36">Akun saya</span>
-                            <span class="hidden text-[10px] text-blue-100 sm:block">Pemilik tenant</span>
-                        </span>
-                        <span aria-hidden="true" class="text-xs text-white">⌄</span>
-                    </button>
-                    <div id="tenantProfileMenu" class="absolute right-0 top-full z-20 mt-1 hidden w-56 overflow-hidden rounded-b-xl border border-slate-200 bg-white p-2 shadow-xl">
-                        <a href="/profile" class="block rounded-lg px-3 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">Edit Profil</a>
-                        <button id="logoutButton" type="button" class="w-full rounded-lg bg-slate-50 px-3 py-3 text-left text-sm font-bold text-rose-600 transition hover:bg-rose-50">Keluar</button>
-                    </div>
-                </div>
+                <button id="logoutButton" type="button" class="tenant-logout-button">Keluar</button>
             </div>
         </div>
     </header>
@@ -147,7 +134,6 @@ import '../styles/tenant-dashboard.css';
         let tenantStatusChannel;
         let refreshTimer;
         let channel;
-        const logoUrl = document.getElementById('tenantProfileAvatar').src;
 
         function showMessage(text, isError) {
             message.textContent = text;
@@ -553,7 +539,7 @@ import '../styles/tenant-dashboard.css';
 
             const { data: profile, error: profileError } = await db
                 .from('profiles')
-                .select('id, peran, nama, avatar_url')
+                .select('id, peran')
                 .eq('id', session.user.id)
                 .single();
             if (profileError) {
@@ -568,12 +554,6 @@ import '../styles/tenant-dashboard.css';
                 );
                 return;
             }
-            const profileName = profile.nama || session.user.user_metadata?.full_name || 'Pemilik tenant';
-            const avatar = document.getElementById('tenantProfileAvatar');
-            avatar.src = profile.avatar_url || logoUrl;
-            avatar.onerror = () => { avatar.src = logoUrl; };
-            document.getElementById('tenantProfileButtonName').textContent = profileName;
-
             const { data: tenant, error: tenantError } = await db
                 .from('tenants')
                 .select('id, nama_tenant, slug, status_buka')
@@ -648,26 +628,8 @@ import '../styles/tenant-dashboard.css';
         });
 
         document.getElementById('tenantOpenStatus').addEventListener('click', toggleTenantOpenStatus);
-        document.getElementById('tenantProfileMenuButton').addEventListener('click', () => {
-            const menu = document.getElementById('tenantProfileMenu');
-            const isOpen = menu.classList.toggle('hidden') === false;
-            document.getElementById('tenantProfileMenuButton').setAttribute('aria-expanded', String(isOpen));
-        });
-        document.addEventListener('click', (event) => {
-            const menu = document.getElementById('tenantProfileMenu');
-            if (!menu.contains(event.target) && !document.getElementById('tenantProfileMenuButton').contains(event.target)) {
-                menu.classList.add('hidden');
-                document.getElementById('tenantProfileMenuButton').setAttribute('aria-expanded', 'false');
-            }
-        });
         document.querySelectorAll('[data-tenant-panel]').forEach((tab) => {
             tab.addEventListener('click', () => showTenantPanel(tab.dataset.tenantPanel));
-        });
-        document.addEventListener('keydown', (event) => {
-            if (event.key === 'Escape') {
-                document.getElementById('tenantProfileMenu').classList.add('hidden');
-                document.getElementById('tenantProfileMenuButton').setAttribute('aria-expanded', 'false');
-            }
         });
 
         window.addEventListener('pagehide', () => {

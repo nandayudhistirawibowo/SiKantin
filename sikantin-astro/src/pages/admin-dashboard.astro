@@ -101,6 +101,10 @@ import '../styles/admin-dashboard.css';
                 <input id="userIdentifier" name="identifier" inputmode="numeric" pattern="[0-9]{6,20}" autocomplete="username" required class="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal">
             </label>
             <p id="identifierHelp" class="-mt-2 text-xs text-slate-500">Login menggunakan NIM ini; email akun dibuat otomatis.</p>
+            <label id="newUserPhoneField" class="hidden text-sm font-bold" for="newUserPhone">Nomor WhatsApp pemilik tenant
+                <input id="newUserPhone" name="no_telepon" type="tel" inputmode="numeric" autocomplete="tel" maxlength="16" pattern="628[0-9]{8,13}" placeholder="6281234567890" class="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal">
+                <span class="mt-1 block text-xs font-normal text-slate-500">Opsional. Gunakan format 628 tanpa tanda + atau spasi.</span>
+            </label>
             <label class="block text-sm font-bold" for="newUserPassword">Password
                 <input id="newUserPassword" name="password" type="password" required minlength="8" maxlength="128" autocomplete="new-password" class="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal">
             </label>
@@ -181,7 +185,13 @@ import '../styles/admin-dashboard.css';
                 <input id="menuName" name="nama_menu" maxlength="120" required class="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal">
             </label>
             <label class="block text-sm font-bold" for="menuCategory">Kategori
-                <input id="menuCategory" name="kategori" maxlength="80" class="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal">
+                <select id="menuCategory" name="kategori" required class="mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 font-normal">
+                    <option value="">Pilih kategori</option>
+                    <option value="Makanan">Makanan</option>
+                    <option value="Minuman">Minuman</option>
+                    <option value="Snack">Snack</option>
+                    <option value="Paket Hemat">Paket Hemat</option>
+                </select>
             </label>
             <label class="block text-sm font-bold" for="menuPrice">Harga (Rp)
                 <input id="menuPrice" name="harga" type="number" min="0" step="1" required class="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal">

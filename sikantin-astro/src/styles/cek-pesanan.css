@@ -2,3 +2,46 @@
 	min-width: 7rem;
 	text-align: center;
 }
+.queue-number-hero {
+	border: 1px solid #a7f3d0;
+	background:
+		radial-gradient(ellipse at 50% 0, rgba(52, 211, 153, .22), transparent 68%),
+		linear-gradient(135deg, #ecfdf5, #d1fae5);
+}
+.order-step {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	color: #94a3b8;
+}
+.order-step:not(:last-child)::after {
+	position: absolute;
+	top: 1rem;
+	left: calc(50% + 1.35rem);
+	width: calc(100% - 2.7rem);
+	height: 2px;
+	background: #e2e8f0;
+	content: "";
+}
+.order-step-indicator {
+	z-index: 1;
+	display: grid;
+	width: 2rem;
+	height: 2rem;
+	place-items: center;
+	border: 2px solid #cbd5e1;
+	border-radius: 9999px;
+	background: white;
+	font-size: .75rem;
+	font-weight: 800;
+}
+.order-step.is-current,
+.order-step.is-complete { color: #047857; }
+.order-step.is-current .order-step-indicator,
+.order-step.is-complete .order-step-indicator {
+	border-color: #10b981;
+	background: #10b981;
+	color: white;
+}
+.order-step.is-complete:not(:last-child)::after { background: #10b981; }
