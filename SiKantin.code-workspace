@@ -1,0 +1,18 @@
+{
+	"folders": [
+		{
+			"name": "SiKantin V2",
+			"path": "."
+		},
+		{
+			"name": "Website Pribadi",
+			"path": "../Website Pribadi"
+		}
+	],
+	"settings": {
+		"files.exclude": {
+			"**/node_modules": true,
+			"**/.git": true
+		}
+	}
+}
