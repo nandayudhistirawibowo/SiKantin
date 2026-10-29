@@ -10,11 +10,11 @@ import logo from '../../assets/logo-uym.png';
 			<img src={logo.src} alt="" class="mx-auto h-16 w-16 rounded-full bg-white p-1" />
 			<p class="mt-4 text-xs font-extrabold uppercase tracking-[0.2em] text-sky-300">SiKantin UYM</p>
 			<h1 class="mt-2 text-3xl font-black">Login Mahasiswa</h1>
-			<p class="mt-2 text-sm text-blue-100/65">Masuk untuk melihat aktivitas dan riwayat pesananmu.</p>
+			<p class="mt-2 text-sm text-blue-100/65">Masuk menggunakan NIM dan password akun mahasiswa.</p>
 		</div>
 		<form id="studentLoginForm" class="space-y-4">
-			<label for="studentEmail" class="block text-sm font-bold">Email kampus / akun
-				<input id="studentEmail" type="email" autocomplete="username" required class="mt-2 w-full rounded-xl border border-white/15 bg-slate-950/60 px-4 py-3 text-white outline-none focus:border-sky-300" />
+			<label for="studentNim" class="block text-sm font-bold">NIM
+				<input id="studentNim" type="text" inputmode="numeric" pattern="[0-9]{6,20}" maxlength="20" autocomplete="username" required class="mt-2 w-full rounded-xl border border-white/15 bg-slate-950/60 px-4 py-3 text-white outline-none focus:border-sky-300" />
 			</label>
 			<label for="studentPassword" class="block text-sm font-bold">Password
 				<input id="studentPassword" type="password" autocomplete="current-password" required class="mt-2 w-full rounded-xl border border-white/15 bg-slate-950/60 px-4 py-3 text-white outline-none focus:border-sky-300" />
@@ -22,7 +22,7 @@ import logo from '../../assets/logo-uym.png';
 			<button id="studentLoginButton" type="submit" class="w-full rounded-xl bg-blue-500 px-4 py-3 font-extrabold text-white transition hover:bg-blue-400 disabled:cursor-wait disabled:opacity-60">Masuk ke Dashboard</button>
 		</form>
 		<p id="studentLoginMessage" role="status" aria-live="polite" class="mt-4 hidden rounded-xl p-3 text-sm"></p>
-		<p class="mt-6 text-center text-xs leading-5 text-blue-100/55">Akun mahasiswa dibuat oleh pengelola SiKantin. Hubungi admin kampus jika belum memiliki akses.</p>
+		<p class="mt-6 text-center text-xs leading-5 text-blue-100/55">Gunakan password yang diberikan pengelola SiKantin. Setelah masuk, kamu bisa menggantinya di halaman profil.</p>
 	</main>
 
 	<script>
@@ -41,8 +41,9 @@ import logo from '../../assets/logo-uym.png';
 			event.preventDefault();
 			button.disabled = true;
 			try {
+				const nim = document.getElementById('studentNim').value.trim();
 				const { data, error } = await db.auth.signInWithPassword({
-					email: document.getElementById('studentEmail').value.trim(),
+					email: `${nim}@uym.ac.id`,
 					password: document.getElementById('studentPassword').value,
 				});
 				if (error) throw new Error(error.message);
