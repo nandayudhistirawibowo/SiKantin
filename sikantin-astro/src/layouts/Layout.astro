@@ -6,6 +6,7 @@ interface Props {
 	description?: string;
 	keywords?: string;
 	ogImage?: string;
+	noIndex?: boolean;
 }
 
 import '../styles/global.css';
@@ -19,9 +20,12 @@ const {
 	description = 'SiKantin Universitas Yatsi Madani.',
 	keywords = 'SiKantin, kantin kampus, Universitas Yatsi Madani, pesan makanan',
 	ogImage,
+	noIndex = false,
 } = Astro.props;
 
-const socialImage = new URL(ogImage || logo.src, Astro.url).href;
+const siteUrl = 'https://sikantin.ndhistira.my.id';
+const canonicalUrl = new URL(Astro.url.pathname, siteUrl).href;
+const socialImage = new URL(ogImage || logo.src, siteUrl).href;
 ---
 
 <!doctype html>
@@ -32,10 +36,20 @@ const socialImage = new URL(ogImage || logo.src, Astro.url).href;
 		<meta name="theme-color" content={themeColor} />
 		<meta name="description" content={description} />
 		<meta name="keywords" content={keywords} />
+		<meta name="robots" content={noIndex ? 'noindex, nofollow' : 'index, follow'} />
+		<link rel="canonical" href={canonicalUrl} />
 		<meta property="og:title" content={title} />
 		<meta property="og:description" content={description} />
 		<meta property="og:image" content={socialImage} />
+		<meta property="og:image:alt" content={`SiKantin UYM - ${title}`} />
 		<meta property="og:type" content="website" />
+		<meta property="og:url" content={canonicalUrl} />
+		<meta property="og:site_name" content="SiKantin UYM" />
+		<meta property="og:locale" content="id_ID" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:title" content={title} />
+		<meta name="twitter:description" content={description} />
+		<meta name="twitter:image" content={socialImage} />
 		<link rel="icon" type="image/png" href={favicon.src} />
 		<link rel="preconnect" href="https://fonts.googleapis.com" />
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />

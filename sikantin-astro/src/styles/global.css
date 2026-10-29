@@ -1,5 +1,33 @@
 @import "tailwindcss";
 
+@theme {
+	--font-sans: 'Plus Jakarta Sans', sans-serif;
+}
+
 body {
-	font-family: 'Plus Jakarta Sans', sans-serif;
+	font-family: var(--font-sans);
+}
+
+@layer base {
+	:where(a, button, [role='button']) {
+		transition-property: color, background-color, border-color, box-shadow, opacity, transform;
+		transition-duration: 180ms;
+		transition-timing-function: cubic-bezier(0.2, 0.7, 0.2, 1);
+	}
+
+	:where(a, button, [role='button']):focus-visible {
+		outline: 3px solid #38bdf8;
+		outline-offset: 3px;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		scroll-behavior: auto !important;
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.01ms !important;
+	}
 }

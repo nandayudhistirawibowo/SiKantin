@@ -9,7 +9,7 @@ interface Props {
 const { title } = Astro.props;
 ---
 
-<Layout title={`${title} | SiKantin Mahasiswa`} themeColor="#172b40" bodyClass="min-h-screen bg-slate-50 text-slate-800">
+<Layout title={`${title} | SiKantin Mahasiswa`} themeColor="#172b40" bodyClass="min-h-screen bg-slate-50 text-slate-800" noIndex>
 	<div class="min-h-screen md:flex">
 		<button id="studentSidebarBackdrop" type="button" aria-label="Tutup menu" class="fixed inset-0 z-40 hidden bg-slate-950/60 backdrop-blur-sm md:hidden"></button>
 		<aside id="studentSidebar" class="fixed inset-y-0 left-0 z-50 hidden w-72 student-sidebar-closed flex-col border-r border-slate-200 bg-white p-5 shadow-xl md:sticky md:top-0 md:flex md:h-screen md:shadow-none">
