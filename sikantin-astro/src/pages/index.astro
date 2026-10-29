@@ -77,6 +77,10 @@ tenantRatings?.forEach((rating) => {
 				</span>
 			</a>
 			<nav class="flex flex-wrap items-center justify-end gap-2 text-sm font-bold">
+				<button id="tenantMenuButton" type="button" aria-controls="tenantSidebar" aria-expanded="false" aria-label="Buka menu kantin" class="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-2 transition hover:bg-white/10 lg:hidden">
+					<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5"><path stroke-linecap="round" d="M4 6h16M4 12h16M4 18h16" /></svg>
+					<span>Menu kantin</span>
+				</button>
 				<a href="/cek-pesanan" class="rounded-full border border-white/15 bg-white/5 px-4 py-2 hover:bg-white/10">Cek Pesanan</a>
 				<a href="/tenant/login" class="rounded-full border border-white/15 bg-white/5 px-4 py-2 hover:bg-white/10">Login Tenant</a>
 			</nav>
@@ -95,10 +99,31 @@ tenantRatings?.forEach((rating) => {
 			<div class="hero-decoration" aria-hidden="true"><span>🍜</span><span>🥤</span><span>🍱</span></div>
 		</section>
 
+		<section class="catalog-promo mt-6 overflow-hidden rounded-3xl border border-white/10 px-5 py-6 shadow-xl sm:px-9 sm:py-9" aria-labelledby="catalog-promo-heading">
+			<div class="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+				<div class="max-w-2xl">
+					<p class="text-xs font-extrabold uppercase tracking-[0.2em] text-amber-200">Praktis untuk hari sibuk</p>
+					<h2 id="catalog-promo-heading" class="mt-2 text-2xl font-black sm:text-3xl">Pesan dulu, nikmati waktu istirahatmu.</h2>
+					<p class="mt-2 text-sm leading-6 text-blue-100/70">Pilih menu favorit tanpa perlu login, lalu gunakan token untuk memantau status pesanan.</p>
+				</div>
+				<a href="/cek-pesanan" class="inline-flex w-full shrink-0 items-center justify-center rounded-xl border border-white/20 bg-white/10 px-5 py-3 text-sm font-extrabold transition hover:bg-white/15 sm:w-auto">
+					Cek status pesanan <span class="ml-2" aria-hidden="true">→</span>
+				</a>
+			</div>
+		</section>
+
 		<div class="mt-10 grid items-start gap-6 lg:grid-cols-[250px_minmax(0,1fr)]">
-			<aside class="tenant-sidebar glass rounded-3xl p-5 lg:sticky lg:top-5" aria-label="Navigasi kantin">
-				<p class="text-xs font-extrabold uppercase tracking-[0.2em] text-blue-200">Jelajahi</p>
-				<h2 class="mt-1 text-xl font-black">Cari kantin</h2>
+			<button id="tenantSidebarBackdrop" type="button" aria-label="Tutup menu kantin" class="fixed inset-0 z-40 hidden bg-slate-950/70 backdrop-blur-sm lg:hidden"></button>
+			<aside id="tenantSidebar" class="tenant-sidebar glass fixed inset-y-4 left-4 z-50 hidden w-[min(20rem,calc(100vw-2rem))] -translate-x-full overflow-y-auto rounded-3xl p-5 transition-transform duration-300 ease-out lg:sticky lg:top-5 lg:block lg:w-auto lg:translate-x-0 lg:overflow-visible" aria-label="Navigasi kantin">
+				<div class="flex items-start justify-between gap-3">
+					<div>
+						<p class="text-xs font-extrabold uppercase tracking-[0.2em] text-blue-200">Jelajahi</p>
+						<h2 class="mt-1 text-xl font-black">Cari kantin</h2>
+					</div>
+					<button id="tenantSidebarClose" type="button" aria-label="Tutup menu kantin" class="rounded-lg border border-white/15 p-2 text-blue-100 transition hover:bg-white/10 lg:hidden">
+						<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5"><path stroke-linecap="round" d="m6 6 12 12M18 6 6 18" /></svg>
+					</button>
+				</div>
 				<nav class="mt-5 grid grid-cols-2 gap-2 lg:grid-cols-1" aria-label="Filter tenant">
 					<button type="button" data-tenant-filter="all" aria-pressed="true" class="tenant-filter is-active rounded-xl px-3 py-2.5 text-left text-sm font-bold transition">Semua kantin <span class="float-right text-xs opacity-70">{tenants?.length ?? 0}</span></button>
 					<button type="button" data-tenant-filter="open" aria-pressed="false" class="tenant-filter rounded-xl px-3 py-2.5 text-left text-sm font-bold transition">Sedang buka <span id="openTenantCount" class="float-right text-xs opacity-70">{tenants?.filter((tenant) => tenant.status_buka).length ?? 0}</span></button>
@@ -209,19 +234,6 @@ tenantRatings?.forEach((rating) => {
 			</section>
 		</div>
 
-		<section class="catalog-promo mt-8 overflow-hidden rounded-3xl border border-white/10 px-6 py-7 shadow-xl sm:px-9 sm:py-9" aria-labelledby="catalog-promo-heading">
-			<div class="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
-				<div class="max-w-2xl">
-					<p class="text-xs font-extrabold uppercase tracking-[0.2em] text-amber-200">Praktis untuk hari sibuk</p>
-					<h2 id="catalog-promo-heading" class="mt-2 text-2xl font-black sm:text-3xl">Pesan dulu, nikmati waktu istirahatmu.</h2>
-					<p class="mt-2 text-sm leading-6 text-blue-100/70">Pilih menu favorit tanpa perlu login, lalu gunakan token untuk memantau status pesanan.</p>
-				</div>
-				<a href="/cek-pesanan" class="inline-flex shrink-0 items-center justify-center rounded-xl border border-white/20 bg-white/10 px-5 py-3 text-sm font-extrabold transition hover:bg-white/15">
-					Cek status pesanan <span class="ml-2" aria-hidden="true">→</span>
-				</a>
-			</div>
-		</section>
-
 		<footer class="py-8 text-center text-xs text-blue-100/50">
 			<p>SiKantin UYM · Pesan dulu, ambil tanpa antre.</p>
 		</footer>
@@ -234,11 +246,58 @@ tenantRatings?.forEach((rating) => {
 		const tenantCardGrid = document.getElementById('tenantCardGrid');
 		const tenantCount = document.getElementById('tenantCount');
 		const openTenantCount = document.getElementById('openTenantCount');
+		const tenantMenuButton = document.getElementById('tenantMenuButton');
+		const tenantSidebar = document.getElementById('tenantSidebar');
+		const tenantSidebarBackdrop = document.getElementById('tenantSidebarBackdrop');
+		const tenantSidebarClose = document.getElementById('tenantSidebarClose');
 		const tenantEmptyFilter = document.getElementById('tenantEmptyFilter');
 		const tenantRealtimeStatus = document.getElementById('tenantRealtimeStatus');
 		let activeTenantFilter = 'all';
 		let tenantStatusChannel;
 		const tenantStatusRevisions = new Map();
+
+		function closeTenantDrawer(restoreFocus = false) {
+			const wasOpen = tenantMenuButton.getAttribute('aria-expanded') === 'true';
+			tenantMenuButton.setAttribute('aria-expanded', 'false');
+			tenantSidebarBackdrop.classList.add('hidden');
+			document.body.classList.remove('overflow-hidden');
+			if (wasOpen && window.matchMedia('(max-width: 1023px)').matches) {
+				tenantSidebar.classList.add('-translate-x-full');
+			} else {
+				tenantSidebar.classList.add('hidden', '-translate-x-full');
+			}
+			if (restoreFocus && wasOpen) tenantMenuButton.focus();
+		}
+
+		tenantSidebar.addEventListener('transitionend', (event) => {
+			if (
+				event.target === tenantSidebar
+				&& event.propertyName === 'transform'
+				&& tenantMenuButton.getAttribute('aria-expanded') === 'false'
+			) {
+				tenantSidebar.classList.add('hidden');
+			}
+		});
+		tenantMenuButton.addEventListener('click', () => {
+			tenantSidebar.classList.remove('hidden');
+			tenantSidebarBackdrop.classList.remove('hidden');
+			tenantMenuButton.setAttribute('aria-expanded', 'true');
+			document.body.classList.add('overflow-hidden');
+			requestAnimationFrame(() => {
+				if (tenantMenuButton.getAttribute('aria-expanded') === 'true') {
+					tenantSidebar.classList.remove('-translate-x-full');
+				}
+			});
+			tenantSidebarClose.focus();
+		});
+		tenantSidebarClose.addEventListener('click', () => closeTenantDrawer(true));
+		tenantSidebarBackdrop.addEventListener('click', () => closeTenantDrawer(true));
+		document.addEventListener('keydown', (event) => {
+			if (event.key === 'Escape') closeTenantDrawer(true);
+		});
+		window.matchMedia('(min-width: 1024px)').addEventListener('change', (event) => {
+			if (event.matches) closeTenantDrawer();
+		});
 
 		function parseTenantOpenStatus(value) {
 			if (value === true || value === 1) return true;
@@ -313,6 +372,7 @@ tenantRatings?.forEach((rating) => {
 					filterButton.classList.toggle('is-active', active);
 					filterButton.setAttribute('aria-pressed', String(active));
 				});
+				closeTenantDrawer(true);
 			});
 		});
 
