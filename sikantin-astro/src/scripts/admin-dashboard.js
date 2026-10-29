@@ -254,7 +254,7 @@ function renderMenus() {
 async function loadAdminData() {
     const [profilesResult, tenantsResult, menusResult] = await Promise.all([
         db.from('profiles').select('id, nama, nim, no_telepon, peran').order('nama'),
-        db.from('tenants').select('id, nama_tenant, lokasi, jam_operasional, no_telepon, qris_image_url, pemilik_id, status_buka').order('nama_tenant'),
+        db.from('tenants').select('id, nama_tenant, lokasi, jam_operasional, jam_buka, jam_tutup, no_telepon, qris_image_url, pemilik_id, status_buka').order('nama_tenant'),
         db.from('menu_items').select('id, tenant_id, nama_menu, kategori, harga, waktu_persiapan, foto_url, tersedia, add_ons').order('nama_menu')
     ]);
 
@@ -378,6 +378,8 @@ function openTenantEdit(tenant) {
     document.getElementById('tenantName').value = tenant.nama_tenant || '';
     document.getElementById('tenantLocation').value = tenant.lokasi || '';
     document.getElementById('tenantHours').value = tenant.jam_operasional || '';
+    document.getElementById('tenantOpenTime').value = tenant.jam_buka || '';
+    document.getElementById('tenantCloseTime').value = tenant.jam_tutup || '';
     document.getElementById('tenantPhone').value = tenant.no_telepon || '';
     document.getElementById('tenantQrisHelp').textContent = tenant.qris_image_url
         ? 'QRIS sudah tersimpan. Pilih file baru jika ingin menggantinya.'
@@ -646,10 +648,21 @@ tenantForm.addEventListener('submit', async (event) => {
         const fields = {
             nama_tenant: String(values.get('nama_tenant') || '').trim(),
             lokasi: String(values.get('lokasi') || '').trim(),
-            jam_operasional: String(values.get('jam_operasional') || '').trim(),
             no_telepon: String(values.get('no_telepon') || '').trim(),
             pemilik_id: String(values.get('pemilik_id') || '')
         };
+        const jamBuka = String(values.get('jam_buka') || '').trim();
+        const jamTutup = String(values.get('jam_tutup') || '').trim();
+        if (Boolean(jamBuka) !== Boolean(jamTutup)) {
+            throw new Error('Isi jam buka dan jam tutup, atau kosongkan keduanya.');
+        }
+        if (jamBuka && jamBuka === jamTutup) {
+            throw new Error('Jam buka dan jam tutup tidak boleh sama.');
+        }
+        fields.jam_buka = jamBuka || null;
+        fields.jam_tutup = jamTutup || null;
+        fields.jam_operasional = jamBuka ? `${jamBuka} - ${jamTutup}` : '';
+        fields.override_until = null;
         let tenantId = id;
         if (id) {
             if (file) {

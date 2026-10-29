@@ -34,9 +34,10 @@ import '../styles/tenant-dashboard.css';
                 <div class="flex flex-col items-end gap-1">
                     <span id="connectionStatus" class="text-xs font-semibold text-slate-500">Menghubungkan realtime pesanan...</span>
                     <span id="tenantStatusRealtime" class="text-xs font-semibold text-slate-500">Menghubungkan realtime status kantin...</span>
+                    <span id="tenantScheduleInfo" class="text-right text-xs text-slate-500">Memuat jadwal operasional...</span>
                 </div>
                 <button id="tenantOpenStatus" type="button" disabled class="tenant-status-button disabled:cursor-wait disabled:opacity-60">
-                    <span class="status-dot"></span><span id="tenantOpenStatusLabel">Memuat status</span><span aria-hidden="true">⌄</span>
+                    <span class="status-dot"></span><span id="tenantOpenStatusLabel">Memuat status</span>
                 </button>
             </div>
         </section>
@@ -159,12 +160,36 @@ import '../styles/tenant-dashboard.css';
                 || (typeof status === 'string' && ['true', '1'].includes(status.trim().toLowerCase()));
         }
 
-        function setTenantOpenStatus(isOpen) {
+        function formatScheduleTime(value) {
+            return value ? value.slice(0, 5) : null;
+        }
+
+        function updateTenantScheduleInfo(tenant) {
+            const scheduleInfo = document.getElementById('tenantScheduleInfo');
+            const openTime = formatScheduleTime(tenant.jam_buka);
+            const closeTime = formatScheduleTime(tenant.jam_tutup);
+            if (openTime && closeTime) {
+                const overrideUntil = tenant.override_until
+                    ? new Intl.DateTimeFormat('id-ID', {
+                        timeZone: 'Asia/Jakarta',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hourCycle: 'h23'
+                    }).format(new Date(tenant.override_until))
+                    : null;
+                scheduleInfo.textContent = `Jadwal otomatis ${openTime}–${closeTime} WIB${overrideUntil ? ` · Override sampai ${overrideUntil} WIB` : ''}`;
+            } else {
+                scheduleInfo.textContent = 'Jadwal otomatis belum diatur admin.';
+            }
+        }
+
+        function setTenantOpenStatus(isOpen, tenant = {}) {
             tenantIsOpen = isTenantOpen(isOpen);
             const button = document.getElementById('tenantOpenStatus');
             button.classList.toggle('is-closed', !tenantIsOpen);
-            document.getElementById('tenantOpenStatusLabel').textContent = tenantIsOpen ? 'Tenant buka' : 'Tenant tutup';
-            button.setAttribute('aria-label', `Status tenant ${tenantIsOpen ? 'buka' : 'tutup'}. Klik untuk mengubah.`);
+            document.getElementById('tenantOpenStatusLabel').textContent = tenantIsOpen ? 'Tutup Manual' : 'Buka Manual';
+            button.setAttribute('aria-label', `${tenantIsOpen ? 'Tutup' : 'Buka'} kantin secara manual.`);
+            updateTenantScheduleInfo(tenant);
         }
 
         function setTenantDashboardUnavailable(statusLabel, connectionLabel, messageText, isError = true) {
@@ -191,7 +216,7 @@ import '../styles/tenant-dashboard.css';
                 }, (payload) => {
                     if (payload.new?.pemilik_id !== ownerId
                         || !Object.prototype.hasOwnProperty.call(payload.new, 'status_buka')) return;
-                    setTenantOpenStatus(payload.new.status_buka);
+                    setTenantOpenStatus(payload.new.status_buka, payload.new);
                 })
                 .subscribe((status, error) => {
                     document.getElementById('tenantStatusRealtime').textContent = status === 'SUBSCRIBED'
@@ -213,17 +238,37 @@ import '../styles/tenant-dashboard.css';
             const nextStatus = !tenantIsOpen;
             const button = document.getElementById('tenantOpenStatus');
             button.disabled = true;
-            const { error } = await db
-                .from('tenants')
-                .update({ status_buka: nextStatus })
-                .eq('id', activeTenantId);
+            const { error } = await db.rpc('set_tenant_manual_status', {
+                p_tenant_id: activeTenantId,
+                p_status_buka: nextStatus
+            });
             button.disabled = false;
             if (error) {
                 showMessage(`Status tenant gagal diperbarui: ${error.message}`, true);
                 return;
             }
-            setTenantOpenStatus(nextStatus);
-            showMessage(`Tenant sekarang ${nextStatus ? 'buka' : 'tutup'}.`, false);
+            const { data: tenant, error: tenantError } = await db
+                .from('tenants')
+                .select('jam_buka, jam_tutup, override_until')
+                .eq('id', activeTenantId)
+                .single();
+            if (tenantError) {
+                showMessage(`Status berubah, tetapi jadwal override gagal dimuat: ${tenantError.message}`, true);
+                return;
+            }
+            setTenantOpenStatus(nextStatus, { ...tenant, status_buka: nextStatus });
+            const overrideUntil = tenant.override_until
+                ? new Intl.DateTimeFormat('id-ID', {
+                    timeZone: 'Asia/Jakarta',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hourCycle: 'h23'
+                }).format(new Date(tenant.override_until))
+                : null;
+            showMessage(
+                `Tenant sekarang ${nextStatus ? 'buka' : 'tutup'} secara manual${overrideUntil ? ` sampai ${overrideUntil} WIB` : ' hingga jadwal otomatis dikonfigurasi'}.`,
+                false
+            );
         }
 
         function showTenantPanel(panel) {
@@ -559,7 +604,7 @@ import '../styles/tenant-dashboard.css';
             }
             const { data: tenant, error: tenantError } = await db
                 .from('tenants')
-                .select('id, nama_tenant, slug, status_buka')
+                .select('id, nama_tenant, slug, status_buka, jam_buka, jam_tutup, override_until')
                 .eq('pemilik_id', session.user.id)
                 .maybeSingle();
             if (tenantError) {
@@ -589,7 +634,7 @@ import '../styles/tenant-dashboard.css';
             }
             activeTenantId = tenant.id;
             document.getElementById('tenantName').textContent = tenant.nama_tenant;
-            setTenantOpenStatus(tenant.status_buka);
+            setTenantOpenStatus(tenant.status_buka, tenant);
             document.getElementById('tenantOpenStatus').disabled = false;
             subscribeToTenantStatus(session.user.id);
 

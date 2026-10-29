@@ -21,9 +21,6 @@ const { title } = Astro.props;
 						<span class="block text-[11px] text-slate-500">Portal Mahasiswa</span>
 					</span>
 				</a>
-				<button id="studentSidebarClose" type="button" aria-label="Tutup menu" class="rounded-lg p-2 text-slate-500 hover:bg-slate-100 md:hidden">
-					<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5"><path stroke-linecap="round" d="m6 6 12 12M18 6 6 18" /></svg>
-				</button>
 			</div>
 
 			<p class="mb-2 mt-9 px-3 text-[11px] font-extrabold uppercase tracking-[0.18em] text-slate-400">Menu utama</p>
@@ -52,7 +49,8 @@ const { title } = Astro.props;
 				<div class="flex min-h-[4.5rem] items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
 					<div class="flex min-w-0 items-center gap-3">
 						<button id="studentMenuButton" type="button" aria-controls="studentSidebar" aria-expanded="false" aria-label="Buka menu" class="inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-slate-200 bg-white p-2 text-slate-700 shadow-sm hover:bg-slate-50">
-							<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5"><path stroke-linecap="round" d="M4 6h16M4 12h16M4 18h16" /></svg>
+							<svg data-sidebar-icon="open" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5"><path stroke-linecap="round" d="M4 6h16M4 12h16M4 18h16" /></svg>
+							<svg data-sidebar-icon="close" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="hidden h-5 w-5"><path stroke-linecap="round" d="m6 6 12 12M18 6 6 18" /></svg>
 						</button>
 						<div class="min-w-0">
 							<p class="truncate text-sm font-extrabold text-slate-900">{title}</p>
@@ -60,10 +58,6 @@ const { title } = Astro.props;
 						</div>
 					</div>
 					<div class="relative flex items-center gap-2">
-						<button id="studentHeaderClose" type="button" aria-label="Tutup menu" class="inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-slate-200 bg-white p-2 text-slate-700 shadow-sm hover:bg-slate-50">
-							<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5"><path stroke-linecap="round" d="m6 6 12 12M18 6 6 18" /></svg>
-						</button>
-
 						<button id="studentProfileButton" type="button" aria-controls="studentProfileMenu" aria-expanded="false" class="flex items-center gap-2 rounded-full border border-slate-200 bg-white py-1.5 pl-1.5 pr-3 text-left transition hover:bg-slate-50">
 							<img id="studentAvatar" src={logo.src} data-avatar-fallback={logo.src} alt="" class="h-9 w-9 rounded-full bg-slate-100 object-cover" />
 							<span class="hidden min-w-0 sm:block">
@@ -90,10 +84,8 @@ const { title } = Astro.props;
 		import { db } from '../scripts/supabase.js';
 
 		const menuButton = document.getElementById('studentMenuButton');
-		const headerCloseButton = document.getElementById('studentHeaderClose');
 		const sidebar = document.getElementById('studentSidebar');
 		const backdrop = document.getElementById('studentSidebarBackdrop');
-		const sidebarCloseButton = document.getElementById('studentSidebarClose');
 		const profileButton = document.getElementById('studentProfileButton');
 		const profileMenu = document.getElementById('studentProfileMenu');
 		const shellMessage = document.getElementById('studentShellMessage');
@@ -150,11 +142,8 @@ const { title } = Astro.props;
 			setSidebarPosition(true);
 			menuButton.setAttribute('aria-expanded', 'true');
 			menuButton.setAttribute('aria-label', 'Tutup menu');
-			headerCloseButton.focus();
+			menuButton.focus();
 		});
-
-		if (headerCloseButton) headerCloseButton.addEventListener('click', () => closeSidebar(true));
-		if (sidebarCloseButton) sidebarCloseButton.addEventListener('click', () => closeSidebar(true));
 
 		backdrop.addEventListener('click', () => closeSidebar(true));
 		document.addEventListener('keydown', (event) => {
@@ -255,11 +244,20 @@ const { title } = Astro.props;
 				z-index: 60 !important;
 			}
 
-			#studentMenuButton,
-			#studentHeaderClose {
+			#studentMenuButton {
 				display: inline-flex !important;
 				visibility: visible !important;
 				opacity: 1 !important;
+			}
+
+			#studentMenuButton[aria-expanded='true'] [data-sidebar-icon='open'],
+			#studentMenuButton[aria-expanded='false'] [data-sidebar-icon='close'] {
+				display: none !important;
+			}
+
+			#studentMenuButton[aria-expanded='true'] [data-sidebar-icon='close'],
+			#studentMenuButton[aria-expanded='false'] [data-sidebar-icon='open'] {
+				display: block !important;
 			}
 
 			#studentSidebar {
@@ -303,8 +301,7 @@ const { title } = Astro.props;
 				display: none !important;
 			}
 
-			#studentMenuButton,
-			#studentHeaderClose {
+			#studentMenuButton {
 				display: inline-flex !important;
 			}
 		}

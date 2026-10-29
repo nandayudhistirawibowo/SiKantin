@@ -38,8 +38,6 @@ import StudentShell from '../../components/StudentShell.astro';
 		const profileButton = document.getElementById('studentProfileButton');
 		const profileMenu = document.getElementById('studentProfileMenu');
 		const sidebar = document.getElementById('studentSidebar');
-		const menuButton = document.getElementById('studentMenuButton');
-		const headerCloseButton = document.getElementById('studentHeaderClose');
 		const headerActions = profileButton.parentElement;
 		const favoriteIds = new Set();
 		let userId;
@@ -55,8 +53,6 @@ import StudentShell from '../../components/StudentShell.astro';
 		profileControl.append(profileButton, profileMenu);
 		sidebar.insertBefore(profileCard, sidebar.querySelector('nav'));
 		profileCard.classList.remove('hidden');
-		headerCloseButton.className = 'inline-flex shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white p-2 text-slate-700 shadow-sm transition hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600';
-		headerCloseButton.setAttribute('aria-label', 'Tutup sidebar');
 
 		function showError(text) {
 			message.textContent = text;
@@ -160,8 +156,7 @@ import StudentShell from '../../components/StudentShell.astro';
 				z-index: 60 !important;
 			}
 
-			:global(header #studentMenuButton),
-			:global(header #studentHeaderClose) {
+			:global(header #studentMenuButton) {
 				display: inline-flex !important;
 				visibility: visible !important;
 				opacity: 1 !important;

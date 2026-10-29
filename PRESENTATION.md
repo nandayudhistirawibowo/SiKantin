@@ -1,240 +1,98 @@
-# SiKantin — Panduan Presentasi dan Belajar
+# Panduan Presentasi SiKantin
 
-Dokumen ini menjelaskan tujuan aplikasi, struktur repository, alur data, fitur yang tersedia, dan cara menjalankan proyek. Gunakan bagian **Alur Demo** untuk presentasi singkat dan bagian **Peta Folder** sebagai panduan saat mulai membaca kode.
+Dokumen ini adalah panduan menyampaikan dan mendemonstrasikan produk. Spesifikasi kebutuhan ada di [PRD.md](./PRD.md), alur sistem di [FLOWCHART.md](./FLOWCHART.md), dan struktur data/RLS di [DATABASE.md](./DATABASE.md).
 
-## 1. Gambaran Proyek
+## Sasaran Presentasi
 
-SiKantin adalah aplikasi pemesanan makanan untuk lingkungan Universitas Yatsi Madani. Pengunjung dapat melihat tenant dan menu tanpa login, membuat pesanan guest dengan NIM dan nomor WhatsApp, lalu melacak status pesanan menggunakan token. Pemilik tenant mengelola pesanan dan status operasional melalui dashboard, sementara admin mengelola data tenant, pemilik, dan menu.
+Dalam 5–7 menit, tunjukkan masalah antrean dan informasi menu, peragakan pemesanan dari sisi mahasiswa dan tenant, lalu jelaskan bagaimana database, status realtime, dan WhatsApp mendukung proses. Gunakan akun demo dan data sintetis; jangan tampilkan kredensial, NIM, nomor pribadi, service-role key, ataupun sesi Baileys.
 
-Sumber data utama adalah Supabase. Aplikasi menggunakan Astro (server output dengan Vercel adapter) untuk halaman web, Supabase PostgreSQL untuk data, Supabase Realtime untuk pembaruan status, Storage untuk bukti transfer, dan Edge Functions untuk validasi serta pembuatan pesanan. Notifikasi WhatsApp berjalan melalui proses Node.js terpisah yang menggunakan Baileys.
+## Persiapan sebelum demo
 
-## 2. Peta Repository
+- Pastikan aplikasi dan koneksi Supabase aktif; gunakan akun mahasiswa, tenant, dan admin demo yang sudah disiapkan.
+- Pastikan ada tenant contoh yang buka, menu tersedia, QRIS demo, dan satu order untuk dilacak.
+- Untuk memperlihatkan notifikasi, pastikan gateway uji siap; jangan memulai/mengubah sesi WhatsApp saat presentasi.
+- Siapkan token order uji cadangan bila koneksi atau pengiriman pesan melambat.
+- Minta izin sebelum mengunggah bukti pembayaran; pakai gambar sintetis, bukan bukti transaksi asli.
 
-```text
-SiKantin V2/
-├── PRESENTATION.md                 # Panduan presentasi dan belajar ini
-├── .gitignore                      # Aturan file yang tidak boleh masuk Git
-├── .vscode/                        # Pengaturan dan konfigurasi editor
-├── index.js                        # Wrapper root yang meneruskan ke server/index.cjs
-├── wa-service.js                   # Wrapper root yang meneruskan ke server/wa-service.cjs
-├── favicon-uym.png                 # Favicon legacy/root
-├── logo-uym.png                    # Logo legacy/root
-├── package.json                    # Dependency kompatibilitas di root
-├── package-lock.json               # Lockfile dependency root
-├── css/
-│   └── style.css                   # Stylesheet frontend legacy/root
-├── js/
-│   ├── admin-dashboard.js          # Script dashboard admin legacy/root
-│   ├── app.js                      # Script frontend legacy/root
-│   ├── notification-sound.js       # Script audio legacy/root
-│   └── supabase.js                 # Klien Supabase legacy/root
-├── auth_info_baileys/              # Sesi WhatsApp lokal; jangan dibagikan atau di-commit
-├── sikantin-astro/                 # Aplikasi web Astro yang aktif
-│   ├── src/
-│   │   ├── assets/                 # Logo dan favicon
-│   │   ├── layouts/Layout.astro    # Kerangka HTML dan metadata bersama
-│   │   ├── lib/supabase-server.js  # Klien Supabase untuk rendering server
-│   │   ├── pages/
-│   │   │   ├── index.astro         # Beranda dan direktori tenant
-│   │   │   ├── tenant/[slug].astro # Katalog dan checkout tenant
-│   │   │   ├── tenant/[slug]/dashboard.astro # Route dashboard tenant berbasis slug
-│   │   │   ├── tenant/login.astro  # Login pemilik tenant
-│   │   │   ├── tenant-dashboard.astro
-│   │   │   ├── tenant-login.astro
-│   │   │   ├── cek-pesanan.astro  # Pelacakan pesanan dan rating tenant
-│   │   │   ├── admin/
-│   │   │   │   ├── dashboard.astro
-│   │   │   │   ├── index.astro
-│   │   │   │   └── login.astro
-│   │   │   ├── admin-dashboard.astro
-│   │   │   ├── dashboard.astro
-│   │   │   ├── login.astro
-│   │   │   └── profile.astro
-│   │   ├── scripts/
-│   │   │   ├── admin-dashboard.js
-│   │   │   ├── notification-sound.js
-│   │   │   └── supabase.js
-│   │   └── styles/                 # CSS global dan per halaman
-│   ├── database/
-│   │   └── mysql-schema.sql        # Referensi skema lama; bukan migrasi Supabase aktif
-│   ├── server/                     # Gateway Node.js/WhatsApp (Baileys)
-│   ├── .env.example                # Contoh konfigurasi, tanpa nilai rahasia aktif
-│   ├── astro.config.mjs            # Astro, Vercel adapter, Tailwind, dan redirect
-│   ├── package.json                # Dependency dan perintah aplikasi
-│   └── README.md                   # Petunjuk setup dan integrasi
-└── supabase/
-    ├── functions/
-    │   ├── create-guest-order/index.ts
-    │   ├── create-user/index.ts
-    │   ├── lookup-guest-order/index.ts
-    │   ├── manage-user/index.ts
-    │   └── validate-nim/index.ts
-    ├── migrations/                 # Perubahan skema database PostgreSQL
-    └── config.toml                 # Konfigurasi lokal Supabase Functions
-```
+## Alur demo langkah demi langkah
 
-`sikantin-astro/server/` berisi `env.cjs`, `index.cjs`, `lib/supabase.cjs`, `wa-service.cjs`, dan `wa.cjs`. Folder `node_modules/`, `.astro/`, `dist/`, dan `.vercel/` adalah hasil instalasi/build. Folder tersebut bukan sumber fitur dan tidak perlu diedit manual. `auth_info_baileys/` berisi kredensial sesi WhatsApp lokal, bukan materi presentasi untuk dibagikan.
+| Waktu | Langkah | Yang diperagakan | Kalimat kunci |
+|---|---|---|---|
+| 0:00–0:40 | Pembukaan dan beranda | Tunjukkan katalog tenant, lokasi, rating, dan badge buka/tutup. | “SiKantin memusatkan informasi kantin kampus dan membuat mahasiswa bisa melihat pilihan sebelum datang.” |
+| 0:40–1:20 | Katalog tenant | Buka tenant; cari/filter menu, harga, ketersediaan, dan add-on. | “Harga dan ketersediaan dibaca dari data tenant, bukan dipercayakan pada nilai yang dikirim browser.” |
+| 1:20–2:20 | Checkout guest | Pilih menu, isi data demo, jelaskan unggah bukti QRIS. | “Mahasiswa dapat memesan tanpa registrasi. Pembayaran QRIS tetap diperiksa manual oleh tenant.” |
+| 2:20–2:50 | Konfirmasi | Tunjukkan token pelacakan dan nomor antrean. Jangan membagikan token milik pengguna nyata. | “Token digunakan untuk melihat status; nomor antrean memudahkan urutan pengambilan.” |
+| 2:50–3:50 | Dashboard tenant | Buka order demo, tunjukkan bukti, verifikasi manual, lalu ubah status. | “Perubahan pesanan tersimpan di database, terlihat realtime, dan notifikasi WhatsApp adalah kanal tambahan.” |
+| 3:50–4:30 | Pelacakan pembeli | Buka halaman Cek Pesanan dengan token demo; tunjukkan perubahan status. | “Guest tetap dapat mengikuti status tanpa harus membuat akun.” |
+| 4:30–5:00 | Rating / mahasiswa login | Jika waktu ada, tunjukkan rating setelah selesai atau dashboard mahasiswa/favorit. | “Akun mahasiswa memberi riwayat, profil, dan favorit; checkout guest tetap tersedia.” |
+| 5:00–5:40 | Admin dan jadwal | Tunjukkan pengelolaan menu/tenant dan input jam buka/tutup. | “Jadwal dihitung pada WIB setiap menit. Tenant masih bisa override manual sampai batas jadwal berikutnya.” |
+| 5:40–6:00 | Penutup | Ringkas manfaat dan batasan. | “SiKantin menghubungkan katalog, pesanan, antrean, status, dan komunikasi dalam satu alur.” |
 
-### Route utama di `sikantin-astro/src/pages/`
+### Jalur demo singkat bila waktu terbatas
 
-| File | Route | Fungsi |
-|---|---|---|
-| `index.astro` | `/` | Direktori tenant, status buka/tutup, rating tenant, dan filter tenant. |
-| `tenant/[slug].astro` | `/tenant/<slug>` | Katalog tenant, keranjang, checkout guest, serta status buka/tutup realtime. |
-| `cek-pesanan.astro` | `/cek-pesanan` | Pencarian token, nomor antrean, status realtime, dan rating setelah pesanan selesai. |
-| `tenant-dashboard.astro` | `/tenant-dashboard` | Pesanan masuk, antrean, menu, riwayat, dan kontrol status kantin. |
-| `tenant/[slug]/dashboard.astro` | `/tenant/<slug>/dashboard` | Memastikan tenant tersedia berdasarkan slug, lalu me-rewrite ke dashboard tenant. |
-| `tenant-login.astro`, `tenant/login.astro` | `/tenant/login` | Halaman autentikasi pemilik tenant. |
-| `admin/login.astro` | `/admin/login` | Halaman autentikasi admin. |
-| `admin/dashboard.astro`, `admin-dashboard.astro` | `/admin/dashboard` dan route kompatibilitas | Dashboard pengelolaan admin. |
-| `login.astro`, `dashboard.astro`, `profile.astro` | Route kompatibilitas/profil | Halaman login, dashboard, dan profil yang masih ada dalam proyek. |
+Beranda → satu katalog → checkout/token demo (atau order yang sudah disiapkan) → dashboard tenant → Cek Pesanan. Jelaskan QRIS manual dan WhatsApp tanpa menunggu pesan sungguhan terkirim.
 
-Astro memetakan file di `src/pages` menjadi route. Kurung siku `[slug].astro` menandakan segmen URL dinamis: nama tenant dibaca dari URL, lalu datanya diambil dari database.
+## Poin penting untuk dosen/teman
 
-### CSS, script, dan komponen bersama
+- **Masalah yang dijawab:** pencarian menu/tenant, antrean, dan kurangnya visibilitas status.
+- **Alur guest:** akses langsung tanpa akun, dengan NIM/nomor kontak, token unik, dan nomor antrean.
+- **Integritas transaksi:** harga/menu diperiksa ulang server; frontend tidak menjadi sumber nilai final order.
+- **Pembayaran:** QRIS manual; gambar bukti bukan konfirmasi pembayaran otomatis.
+- **Operasional:** jadwal harian memakai zona waktu Asia/Jakarta; perubahan manual tenant berakhir pada batas jadwal selanjutnya.
+- **Realtime:** dashboard/katalog dapat mengikuti perubahan status tanpa reload manual.
+- **WhatsApp:** gateway terpisah dari web; jika pesan gagal, order yang sudah disimpan tetap ada.
+- **Keamanan:** role dan RLS memisahkan akses mahasiswa, pemilik, admin, dan guest; token order harus diperlakukan rahasia.
+- **Batasan yang terbuka:** belum ada kalender libur, payment gateway, atau verifikasi pembayaran oleh dashboard Admin.
 
-- `src/layouts/Layout.astro` membungkus halaman dengan struktur HTML dasar dan metadata SEO.
-- `src/styles/global.css` berisi gaya global; file CSS lain di `src/styles/` mengatur halaman atau fitur tertentu.
-- `src/scripts/supabase.js` menyediakan klien Supabase browser. `src/lib/supabase-server.js` menyediakan klien yang dipakai saat rendering server.
-- `src/scripts/notification-sound.js` mengatur audio notifikasi setelah interaksi pengguna.
-- Script yang berada di dalam file `.astro` menangani interaksi khusus halaman, misalnya filter katalog, keranjang, Realtime, dan dashboard.
-- Dashboard tenant memulai inisialisasi pada `DOMContentLoaded` (atau langsung jika dokumen sudah siap), memeriksa sesi/role, lalu memanggil `loadOrders()` dan memuat menu.
-- Beranda dan katalog tenant berlangganan ke `UPDATE` tabel `tenants`. Badge dan kontrol checkout mengikuti `status_buka` terbaru, termasuk snapshot awal setelah Realtime tersambung.
+## Q&A yang mungkin ditanyakan
 
-## 3. Backend Supabase dan Integrasi
+**Mengapa mahasiswa bisa checkout tanpa login?**
 
-### Edge Functions
+Supaya pemesanan tidak terhambat pembuatan akun. NIM dan nomor kontak tetap diminta; login menyediakan riwayat/favorit dan pengisian data otomatis.
 
-| Folder | Tanggung jawab |
+**Apakah unggah bukti QRIS langsung berarti lunas?**
+
+Tidak. Bukti hanya dikirim untuk diperiksa manual tenant. Sistem ini tidak terhubung ke payment gateway.
+
+**Bagaimana jika WhatsApp tidak terkirim?**
+
+Status kirim dilaporkan terpisah. Data order dan token disimpan di database, sehingga tenant/pembeli tetap dapat melanjutkan melalui dashboard dan halaman pelacakan.
+
+**Bagaimana tenant bisa menutup kantin lebih awal?**
+
+Tenant menekan kontrol Buka/Tutup Manual. Status manual dipertahankan sampai jadwal buka/tutup berikutnya; cron database lalu kembali menghitung status otomatis.
+
+**Apakah jadwal mendukung kantin yang buka melewati tengah malam?**
+
+Ya, jika jam tutup lebih awal daripada jam buka. Saat ini jadwal yang sama berulang setiap hari dan belum memiliki pengaturan hari libur.
+
+**Siapa yang memverifikasi pembayaran?**
+
+Saat ini pemilik tenant memeriksa bukti transfer pada dashboard tenant. Dashboard Admin mengelola pengguna/tenant/menu dan belum mempunyai tindakan verifikasi pembayaran.
+
+**Apakah nomor antrean global?**
+
+Tidak. Nomor bertambah untuk setiap tenant dalam satu tanggal WIB; hitungan mulai lagi pada tanggal berikutnya.
+
+**Data apa yang harus disiapkan untuk demo?**
+
+Akun demo per role, satu tenant/menu, bukti sintetis, dan token uji. Hindari data pribadi dan kredensial produksi.
+
+## Pembagian tugas tim
+
+| Peran | Tanggung jawab presentasi/proyek |
 |---|---|
-| `validate-nim/` | Memvalidasi NIM mahasiswa. |
-| `create-guest-order/` | Memvalidasi checkout, mengambil harga/menu yang sah dari database, membuat antrean dan pesanan, menyimpan detail, lalu mencoba notifikasi WhatsApp. |
-| `lookup-guest-order/` | Endpoint pencarian pesanan guest dengan token. Halaman cek pesanan juga memakai RPC database yang mengembalikan ringkasan pesanan. |
-| `create-user/` | Membantu pembuatan akun oleh admin. |
-| `manage-user/` | Operasi pengelolaan akun oleh admin. |
+| Founder / Product Lead | Membuka presentasi, menjelaskan masalah, target, prioritas, dan keputusan produk. |
+| Frontend | Mendemonstrasikan katalog, checkout, responsivitas, dashboard mahasiswa, dan aksesibilitas UI. |
+| Backend | Menjelaskan model data Supabase, Edge Functions, validasi harga/checkout, RLS, RPC, dan Realtime. |
+| Research | Menyampaikan kebutuhan pengguna, alur kampus, batasan QRIS manual, dan dasar keputusan UX. |
+| QA | Menjelaskan skenario uji guest/login/tenant, validasi input, jadwal/override, kasus gagal, dan hasil build. |
 
-`supabase/config.toml` menentukan apakah function memerlukan verifikasi JWT. Guest checkout dan validasi NIM menerima request guest dan harus melakukan validasi input di dalam function; operasi admin harus memeriksa autentikasi dan izin.
+## Referensi teknis untuk presenter
 
-### Migration penting
-
-Migration dijalankan berurutan dari `supabase/migrations/`. Di antaranya:
-
-- `20261027000000_role_based_rls.sql`: role, Row Level Security, dan kebijakan akses.
-- `20261027000001_enable_orders_realtime.sql` dan `20261027000004_enable_tenant_realtime.sql`: publikasi tabel pesanan dan tenant untuk Realtime.
-- `20261027000006_guest_checkout_slug.sql`: slug tenant, token pesanan, kebijakan akses guest, dan broadcast status pesanan.
-- `20261027000007_guest_transfer_proofs.sql`: penyimpanan bukti transfer.
-- `20261027000009_menu_addons.sql`: konfigurasi add-on.
-- `20261028000000_daily_order_queue.sql`: nomor antrean dan counter harian.
-- `20261029000000_menu_reviews.sql`: model rating menu versi awal.
-- `20261029000001_tenant_reviews.sql`: rating satu kali per pesanan/tenant, RPC submit/aggregasi, serta migrasi rating lama.
-- `20261029000003_restore_daily_queue_numbering.sql`: mengembalikan nomor antrean yang terus bertambah per tenant dan tanggal.
-
-Migration adalah perubahan skema yang perlu diterapkan ke proyek Supabase sebelum kode yang bergantung padanya dirilis. Jangan menganggap file migration sudah otomatis diterapkan hanya karena ada di repository.
-
-## 4. Alur Kerja Utama
-
-### Pesanan guest
-
-1. Pengunjung membuka `/`, memilih tenant yang buka, lalu membuka `/tenant/<slug>`.
-2. Halaman katalog memuat menu tersedia dan status tenant dari Supabase. Realtime tenant memperbarui badge buka/tutup, pesan penutupan, serta kemampuan checkout tanpa refresh.
-3. Pengunjung memilih item dan add-on, mengisi NIM serta nomor WhatsApp, kemudian mengunggah bukti pembayaran QRIS.
-4. Browser mengirim checkout ke `create-guest-order`. Function memvalidasi input dan harga berdasarkan database, memanggil `next_tenant_queue_number`, lalu menyimpan pesanan dan detailnya.
-5. Token acak menjadi kunci untuk melihat ringkasan pesanan di `/cek-pesanan`. Token diperlakukan sebagai rahasia pemilik pesanan.
-6. Tenant memperbarui status melalui dashboard. Pembeli menerima perubahan melalui Realtime; badge status dan stepper diperbarui tanpa refresh.
-7. Setelah pesanan `Selesai`, pembeli dapat mengirim satu rating bintang 1–5 untuk tenant. Nilai ini tersimpan pada `tenant_reviews` dan menjadi agregat rating di beranda serta katalog tenant.
-
-### Nomor antrean
-
-Counter antrean dicatat per tenant dan tanggal lokal Asia/Jakarta. Nomor bertambah terus sepanjang hari dan kembali ke `A-01` saat tanggal berganti.
-
-### Dashboard tenant
-
-Saat halaman dashboard siap, aplikasi memeriksa sesi dan role pemilik, memuat tenant, kemudian memuat pesanan dan menu pertama kali. Perubahan pada tabel `orders` memicu pemuatan ulang daftar dan ringkasan; perubahan status buka/tutup tenant memperbarui kontrol operasional. Kartu pesanan menampilkan nomor antrean.
-
-### WhatsApp
-
-Edge Function menghubungi gateway Node.js melalui URL HTTPS (umumnya tunnel ngrok). Gateway memvalidasi API key lalu meminta Baileys mengirim pesan melalui sesi WhatsApp. Gateway tidak menggantikan database: pesanan tetap disimpan walaupun notifikasi gagal.
-
-```text
-Browser
-  ├── Astro SSR dan halaman
-  └── Supabase client browser
-        ├── PostgreSQL / RLS / RPC
-        ├── Realtime (orders, tenants)
-        ├── Storage (bukti transfer)
-        └── Edge Functions
-              └── create-guest-order
-                    ├── database + nomor antrean
-                    └── HTTPS tunnel → Node.js Gateway → Baileys → WhatsApp
-```
-
-## 5. Alur Demo Presentasi
-
-1. **Beranda:** tunjukkan tenant, badge buka/tutup, rata-rata rating tenant, dan filter “Sedang buka”.
-2. **Katalog:** buka salah satu tenant, cari/filter menu, pilih jumlah dan add-on.
-3. **Checkout:** jelaskan validasi NIM, nomor WhatsApp, QRIS, dan upload bukti transfer. Jangan gunakan data pribadi nyata untuk demo.
-4. **Nomor antrean:** tunjukkan nomor dan token yang muncul setelah pesanan dibuat.
-5. **Dashboard tenant:** buka akun pemilik tenant, perlihatkan pesanan dan antrean, lalu ubah statusnya.
-6. **Cek pesanan:** masukkan token pada perangkat/tab pembeli. Tunjukkan badge dan stepper bergerak realtime.
-7. **Rating:** setelah status pesanan `Selesai`, kirim rating tenant dan jelaskan bahwa agregat ditampilkan di katalog.
-8. **Admin:** tunjukkan pengelolaan tenant, akun, dan menu tanpa membuka data rahasia.
-
-## 6. Menjalankan dan Memvalidasi
-
-Jalankan perintah dari folder `sikantin-astro/`:
-
-```powershell
-npm install
-npm run dev
-npm run build
-```
-
-Pastikan environment aplikasi memuat `PUBLIC_SUPABASE_URL` dan `PUBLIC_SUPABASE_ANON_KEY`. Jalankan migration yang diperlukan dan deploy Edge Functions ke proyek Supabase sebelum menguji alur penuh. Jangan pernah mengekspos service-role key, `WA_API_KEY`, atau isi sesi Baileys ke browser.
-
-Script gateway yang tersedia pada `sikantin-astro/package.json`:
-
-```powershell
-npm run wa:server
-npm run wa:tunnel
-```
-
-Gunakan tunnel HTTPS hanya untuk menghubungkan Supabase Edge Function dengan gateway lokal saat pengembangan. Jaga gateway tetap terikat ke localhost, dan jangan menjalankan dua proses yang memakai sesi Baileys sama secara bersamaan.
-
-## 7. Poin Belajar
-
-- **Astro routing:** file `.astro` di `src/pages` menjadi halaman; `[slug]` menerima parameter URL.
-- **Rendering server dan browser:** query katalog awal dapat dilakukan saat render server, sedangkan event klik dan Realtime dijalankan di browser.
-- **Supabase:** PostgreSQL menyimpan data, RLS mengatur siapa yang boleh membaca/menulis, RPC merangkum operasi database, Realtime mengirim perubahan, dan Storage menyimpan file.
-- **Validasi server:** browser tidak dipercaya untuk menentukan harga atau status izin. Edge Function memvalidasi detail checkout dari sumber data server.
-- **Asinkron:** query Supabase dan Realtime bekerja asinkron. Tampilkan status pemuatan/kegagalan dan lepaskan channel saat halaman ditinggalkan.
-- **Migrasi database:** perubahan skema perlu diberi nama, urutan, dan dokumentasi; frontend dan Edge Function harus memakai kontrak skema yang sama.
-- **Pemisahan integrasi:** kegagalan WhatsApp tidak seharusnya membatalkan pesanan yang telah tersimpan.
-
-## 8. Catatan Batasan dan Keamanan
-
-- QRIS diimplementasikan sebagai tampilan kode dan unggahan bukti; repository ini tidak menunjukkan payment gateway yang otomatis menyelesaikan pembayaran.
-- Token pesanan adalah bearer credential: siapa pun yang memilikinya dapat melihat ringkasan status pesanan tersebut. Jangan membagikannya secara publik.
-- Nomor WhatsApp gateway, service-role key, bukti transfer, serta sesi Baileys harus diperlakukan sebagai data sensitif.
-- `auth_info_baileys/` dan file environment berisi rahasia tidak boleh ikut dipresentasikan atau di-commit.
-- Fitur Realtime memerlukan tabel terdaftar pada publication `supabase_realtime`, kebijakan akses yang sesuai, dan koneksi Supabase yang valid.
-- `css/`, `js/`, `index.js`, dan `wa-service.js` pada root dipisahkan dari aplikasi Astro di `sikantin-astro/`; ketika mengubah fitur, pastikan file yang diedit memang jalur aplikasi yang sedang dipakai.
-
-## 9. FAQ Singkat
-
-**Mengapa mahasiswa tidak perlu login?**
-Katalog dan checkout guest dibuat agar pemesanan cepat. NIM tetap divalidasi sebelum pesanan diproses.
-
-**Mengapa perlu token untuk mengecek pesanan?**
-Token acak mengidentifikasi pesanan guest tanpa membuka daftar pesanan publik.
-
-**Apa yang terjadi jika WhatsApp tidak aktif?**
-Pesanan tetap tersimpan; respons checkout melaporkan notifikasi secara terpisah.
-
-**Bagaimana rating ditampilkan?**
-Satu rating per order diberikan setelah status `Selesai`. Database mengagregasi nilai tersebut per tenant.
-
-**Kapan nomor antrean kembali ke A-01?**
-Ketika semua pesanan dalam siklus antrean tenant pada hari itu berstatus `Selesai` atau `Dibatalkan`.
-
-**Apakah seluruh integrasi siap hanya dengan menjalankan `npm run dev`?**
-Tidak. Database harus memiliki migration yang sesuai, Edge Functions harus di-deploy, environment harus benar, dan gateway WhatsApp harus tersedia jika notifikasi WhatsApp ingin diuji.
+- Aplikasi Astro aktif: `sikantin-astro/`.
+- Migration database: `supabase/migrations/`.
+- Ringkasan kebutuhan: [PRD.md](./PRD.md).
+- Diagram proses: [FLOWCHART.md](./FLOWCHART.md).
+- Tabel, relasi, dan RLS: [DATABASE.md](./DATABASE.md).
+- Jalankan web dari `sikantin-astro/` dengan `npm run dev`; validasi produksi dengan `npm run build`.

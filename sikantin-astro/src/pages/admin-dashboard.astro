@@ -37,9 +37,9 @@ import '../styles/admin-dashboard.css';
             <main id="adminHome" class="mx-auto max-w-7xl space-y-7 p-4 sm:p-7">
                 <p id="message" role="status" aria-live="polite" class="hidden rounded-lg p-3 text-sm"></p>
                 <section class="grid gap-4 sm:grid-cols-3" aria-label="Ringkasan admin">
-                    <article class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"><p class="text-sm font-semibold text-slate-500">Mahasiswa terdaftar</p><p id="studentCount" class="mt-2 text-3xl font-extrabold text-blue-700">—</p></article>
-                    <article class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"><p class="text-sm font-semibold text-slate-500">Tenant terdaftar</p><p id="tenantCount" class="mt-2 text-3xl font-extrabold text-emerald-700">—</p></article>
-                    <article class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"><p class="text-sm font-semibold text-slate-500">Tenant buka</p><p id="openTenantCount" class="mt-2 text-3xl font-extrabold text-amber-600">—</p></article>
+                    <article class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md"><p class="text-sm font-semibold text-slate-500">Mahasiswa terdaftar</p><p id="studentCount" class="mt-2 text-3xl font-extrabold text-blue-700">—</p></article>
+                    <article class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md"><p class="text-sm font-semibold text-slate-500">Tenant terdaftar</p><p id="tenantCount" class="mt-2 text-3xl font-extrabold text-emerald-700">—</p></article>
+                    <article class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md"><p class="text-sm font-semibold text-slate-500">Tenant buka</p><p id="openTenantCount" class="mt-2 text-3xl font-extrabold text-amber-600">—</p></article>
                 </section>
 
                 <section id="studentsSection" class="scroll-mt-24 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
@@ -151,9 +151,19 @@ import '../styles/admin-dashboard.css';
             <label class="block text-sm font-bold" for="tenantLocation">Lokasi
                 <input id="tenantLocation" name="lokasi" maxlength="255" required class="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal">
             </label>
-            <label class="block text-sm font-bold" for="tenantHours">Jam operasional
-                <input id="tenantHours" name="jam_operasional" maxlength="120" placeholder="Contoh: 08.00–17.00" class="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal">
-            </label>
+            <fieldset class="space-y-2">
+                <legend class="text-sm font-bold">Jadwal buka otomatis (WIB)</legend>
+                <div class="grid grid-cols-2 gap-3">
+                    <label class="text-xs font-semibold text-slate-600" for="tenantOpenTime">Jam buka
+                        <input id="tenantOpenTime" name="jam_buka" type="time" class="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-normal text-slate-900">
+                    </label>
+                    <label class="text-xs font-semibold text-slate-600" for="tenantCloseTime">Jam tutup
+                        <input id="tenantCloseTime" name="jam_tutup" type="time" class="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-normal text-slate-900">
+                    </label>
+                </div>
+                <p class="text-xs font-normal text-slate-500">Kosongkan keduanya untuk menonaktifkan jadwal otomatis. Jam tutup boleh melewati tengah malam.</p>
+            </fieldset>
+            <input id="tenantHours" name="jam_operasional" type="hidden">
             <label class="block text-sm font-bold" for="tenantPhone">No. HP
                 <input id="tenantPhone" name="no_telepon" type="tel" maxlength="30" class="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal">
             </label>
