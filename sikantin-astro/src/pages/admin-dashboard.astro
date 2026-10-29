@@ -97,15 +97,18 @@ import '../styles/admin-dashboard.css';
             </div>
             <p id="modalMessage" role="status" aria-live="polite" class="hidden rounded-lg p-3 text-sm"></p>
             <label class="block text-sm font-bold">Role<select id="newUserRole" name="peran" required class="mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 font-normal"><option value="mahasiswa">Mahasiswa</option><option value="pemilik_tenant">Pemilik tenant</option></select></label>
+            <label id="newUserNameField" class="block text-sm font-bold" for="newUserName">Nama mahasiswa
+                <input id="newUserName" name="nama" maxlength="120" autocomplete="name" required class="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal">
+            </label>
             <label id="userIdentifierLabel" class="block text-sm font-bold" for="userIdentifier">NIM
                 <input id="userIdentifier" name="identifier" inputmode="numeric" pattern="[0-9]{6,20}" autocomplete="username" required class="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal">
             </label>
-            <p id="identifierHelp" class="-mt-2 text-xs text-slate-500">Login menggunakan NIM ini; email akun dibuat otomatis.</p>
+            <p id="identifierHelp" class="-mt-2 text-xs text-slate-500">Akun menggunakan NIM sebagai login. Link pengaturan password akan dikirim ke alamat NIM.</p>
             <label id="newUserPhoneField" class="hidden text-sm font-bold" for="newUserPhone">Nomor WhatsApp pemilik tenant
                 <input id="newUserPhone" name="no_telepon" type="tel" inputmode="numeric" autocomplete="tel" maxlength="16" pattern="628[0-9]{8,13}" placeholder="6281234567890" class="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal">
                 <span class="mt-1 block text-xs font-normal text-slate-500">Opsional. Gunakan format 628 tanpa tanda + atau spasi.</span>
             </label>
-            <label class="block text-sm font-bold" for="newUserPassword">Password
+            <label id="newUserPasswordField" class="block text-sm font-bold" for="newUserPassword">Password
                 <input id="newUserPassword" name="password" type="password" required minlength="8" maxlength="128" autocomplete="new-password" class="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal">
             </label>
             <div class="flex justify-end gap-2 pt-2">

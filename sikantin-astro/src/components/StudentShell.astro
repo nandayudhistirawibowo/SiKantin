@@ -213,6 +213,13 @@ const { title } = Astro.props;
 				window.location.replace(`/mahasiswa/login?redirect=${encodeURIComponent(window.location.pathname)}`);
 				return;
 			}
+			if (
+				session.user.user_metadata?.password_reset_required === true
+				&& window.location.pathname !== '/mahasiswa/update-password'
+			) {
+				window.location.replace('/mahasiswa/update-password?required=1');
+				return;
+			}
 
 			const { data: profile, error: profileError } = await db
 				.from('profiles')

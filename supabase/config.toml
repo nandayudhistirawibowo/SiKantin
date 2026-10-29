@@ -4,6 +4,9 @@ verify_jwt = true
 [functions.manage-user]
 verify_jwt = true
 
+[functions.admin-reset-password]
+verify_jwt = true
+
 [functions.validate-nim]
 verify_jwt = false
 

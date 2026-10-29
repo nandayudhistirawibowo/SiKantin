@@ -87,17 +87,18 @@ Deno.serve(async (request: Request): Promise<Response> => {
     return jsonResponse({ error: "Body permintaan tidak valid." }, 400);
   }
 
-  const password = typeof payload.password === "string" ? payload.password : "";
   const peran = payload.peran;
   const nim = typeof payload.nim === "string" ? payload.nim.trim() : "";
+  const submittedName = typeof payload.nama === "string" ? payload.nama.trim() : "";
+  const password = typeof payload.password === "string" ? payload.password : "";
   const submittedEmail = typeof payload.email === "string" ? payload.email.trim().toLowerCase() : "";
   const submittedPhone = typeof payload.no_telepon === "string" ? payload.no_telepon.trim() : "";
 
-  if (password.length < 8 || password.length > 128) {
-    return jsonResponse({ error: "Password harus berisi 8 sampai 128 karakter." }, 400);
-  }
   if (peran !== "mahasiswa" && peran !== "pemilik_tenant") {
     return jsonResponse({ error: "Role yang diizinkan hanya mahasiswa atau pemilik tenant." }, 400);
+  }
+  if (peran === "pemilik_tenant" && (password.length < 8 || password.length > 128)) {
+    return jsonResponse({ error: "Password harus berisi 8 sampai 128 karakter." }, 400);
   }
   if (peran === "pemilik_tenant" && submittedPhone && !/^628\d{8,13}$/.test(submittedPhone)) {
     return jsonResponse({ error: "Nomor WhatsApp harus memakai format 628 yang valid." }, 400);
@@ -108,8 +109,11 @@ Deno.serve(async (request: Request): Promise<Response> => {
     if (!/^\d{6,20}$/.test(nim)) {
       return jsonResponse({ error: "NIM harus berisi 6 sampai 20 digit." }, 400);
     }
+    if (!submittedName || submittedName.length > 120) {
+      return jsonResponse({ error: "Nama mahasiswa wajib diisi maksimal 120 karakter." }, 400);
+    }
     email = `${nim}@uym.ac.id`;
-    nama = `Mahasiswa ${nim}`;
+    nama = submittedName;
   } else {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(submittedEmail) || submittedEmail.length > 254) {
       return jsonResponse({ error: "Email tidak valid." }, 400);
@@ -120,9 +124,12 @@ Deno.serve(async (request: Request): Promise<Response> => {
 
   const { data: createdAuthUser, error: createAuthError } = await serviceClient.auth.admin.createUser({
     email,
-    password,
+    ...(peran === "pemilik_tenant" ? { password } : {}),
     email_confirm: true,
-    user_metadata: { full_name: nama },
+    user_metadata: {
+      full_name: nama,
+      ...(peran === "mahasiswa" ? { password_reset_required: true } : {}),
+    },
   });
   if (createAuthError || !createdAuthUser.user) {
     return jsonResponse({ error: `Gagal membuat akun Auth: ${createAuthError?.message || "User tidak dikembalikan."}` }, 400);
@@ -143,6 +150,20 @@ Deno.serve(async (request: Request): Promise<Response> => {
       error: `Gagal menyimpan profil: ${profileInsertError.message}`,
       ...(cleanupErrors.length ? { cleanup_errors: cleanupErrors } : {}),
     }, 500);
+  }
+
+  if (peran === "mahasiswa") {
+    const appSiteUrl = (Deno.env.get("APP_SITE_URL") || "https://sikantin.ndhistira.my.id").replace(/\/+$/, "");
+    const { error: passwordLinkError } = await authClient.auth.resetPasswordForEmail(email, {
+      redirectTo: `${appSiteUrl}/mahasiswa/update-password`,
+    });
+    if (passwordLinkError) {
+      const cleanupErrors = await rollbackUser(serviceClient, createdAuthUser.user.id);
+      return jsonResponse({
+        error: `Akun mahasiswa gagal diselesaikan karena link pengaturan password tidak dapat dikirim: ${passwordLinkError.message}`,
+        ...(cleanupErrors.length ? { cleanup_errors: cleanupErrors } : {}),
+      }, 502);
+    }
   }
 
   if (peran === "pemilik_tenant") {
@@ -167,7 +188,9 @@ Deno.serve(async (request: Request): Promise<Response> => {
   }
 
   return jsonResponse({
-    message: "User berhasil dibuat.",
+    message: peran === "mahasiswa"
+      ? "Mahasiswa berhasil didaftarkan. Link pengaturan password dikirim ke alamat NIM."
+      : "User berhasil dibuat.",
     user_id: createdAuthUser.user.id,
     peran,
   }, 201);

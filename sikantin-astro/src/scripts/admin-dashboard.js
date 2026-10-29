@@ -169,6 +169,9 @@ function renderUsers() {
         appendCell(row, profile.peran);
         appendActionCell(row, (actions) => {
             addButton(actions, 'Edit', () => openUserEdit(profile));
+            if (profile.peran === 'mahasiswa') {
+                addButton(actions, 'Reset Password', () => resetStudentPassword(profile), true);
+            }
             if (profile.peran !== 'admin' && profile.id !== adminUser.id) {
                 addButton(actions, 'Hapus', () => deleteUser(profile), true);
             }
@@ -328,16 +331,27 @@ function updateNewUserRoleFields() {
     const isTenant = document.getElementById('newUserRole').value === 'pemilik_tenant';
     const identifier = document.getElementById('userIdentifier');
     const phoneField = document.getElementById('newUserPhoneField');
+    const nameField = document.getElementById('newUserNameField');
+    const passwordField = document.getElementById('newUserPasswordField');
+    const passwordInput = document.getElementById('newUserPassword');
     document.getElementById('userIdentifierLabel').firstChild.textContent = isTenant ? 'Email' : 'NIM';
     document.getElementById('identifierHelp').textContent = isTenant
         ? 'Pemilik tenant login menggunakan email ini.'
-        : 'Login menggunakan NIM ini; email akun dibuat otomatis.';
+        : 'Akun menggunakan NIM sebagai login. Link pengaturan password akan dikirim ke alamat NIM.';
     identifier.type = isTenant ? 'email' : 'text';
     identifier.inputMode = isTenant ? 'email' : 'numeric';
     if (isTenant) identifier.removeAttribute('pattern');
     else identifier.pattern = '[0-9]{6,20}';
     identifier.placeholder = isTenant ? 'nama@email.com' : '';
     identifier.value = '';
+    nameField.classList.toggle('hidden', isTenant);
+    nameField.classList.toggle('block', !isTenant);
+    document.getElementById('newUserName').required = !isTenant;
+    passwordField.classList.toggle('hidden', !isTenant);
+    passwordField.classList.toggle('block', isTenant);
+    passwordInput.required = isTenant;
+    passwordInput.disabled = !isTenant;
+    passwordInput.value = '';
     phoneField.classList.toggle('hidden', !isTenant);
     phoneField.classList.toggle('block', isTenant);
     if (!isTenant) document.getElementById('newUserPhone').value = '';
@@ -504,6 +518,19 @@ async function deleteUser(profile) {
     await loadAdminData();
 }
 
+async function resetStudentPassword(profile) {
+    if (profile.peran !== 'mahasiswa') return;
+    if (!window.confirm(`Reset password ${profile.nama || profile.nim}? Password sementara akan ditampilkan dan wajib diganti saat login.`)) return;
+    const { data, error } = await db.functions.invoke('admin-reset-password', {
+        body: { user_id: profile.id }
+    });
+    if (error || data?.error) {
+        setMessage(message, `Reset password gagal: ${error?.message || data.error}`, true);
+        return;
+    }
+    setMessage(message, `Password sementara untuk ${profile.nama || profile.nim}: ${data.temporary_password}. Minta mahasiswa login dan segera menggantinya.`, false);
+}
+
 async function deleteTenant(tenant) {
     if (!window.confirm(`Hapus tenant "${tenant.nama_tenant}"? Tenant yang masih dipakai menu atau transaksi tidak dapat dihapus.`)) return;
     const { error } = await db.from('tenants').delete().eq('id', tenant.id);
@@ -579,11 +606,15 @@ createUserForm.addEventListener('submit', async (event) => {
     const formData = new FormData(createUserForm);
     const peran = formData.get('peran');
     const identifier = String(formData.get('identifier') || '').trim();
-    const body = { password: formData.get('password'), peran };
-    if (peran === 'mahasiswa') body.nim = identifier;
+    const body = { peran };
+    if (peran === 'mahasiswa') {
+        body.nim = identifier;
+        body.nama = String(formData.get('nama') || '').trim();
+    }
     else {
         body.email = identifier;
         body.no_telepon = String(formData.get('no_telepon') || '').trim();
+        body.password = formData.get('password');
     }
     const submitButton = document.getElementById('createUserSubmit');
     submitButton.disabled = true;

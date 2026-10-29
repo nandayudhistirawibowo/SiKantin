@@ -21,8 +21,11 @@ import logo from '../../assets/logo-uym.png';
 			</label>
 			<button id="studentLoginButton" type="submit" class="w-full rounded-xl bg-blue-500 px-4 py-3 font-extrabold text-white transition hover:bg-blue-400 disabled:cursor-wait disabled:opacity-60">Masuk ke Dashboard</button>
 		</form>
+		<div class="mt-4 text-center">
+			<a href="/mahasiswa/lupa-password" class="text-sm font-bold text-sky-300 underline-offset-4 hover:text-white hover:underline">Lupa Password? / Atur password pertama kali</a>
+		</div>
 		<p id="studentLoginMessage" role="status" aria-live="polite" class="mt-4 hidden rounded-xl p-3 text-sm"></p>
-		<p class="mt-6 text-center text-xs leading-5 text-blue-100/55">Gunakan password yang diberikan pengelola SiKantin. Setelah masuk, kamu bisa menggantinya di halaman profil.</p>
+		<p class="mt-6 text-center text-xs leading-5 text-blue-100/55">Masuk menggunakan NIM dan password. Jika belum pernah mengatur password, silakan atur password dulu lewat link yang dikirim ke email/NIM.</p>
 	</main>
 
 	<script>
@@ -55,6 +58,10 @@ import logo from '../../assets/logo-uym.png';
 					.single();
 				if (profileError) throw new Error(`Profil gagal dimuat: ${profileError.message}`);
 				if (profile.peran !== 'mahasiswa') throw new Error('Akun ini bukan akun mahasiswa.');
+				if (data.user.user_metadata?.password_reset_required === true) {
+					window.location.assign('/mahasiswa/update-password?required=1');
+					return;
+				}
 
 				const requestedPath = new URLSearchParams(window.location.search).get('redirect') || '';
 				const destination = requestedPath.startsWith('/mahasiswa/')
@@ -65,9 +72,10 @@ import logo from '../../assets/logo-uym.png';
 			} catch (error) {
 				const { error: signOutError } = await db.auth.signOut();
 				const errorMessage = error instanceof Error ? error.message : String(error);
+				const passwordHint = ' Silakan atur password dulu lewat link yang dikirim ke email/NIM. Gunakan tautan di bawah jika link belum diterima.';
 				showMessage(signOutError
-					? `${errorMessage} Sesi gagal ditutup: ${signOutError.message}`
-					: errorMessage, true);
+					? `${errorMessage} Sesi gagal ditutup: ${signOutError.message}${passwordHint}`
+					: `${errorMessage}${passwordHint}`, true);
 			} finally {
 				button.disabled = false;
 			}
