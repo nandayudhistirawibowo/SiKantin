@@ -540,6 +540,18 @@ const menuCategories = [...new Set((menuItems ?? []).map((item) => item.kategori
       }
     }
 
+    function setCartQuantity(item, input) {
+      if (guestCart.get(item.key) !== item) return;
+      const parsedQuantity = Number(input.value);
+      const quantity = Number.isFinite(parsedQuantity)
+        ? Math.min(50, Math.max(1, Math.trunc(parsedQuantity)))
+        : 1;
+      input.value = String(quantity);
+      if (item.quantity === quantity) return;
+      item.quantity = quantity;
+      renderCart();
+    }
+
     function renderCart() {
       cartList.replaceChildren();
       if (!guestCart.size) {
@@ -559,7 +571,7 @@ const menuCategories = [...new Set((menuItems ?? []).map((item) => item.kategori
         details.className = 'min-w-0 flex-1';
         const description = document.createElement('span');
         description.className = 'block font-semibold text-slate-700';
-        description.textContent = `${item.name} × ${item.quantity}`;
+        description.textContent = item.name;
         details.append(description);
         if (item.addons.length) {
           const addonNames = document.createElement('span');
@@ -567,6 +579,35 @@ const menuCategories = [...new Set((menuItems ?? []).map((item) => item.kategori
           addonNames.textContent = `+ ${item.addons.map((addon) => addon.name).join(', ')}`;
           details.append(addonNames);
         }
+        const quantityControls = document.createElement('span');
+        quantityControls.className = 'mt-2 flex items-center gap-1';
+        const decrement = document.createElement('button');
+        decrement.type = 'button';
+        decrement.className = 'rounded border border-slate-300 px-2 py-1 font-bold text-slate-700 transition hover:bg-slate-100';
+        decrement.textContent = '−';
+        decrement.setAttribute('aria-label', `Kurangi ${item.name}`);
+        decrement.addEventListener('click', () => {
+          if (item.quantity <= 1) guestCart.delete(item.key);
+          else item.quantity -= 1;
+          renderCart();
+        });
+        const quantityInput = document.createElement('input');
+        quantityInput.type = 'number';
+        quantityInput.min = '1';
+        quantityInput.max = '50';
+        quantityInput.step = '1';
+        quantityInput.value = String(item.quantity);
+        quantityInput.className = 'w-16 rounded border border-slate-300 px-2 py-1 text-center font-semibold text-slate-900';
+        quantityInput.setAttribute('aria-label', `Jumlah ${item.name}`);
+        quantityInput.addEventListener('change', () => setCartQuantity(item, quantityInput));
+        quantityInput.addEventListener('keydown', (event) => {
+          if (event.key === 'Enter') {
+            event.preventDefault();
+            setCartQuantity(item, quantityInput);
+          }
+        });
+        quantityControls.append(decrement, quantityInput);
+        details.append(quantityControls);
         const controls = document.createElement('span');
         controls.className = 'flex items-center gap-1';
         const price = document.createElement('span');
@@ -581,16 +622,7 @@ const menuCategories = [...new Set((menuItems ?? []).map((item) => item.kategori
           guestCart.delete(item.key);
           renderCart();
         });
-        const add = document.createElement('button');
-        add.type = 'button';
-        add.className = 'rounded px-2 py-1 text-blue-700 hover:bg-blue-50';
-        add.textContent = '+';
-        add.setAttribute('aria-label', `Tambah ${item.name}`);
-        add.addEventListener('click', () => {
-          if (item.quantity < 50) item.quantity += 1;
-          renderCart();
-        });
-        controls.append(price, remove, add);
+        controls.append(price, remove);
         row.append(details, controls);
         cartList.append(row);
       }
