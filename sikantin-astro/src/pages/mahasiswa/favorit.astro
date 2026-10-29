@@ -1,0 +1,103 @@
+---
+import StudentShell from '../../components/StudentShell.astro';
+---
+
+<StudentShell title="Favorit Saya">
+	<section class="mb-6">
+		<p class="text-xs font-extrabold uppercase tracking-[0.16em] text-blue-700">Kantin pilihan</p>
+		<h1 class="mt-1 text-2xl font-black text-slate-900">Favorit Saya</h1>
+		<p class="mt-2 text-sm text-slate-500">Kantin yang kamu simpan supaya mudah ditemukan lagi.</p>
+	</section>
+	<p id="favoritePageMessage" role="status" aria-live="polite" class="mb-4 hidden rounded-xl p-4 text-sm"></p>
+	<div id="favoriteTenantGrid" class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+		<div class="rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-500">Memuat favorit...</div>
+	</div>
+
+	<script>
+		import { db } from '../../scripts/supabase.js';
+
+		const grid = document.getElementById('favoriteTenantGrid');
+		const message = document.getElementById('favoritePageMessage');
+		let userId;
+		let tenants = [];
+
+		function showMessage(text, isError = true) {
+			message.textContent = text;
+			message.className = `mb-4 rounded-xl p-4 text-sm ${isError ? 'border border-rose-200 bg-rose-50 text-rose-700' : 'border border-emerald-200 bg-emerald-50 text-emerald-700'}`;
+		}
+
+		function render() {
+			grid.replaceChildren();
+			if (!tenants.length) {
+				const empty = document.createElement('section');
+				empty.className = 'rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center sm:col-span-2 xl:col-span-3';
+				empty.innerHTML = '<p class="font-bold text-slate-800">Belum ada kantin favorit</p><p class="mt-2 text-sm text-slate-500">Jelajahi daftar kantin dan tekan ikon hati untuk menyimpannya.</p><a href="/mahasiswa/dashboard" class="mt-4 inline-flex rounded-lg bg-blue-700 px-4 py-2 text-sm font-bold text-white">Jelajahi kantin</a>';
+				grid.append(empty);
+				return;
+			}
+
+			tenants.forEach((tenant) => {
+				const card = document.createElement('article');
+				card.className = 'rounded-2xl border border-slate-200 bg-white p-5 shadow-sm';
+				const heading = document.createElement('div');
+				heading.className = 'flex items-start justify-between gap-3';
+				const details = document.createElement('div');
+				const name = document.createElement('h2');
+				name.className = 'font-extrabold text-slate-900';
+				name.textContent = tenant.nama_tenant;
+				const location = document.createElement('p');
+				location.className = 'mt-1 text-sm text-slate-500';
+				location.textContent = tenant.lokasi || 'Lokasi belum diisi';
+				details.append(name, location);
+				const remove = document.createElement('button');
+				remove.type = 'button';
+				remove.className = 'rounded-full border border-rose-100 px-3 py-1.5 text-sm font-bold text-rose-700 hover:bg-rose-50';
+				remove.textContent = '♥';
+				remove.setAttribute('aria-label', `Hapus ${tenant.nama_tenant} dari favorit`);
+				remove.addEventListener('click', async () => {
+					remove.disabled = true;
+					const { error } = await db.from('favorites').delete().eq('user_id', userId).eq('tenant_id', tenant.id);
+					if (error) {
+						showMessage(`Favorit gagal dihapus: ${error.message}`);
+						remove.disabled = false;
+						return;
+					}
+					tenants = tenants.filter((item) => item.id !== tenant.id);
+					showMessage('Kantin dihapus dari favorit.', false);
+					render();
+				});
+				heading.append(details, remove);
+				const visit = document.createElement('a');
+				visit.href = `/tenant/${encodeURIComponent(tenant.slug)}`;
+				visit.className = 'mt-5 flex justify-center rounded-xl bg-blue-700 px-4 py-3 text-sm font-extrabold text-white hover:bg-blue-800';
+				visit.textContent = 'Lihat menu & pesan →';
+				card.append(heading, visit);
+				grid.append(card);
+			});
+		}
+
+		async function initializeFavorites() {
+			const { data: { session }, error: sessionError } = await db.auth.getSession();
+			if (sessionError) throw new Error(`Sesi gagal diperiksa: ${sessionError.message}`);
+			if (!session) return;
+			userId = session.user.id;
+			const { data: favorites, error: favoritesError } = await db.from('favorites').select('tenant_id').eq('user_id', userId);
+			if (favoritesError) throw new Error(`Favorit gagal dimuat: ${favoritesError.message}`);
+			const ids = favorites.map((favorite) => favorite.tenant_id);
+			if (!ids.length) {
+				tenants = [];
+				render();
+				return;
+			}
+			const { data, error } = await db.from('tenants').select('id, nama_tenant, slug, lokasi').in('id', ids).order('nama_tenant');
+			if (error) throw new Error(`Daftar kantin favorit gagal dimuat: ${error.message}`);
+			tenants = data || [];
+			render();
+		}
+
+		initializeFavorites().catch((error) => {
+			showMessage(error.message || String(error));
+			grid.replaceChildren();
+		});
+	</script>
+</StudentShell>

@@ -1,0 +1,254 @@
+---
+import StudentShell from '../../components/StudentShell.astro';
+---
+
+<StudentShell title="Beranda">
+	<section id="dashboardStudentProfileCard" class="hidden rounded-2xl border border-slate-200 bg-slate-50 p-4" aria-label="Profil mahasiswa">
+		<div id="dashboardProfileControl" class="relative"></div>
+	</section>
+
+	<section class="overflow-hidden rounded-3xl bg-gradient-to-br from-blue-800 via-blue-700 to-indigo-800 p-6 text-white shadow-lg sm:p-9">
+		<p class="text-xs font-extrabold uppercase tracking-[0.2em] text-blue-200">Portal mahasiswa</p>
+		<h1 id="studentGreetingName" class="mt-3 truncate text-3xl font-black sm:text-4xl">Nama Mahasiswa</h1>
+		<p class="mt-3 max-w-2xl text-sm leading-6 text-blue-100/80">Mau makan apa hari ini? Temukan kantin favoritmu, pesan lebih awal, dan nikmati waktu istirahat tanpa terburu-buru.</p>
+		<a href="#dashboardTenantGrid" class="mt-6 inline-flex rounded-xl bg-white px-5 py-3 text-sm font-extrabold text-blue-800 transition hover:bg-blue-50">Pilih kantin <span class="ml-2" aria-hidden="true">↓</span></a>
+	</section>
+
+	<section class="mt-8" aria-labelledby="dashboardTenantHeading">
+		<div class="mb-4 flex flex-wrap items-end justify-between gap-3">
+			<div>
+				<p class="text-xs font-extrabold uppercase tracking-[0.16em] text-blue-700">Jelajahi</p>
+				<h2 id="dashboardTenantHeading" class="mt-1 text-xl font-black text-slate-900">Pilih kantin</h2>
+			</div>
+			<a href="/mahasiswa/favorit" class="text-sm font-bold text-blue-700 hover:underline">Kelola favorit →</a>
+		</div>
+		<p id="dashboardTenantMessage" role="status" aria-live="polite" class="mb-4 hidden rounded-xl p-4 text-sm"></p>
+		<div id="dashboardTenantGrid" class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+			<div class="rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-500">Memuat daftar kantin...</div>
+		</div>
+	</section>
+
+	<script>
+		import { db } from '../../scripts/supabase.js';
+
+		const grid = document.getElementById('dashboardTenantGrid');
+		const message = document.getElementById('dashboardTenantMessage');
+		const profileCard = document.getElementById('dashboardStudentProfileCard');
+		const profileControl = document.getElementById('dashboardProfileControl');
+		const profileButton = document.getElementById('studentProfileButton');
+		const profileMenu = document.getElementById('studentProfileMenu');
+		const sidebar = document.getElementById('studentSidebar');
+		const menuButton = document.getElementById('studentMenuButton');
+		const headerCloseButton = document.getElementById('studentHeaderClose');
+		const headerActions = profileButton.parentElement;
+		const favoriteIds = new Set();
+		let userId;
+		let tenants = [];
+
+		headerActions.className = 'relative flex items-center gap-2';
+		profileButton.className = 'flex w-full items-center gap-3 rounded-xl border-0 bg-transparent p-0 text-left transition hover:bg-transparent';
+		profileButton.querySelector('span').className = 'block min-w-0 flex-1';
+		profileButton.querySelector('span > span:first-child').classList.add('truncate');
+		profileButton.querySelector('span > span:last-child').textContent = 'Mahasiswa';
+		profileButton.querySelector('[aria-hidden="true"]').classList.add('ml-auto');
+		profileMenu.classList.add('left-0', 'right-auto', 'w-full');
+		profileControl.append(profileButton, profileMenu);
+		sidebar.insertBefore(profileCard, sidebar.querySelector('nav'));
+		profileCard.classList.remove('hidden');
+		headerCloseButton.className = 'inline-flex shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white p-2 text-slate-700 shadow-sm transition hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600';
+		headerCloseButton.setAttribute('aria-label', 'Tutup sidebar');
+
+		function showError(text) {
+			message.textContent = text;
+			message.className = 'mb-4 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700';
+		}
+
+		function makeTenantCard(tenant) {
+			const card = document.createElement('article');
+			card.className = 'rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md';
+			const top = document.createElement('div');
+			top.className = 'flex items-start justify-between gap-3';
+			const details = document.createElement('div');
+			const name = document.createElement('h3');
+			name.className = 'font-extrabold text-slate-900';
+			name.textContent = tenant.nama_tenant;
+			const location = document.createElement('p');
+			location.className = 'mt-1 text-sm text-slate-500';
+			location.textContent = tenant.lokasi || 'Lokasi belum diisi';
+			const status = document.createElement('span');
+			const isOpen = tenant.status_buka === true;
+			status.className = `mt-3 inline-flex rounded-full px-2.5 py-1 text-xs font-bold ${isOpen ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600'}`;
+			status.textContent = isOpen ? 'Sedang buka' : 'Sedang tutup';
+			details.append(name, location, status);
+
+			const favoriteButton = document.createElement('button');
+			favoriteButton.type = 'button';
+			favoriteButton.className = 'shrink-0 rounded-full border border-slate-200 p-2 text-xl leading-none transition hover:bg-rose-50';
+			favoriteButton.setAttribute('aria-label', `${favoriteIds.has(tenant.id) ? 'Hapus dari' : 'Tambah ke'} favorit ${tenant.nama_tenant}`);
+			favoriteButton.setAttribute('aria-pressed', String(favoriteIds.has(tenant.id)));
+			favoriteButton.textContent = favoriteIds.has(tenant.id) ? '♥' : '♡';
+			favoriteButton.addEventListener('click', async () => {
+				favoriteButton.disabled = true;
+				try {
+					if (favoriteIds.has(tenant.id)) {
+						const { error } = await db.from('favorites').delete().eq('user_id', userId).eq('tenant_id', tenant.id);
+						if (error) throw error;
+						favoriteIds.delete(tenant.id);
+					} else {
+						const { error } = await db.from('favorites').insert({ user_id: userId, tenant_id: tenant.id });
+						if (error) throw error;
+						favoriteIds.add(tenant.id);
+					}
+					render();
+				} catch (error) {
+					showError(`Favorit gagal diperbarui: ${error.message || error}`);
+					favoriteButton.disabled = false;
+				}
+			});
+			top.append(details, favoriteButton);
+			const visit = document.createElement('a');
+			visit.href = `/tenant/${encodeURIComponent(tenant.slug)}`;
+			visit.className = 'mt-5 flex items-center justify-center rounded-xl bg-blue-700 px-4 py-3 text-sm font-extrabold text-white transition hover:bg-blue-800';
+			visit.textContent = 'Lihat menu & pesan →';
+			card.append(top, visit);
+			return card;
+		}
+
+		function render() {
+			grid.replaceChildren(...tenants.map(makeTenantCard));
+			if (!tenants.length) {
+				const empty = document.createElement('p');
+				empty.className = 'rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-500 sm:col-span-2 xl:col-span-3';
+				empty.textContent = 'Belum ada kantin yang tersedia.';
+				grid.append(empty);
+			}
+		}
+
+		async function initializeDashboard() {
+			const { data: { session }, error: sessionError } = await db.auth.getSession();
+			if (sessionError) throw new Error(`Sesi gagal diperiksa: ${sessionError.message}`);
+			if (!session) return;
+			userId = session.user.id;
+
+			const [{ data: profile, error: profileError }, { data: tenantRows, error: tenantError }, { data: favorites, error: favoriteError }] = await Promise.all([
+				db.from('profiles').select('nama, avatar_url').eq('id', userId).single(),
+				db.from('tenants').select('id, nama_tenant, slug, lokasi, status_buka').order('nama_tenant'),
+				db.from('favorites').select('tenant_id').eq('user_id', userId),
+			]);
+			if (profileError) throw new Error(`Profil gagal dimuat: ${profileError.message}`);
+			if (tenantError) throw new Error(`Daftar kantin gagal dimuat: ${tenantError.message}`);
+			if (favoriteError) throw new Error(`Favorit gagal dimuat: ${favoriteError.message}`);
+			const studentName = profile.nama?.trim() || 'Mahasiswa';
+			document.getElementById('studentGreetingName').textContent = studentName;
+			document.getElementById('studentName').textContent = studentName;
+			const avatar = document.getElementById('studentAvatar');
+			avatar.src = profile.avatar_url || avatar.dataset.avatarFallback;
+			tenants = tenantRows || [];
+			favorites.forEach((favorite) => favoriteIds.add(favorite.tenant_id));
+			render();
+		}
+
+		initializeDashboard().catch((error) => {
+			showError(error.message || String(error));
+			grid.replaceChildren();
+		});
+	</script>
+
+	<style>
+		@media (max-width: 1023px) {
+			:global(header) {
+				z-index: 60 !important;
+			}
+
+			:global(header #studentMenuButton),
+			:global(header #studentHeaderClose) {
+				display: inline-flex !important;
+				visibility: visible !important;
+				opacity: 1 !important;
+				position: relative;
+				z-index: 61 !important;
+				min-width: 2.75rem;
+				min-height: 2.75rem;
+			}
+
+			:global(#studentSidebar) {
+				position: fixed !important;
+				inset: 0 auto 0 0 !important;
+				z-index: 50 !important;
+				display: flex !important;
+				width: min(18rem, calc(100vw - 4rem)) !important;
+				height: 100dvh !important;
+				transform: translateX(-100%) !important;
+				translate: none !important;
+			}
+
+			:global(#studentSidebar.hidden) {
+				display: none !important;
+			}
+
+			:global(#studentSidebar:not(.hidden):not(.student-sidebar-closed)) {
+				transform: translateX(0) !important;
+			}
+
+			:global(#studentSidebar.student-sidebar-closed) {
+				transform: translateX(-100%) !important;
+			}
+
+			:global(#studentSidebarBackdrop:not(.hidden)) {
+				display: block !important;
+				z-index: 20 !important;
+			}
+		}
+
+		@media (min-width: 1024px) {
+			:global(#studentSidebar) {
+				display: flex !important;
+				position: sticky !important;
+				height: 100vh !important;
+				transform: none !important;
+				translate: none !important;
+			}
+
+			:global(#studentSidebar.student-sidebar-collapsed) {
+				display: none !important;
+			}
+		}
+
+		:global(header #studentProfileButton) {
+			display: none !important;
+		}
+
+		:global(#dashboardProfileControl #studentProfileButton) {
+			display: flex !important;
+		}
+
+		:global(#dashboardProfileControl #studentProfileButton > img) {
+			width: 2.5rem;
+			height: 2.5rem;
+			flex: 0 0 2.5rem;
+		}
+
+		:global(#dashboardProfileControl #studentProfileButton > span > span:first-child) {
+			display: block;
+			min-width: 0;
+			max-width: 10rem;
+			overflow: hidden;
+			font-size: 0.875rem;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+		}
+
+		:global(#dashboardProfileControl #studentProfileButton > span > span:last-child) {
+			margin-top: 0.125rem;
+			font-size: 0.75rem;
+		}
+
+		:global(#dashboardProfileControl #studentProfileButton > span[aria-hidden="true"]) {
+			margin-left: auto;
+		}
+
+		:global(#dashboardProfileControl #studentProfileMenu) {
+			top: calc(100% + 0.5rem);
+		}
+	</style>
+</StudentShell>

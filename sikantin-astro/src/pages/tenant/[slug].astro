@@ -241,13 +241,34 @@ const menuCategories = [...new Set((menuItems ?? []).map((item) => item.kategori
               <span>Total</span><span id="guestCartTotal">Rp 0</span>
             </div>
             <p id="tenantClosedMessage" class:list={['mt-4 rounded-lg bg-amber-50 p-3 text-xs font-semibold text-amber-800', tenant.status_buka ? 'hidden' : '']}>Tenant sedang tutup. Pesanan baru belum dapat dibuat.</p>
-            <form id="guestCheckoutForm" data-tenant-open={tenant.status_buka ? 'true' : 'false'} class="mt-5 space-y-4">
-              <label class="block text-sm font-bold text-slate-700" for="guestNim">
+            <form id="guestCheckoutForm" data-tenant-id={tenant.id} data-tenant-open={tenant.status_buka ? 'true' : 'false'} class="mt-5 space-y-4">
+              <div id="studentCheckoutInfo" role="status" aria-live="polite" class="hidden rounded-xl border border-blue-200 bg-blue-50 p-3 text-sm text-blue-900"></div>
+              <section id="studentCheckoutProfileCard" class="hidden rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50 to-white p-4 shadow-sm sm:p-5" aria-label="Profil checkout">
+                <div class="mb-4 flex items-center justify-between gap-2">
+                  <div>
+                    <p class="text-[11px] font-extrabold uppercase tracking-[0.16em] text-emerald-700">Checkout Mahasiswa</p>
+                    <p class="mt-1 text-xs text-slate-500">Data terhubung ke profil kamu</p>
+                  </div>
+                  <span class="rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-bold text-emerald-800">Login</span>
+                </div>
+                <div class="flex min-w-0 items-center gap-3">
+                  <img id="checkoutStudentAvatar" src="" alt="" class="h-12 w-12 rounded-full bg-white object-cover" />
+                  <div class="min-w-0">
+                    <p id="checkoutStudentName" class="truncate font-extrabold text-slate-900"></p>
+                    <p id="checkoutStudentPhone" class="mt-0.5 text-sm text-slate-600"></p>
+                  </div>
+                </div>
+                <p class="mt-4 flex items-center gap-2 border-t border-emerald-200 pt-3 text-xs font-semibold leading-5 text-emerald-800">
+                  <svg aria-hidden="true" viewBox="0 0 20 20" fill="currentColor" class="h-4 w-4 shrink-0"><path fill-rule="evenodd" d="M16.704 5.29a1 1 0 0 1 .006 1.414l-7.2 7.26a1 1 0 0 1-1.42.003L3.294 9.18a1 1 0 1 1 1.412-1.416l4.086 4.076 6.498-6.545a1 1 0 0 1 1.414-.006Z" clip-rule="evenodd" /></svg>
+                  Pesanan akan dikirim ke nomor ini.
+                </p>
+              </section>
+              <label id="guestNimField" class="block text-sm font-bold text-slate-700" for="guestNim">
                 NIM mahasiswa
                 <input id="guestNim" name="nim" inputmode="numeric" pattern="[0-9]{6,20}" minlength="6" maxlength="20" required class="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal" />
                 <span id="nimValidationMessage" class="mt-1 block text-xs font-normal text-slate-500">NIM akan diverifikasi sebelum pesanan dibuat.</span>
               </label>
-              <label class="block text-sm font-bold text-slate-700" for="guestPhone">
+              <label id="guestPhoneField" class="block text-sm font-bold text-slate-700" for="guestPhone">
                 Nomor HP / WhatsApp
                 <input id="guestPhone" name="phone" type="tel" inputmode="numeric" autocomplete="tel" placeholder="6281234567890" pattern="628[0-9]{8,13}" required class="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal" />
                 <span class="mt-1 block text-xs font-normal text-slate-500">Gunakan format 628... agar notifikasi WhatsApp dapat dikirim.</span>
@@ -315,6 +336,8 @@ const menuCategories = [...new Set((menuItems ?? []).map((item) => item.kategori
     const checkoutMessage = document.getElementById('checkoutMessage');
     const checkoutButton = document.getElementById('guestCheckoutButton');
     const proofInput = document.getElementById('guestTransferProof');
+    const studentCheckoutInfo = document.getElementById('studentCheckoutInfo');
+    const studentCheckoutProfileCard = document.getElementById('studentCheckoutProfileCard');
     const tenantSlug = window.location.pathname.split('/').filter(Boolean).at(-1);
     let tenantIsOpen = checkoutForm?.dataset.tenantOpen === 'true';
     const menuSearch = document.getElementById('menuSearch');
@@ -328,8 +351,75 @@ const menuCategories = [...new Set((menuItems ?? []).map((item) => item.kategori
     let sortByCheapest = false;
     let nimIsValid = false;
     let validatingNim = false;
+    let studentCheckoutProfile = null;
+    let studentProfileRequiresCompletion = false;
+    let studentCheckoutReady = false;
+    let studentSessionDetected = false;
     let tenantStatusChannel;
     let tenantStatusRevision = 0;
+
+    function showGuestCheckoutPrompt() {
+      studentCheckoutInfo.innerHTML = 'Login untuk pesan lebih cepat. <a href="/mahasiswa/login" class="font-extrabold underline">Login Mahasiswa</a>';
+      studentCheckoutInfo.classList.remove('hidden');
+    }
+
+    async function initializeStudentCheckout() {
+      try {
+        const { data: { session }, error: sessionError } = await db.auth.getSession();
+        if (sessionError) throw new Error(`Sesi login gagal diperiksa: ${sessionError.message}`);
+        if (!session) return;
+        studentSessionDetected = true;
+        studentProfileRequiresCompletion = true;
+
+        const { data: profile, error: profileError } = await db
+          .from('profiles')
+          .select('id, nama, nim, no_telepon, avatar_url, peran')
+          .eq('id', session.user.id)
+          .single();
+        if (profileError) throw new Error(`Profil gagal dimuat untuk checkout: ${profileError.message}`);
+        if (profile.peran !== 'mahasiswa') {
+          studentSessionDetected = false;
+          studentProfileRequiresCompletion = false;
+          return;
+        }
+
+        studentCheckoutProfile = profile;
+        const nimInput = document.getElementById('guestNim');
+        const phoneInput = document.getElementById('guestPhone');
+        nimInput.value = profile.nim || '';
+        phoneInput.value = profile.no_telepon || '';
+        document.getElementById('guestNimField').classList.add('hidden');
+        document.getElementById('guestPhoneField').classList.add('hidden');
+        studentCheckoutProfileCard.classList.remove('hidden');
+        document.getElementById('checkoutStudentName').textContent = profile.nama || 'Mahasiswa';
+        document.getElementById('checkoutStudentPhone').textContent = profile.no_telepon || 'Nomor HP belum diisi';
+        const avatar = document.getElementById('checkoutStudentAvatar');
+        avatar.src = profile.avatar_url || document.body.dataset.logoUrl;
+        avatar.onerror = () => { avatar.src = document.body.dataset.logoUrl; };
+        studentProfileRequiresCompletion = !/^\d{6,20}$/.test(profile.nim || '')
+          || !/^628\d{8,13}$/.test(profile.no_telepon || '');
+        if (studentProfileRequiresCompletion) {
+          studentCheckoutInfo.innerHTML = 'Silakan isi NIM dan No HP di <a href="/mahasiswa/profil" class="font-extrabold underline">Profil</a> dulu.';
+          studentCheckoutInfo.classList.remove('hidden');
+        } else {
+          document.getElementById('checkoutStudentPhone').textContent = profile.no_telepon;
+        }
+      } catch (error) {
+        console.error('Gagal memuat profil checkout:', error);
+        if (studentSessionDetected) {
+          studentCheckoutInfo.textContent = `Profil checkout gagal dimuat: ${error.message || error}`;
+          studentCheckoutInfo.classList.remove('hidden');
+          document.getElementById('guestNimField').classList.add('hidden');
+          document.getElementById('guestPhoneField').classList.add('hidden');
+        } else {
+          showGuestCheckoutPrompt();
+        }
+      } finally {
+        if (!studentSessionDetected) showGuestCheckoutPrompt();
+        studentCheckoutReady = true;
+        if (guestCart.size) renderCart();
+      }
+    }
 
     function parseTenantOpenStatus(value) {
       if (value === true || value === 1) return true;
@@ -354,7 +444,7 @@ const menuCategories = [...new Set((menuItems ?? []).map((item) => item.kategori
       badge.classList.toggle('bg-slate-400/15', !isOpen);
       badge.classList.toggle('text-slate-200', !isOpen);
       document.getElementById('tenantClosedMessage').classList.toggle('hidden', isOpen);
-      checkoutButton.disabled = !isOpen || menuCards.length === 0;
+      checkoutButton.disabled = !isOpen || menuCards.length === 0 || !studentCheckoutReady || studentProfileRequiresCompletion;
       menuCards.forEach(updateCardQuantity);
     }
 
@@ -627,7 +717,7 @@ const menuCategories = [...new Set((menuItems ?? []).map((item) => item.kategori
         cartList.append(row);
       }
       totalElement.textContent = formatRupiah(total);
-      checkoutButton.disabled = !guestCart.size || !tenantIsOpen;
+      checkoutButton.disabled = !guestCart.size || !tenantIsOpen || !studentCheckoutReady || studentProfileRequiresCompletion;
       menuCards.forEach(updateCardQuantity);
     }
 
@@ -679,12 +769,24 @@ const menuCategories = [...new Set((menuItems ?? []).map((item) => item.kategori
         showCheckoutMessage('Tambahkan menu sebelum membuat pesanan.', true);
         return;
       }
-      const nim = nimInput.value.trim();
-      const phone = document.getElementById('guestPhone').value.replace(/[\s()+-]/g, '');
+      if (!studentCheckoutReady) {
+        showCheckoutMessage('Sedang memeriksa profil checkout. Silakan coba kembali sebentar lagi.', true);
+        return;
+      }
+      if (studentProfileRequiresCompletion) {
+        showCheckoutMessage('Silakan isi NIM dan No HP di Profil dulu sebelum membuat pesanan.', true);
+        return;
+      }
+      const nim = studentCheckoutProfile
+        ? studentCheckoutProfile.nim.trim()
+        : nimInput.value.trim();
+      const phone = (studentCheckoutProfile
+        ? studentCheckoutProfile.no_telepon
+        : document.getElementById('guestPhone').value).replace(/[\s()+-]/g, '');
       const proofFile = proofInput.files?.[0];
       if (!/^\d{6,20}$/.test(nim)) {
         showCheckoutMessage('NIM harus terdiri dari 6 sampai 20 digit.', true);
-        nimInput.focus();
+        if (!studentCheckoutProfile) nimInput.focus();
         return;
       }
       if (!/^628\d{8,13}$/.test(phone)) {
@@ -726,6 +828,7 @@ const menuCategories = [...new Set((menuItems ?? []).map((item) => item.kategori
         nimStatus.className = 'mt-1 block text-xs font-normal text-emerald-700';
         const orderForm = new FormData();
         orderForm.set('tenant_slug', tenantSlug);
+        orderForm.set('tenant_id', checkoutForm.dataset.tenantId);
         orderForm.set('nim', nim);
         orderForm.set('phone', phone);
         orderForm.set('items', JSON.stringify([...guestCart.values()].map(({ id, quantity, addons }) => ({
@@ -772,12 +875,13 @@ const menuCategories = [...new Set((menuItems ?? []).map((item) => item.kategori
       } catch (error) {
         console.error('Checkout guest gagal:', error);
         showCheckoutMessage(`Pesanan gagal dibuat: ${error.message || error}`, true);
-        checkoutButton.disabled = false;
+        checkoutButton.disabled = !guestCart.size || !tenantIsOpen || !studentCheckoutReady || studentProfileRequiresCompletion;
       } finally {
         checkoutButton.textContent = 'Buat Pesanan';
       }
     });
 
+    initializeStudentCheckout();
     subscribeToTenantStatus();
     window.addEventListener('pagehide', () => {
       if (tenantStatusChannel) db.removeChannel(tenantStatusChannel);

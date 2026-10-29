@@ -1,0 +1,205 @@
+---
+import StudentShell from '../../components/StudentShell.astro';
+import logo from '../../assets/logo-uym.png';
+---
+
+<StudentShell title="Profil Saya">
+	<div class="grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(18rem,0.8fr)]">
+		<section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
+			<div class="mb-6">
+				<p class="text-xs font-extrabold uppercase tracking-[0.16em] text-blue-700">Akun mahasiswa</p>
+				<h1 class="mt-1 text-2xl font-black text-slate-900">Profil Saya</h1>
+				<p class="mt-2 text-sm text-slate-500">Nomor telepon profil digunakan saat membuat pesanan.</p>
+			</div>
+			<p id="studentProfileMessage" role="status" aria-live="polite" class="mb-5 hidden rounded-xl p-3 text-sm"></p>
+			<form id="studentProfileForm" class="space-y-5">
+				<div>
+					<label for="studentAvatarFile" class="mb-2 block text-sm font-bold text-slate-700">Foto profil</label>
+					<div class="flex flex-wrap items-center gap-4">
+						<img id="studentAvatarPreview" src={logo.src} alt="Pratinjau foto profil" class="h-20 w-20 rounded-full border border-slate-200 bg-slate-50 object-cover" />
+						<div class="min-w-0 flex-1">
+							<input id="studentAvatarFile" type="file" accept="image/jpeg,image/png,image/webp" class="block w-full text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-blue-50 file:px-3 file:py-2 file:font-bold file:text-blue-700" />
+							<p class="mt-2 text-xs text-slate-500">JPG, PNG, atau WebP, maksimal 5 MB.</p>
+						</div>
+					</div>
+				</div>
+				<label for="studentProfileName" class="block text-sm font-bold text-slate-700">Nama lengkap
+					<input id="studentProfileName" name="nama" maxlength="120" autocomplete="name" required class="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2.5 font-normal outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
+				</label>
+				<label for="studentProfileNim" class="block text-sm font-bold text-slate-700">NIM
+					<input id="studentProfileNim" readonly class="mt-2 w-full rounded-xl border border-slate-200 bg-slate-100 px-3 py-2.5 font-normal text-slate-600" />
+				</label>
+				<label for="studentProfilePhone" class="block text-sm font-bold text-slate-700">Nomor Telepon / WhatsApp
+					<input id="studentProfilePhone" type="tel" inputmode="numeric" autocomplete="tel" placeholder="6281234567890" pattern="628[0-9]{8,13}" title="Gunakan format 628 diikuti 8 sampai 13 digit" required class="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2.5 font-normal outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
+					<span class="mt-1 block text-xs font-normal text-slate-500">Wajib diisi dengan format 628... agar pesanan dan notifikasi dapat menggunakan nomor yang benar.</span>
+				</label>
+				<button id="saveStudentProfile" type="submit" class="w-full rounded-xl bg-blue-700 px-4 py-3 text-sm font-extrabold text-white transition hover:bg-blue-800 disabled:cursor-wait disabled:opacity-60">Simpan Profil</button>
+			</form>
+		</section>
+
+		<section class="h-fit rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
+			<div class="mb-6">
+				<p class="text-xs font-extrabold uppercase tracking-[0.16em] text-blue-700">Keamanan</p>
+				<h2 class="mt-1 text-xl font-black text-slate-900">Ganti Password</h2>
+				<p class="mt-2 text-sm text-slate-500">Gunakan password baru minimal 6 karakter.</p>
+			</div>
+			<p id="studentPasswordMessage" role="status" aria-live="polite" class="mb-5 hidden rounded-xl p-3 text-sm"></p>
+			<form id="studentPasswordForm" class="space-y-4">
+				<label for="studentNewPassword" class="block text-sm font-bold text-slate-700">Password baru
+					<input id="studentNewPassword" type="password" minlength="6" autocomplete="new-password" required class="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2.5 font-normal outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
+				</label>
+				<label for="studentConfirmPassword" class="block text-sm font-bold text-slate-700">Konfirmasi password baru
+					<input id="studentConfirmPassword" type="password" minlength="6" autocomplete="new-password" required class="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2.5 font-normal outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
+				</label>
+				<button id="changeStudentPassword" type="submit" class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm font-extrabold text-slate-700 transition hover:bg-slate-50 disabled:cursor-wait disabled:opacity-60">Ganti Password</button>
+			</form>
+		</section>
+	</div>
+
+	<script>
+		import { db } from '../../scripts/supabase.js';
+
+		const profileForm = document.getElementById('studentProfileForm');
+		const passwordForm = document.getElementById('studentPasswordForm');
+		const profileMessage = document.getElementById('studentProfileMessage');
+		const passwordMessage = document.getElementById('studentPasswordMessage');
+		const avatarInput = document.getElementById('studentAvatarFile');
+		const avatarPreview = document.getElementById('studentAvatarPreview');
+		const avatarFallback = avatarPreview.src;
+		let currentUser;
+		let currentProfile;
+		let selectedAvatar;
+		let previewUrl;
+
+		function showMessage(element, text, isError) {
+			element.textContent = text;
+			element.className = `mb-5 rounded-xl p-3 text-sm ${isError ? 'bg-rose-50 text-rose-700' : 'bg-emerald-50 text-emerald-700'}`;
+		}
+
+		async function initializeProfile() {
+			const { data: { session }, error: sessionError } = await db.auth.getSession();
+			if (sessionError) throw new Error(`Sesi gagal diperiksa: ${sessionError.message}`);
+			if (!session) return;
+			const { data: profile, error } = await db
+				.from('profiles')
+				.select('id, nama, nim, no_telepon, avatar_url, peran')
+				.eq('id', session.user.id)
+				.single();
+			if (error) throw new Error(`Profil gagal dimuat: ${error.message}`);
+			if (profile.peran !== 'mahasiswa') {
+				window.location.replace('/');
+				return;
+			}
+			currentUser = session.user;
+			currentProfile = profile;
+			document.getElementById('studentProfileName').value = profile.nama || '';
+			document.getElementById('studentProfileNim').value = profile.nim || '';
+			document.getElementById('studentProfilePhone').value = profile.no_telepon || '';
+			avatarPreview.src = profile.avatar_url || avatarFallback;
+			avatarPreview.onerror = () => { avatarPreview.src = avatarFallback; };
+		}
+
+		avatarInput.addEventListener('change', () => {
+			const file = avatarInput.files?.[0];
+			selectedAvatar = file || null;
+			if (previewUrl) URL.revokeObjectURL(previewUrl);
+			previewUrl = undefined;
+			if (!file) {
+				avatarPreview.src = currentProfile?.avatar_url || avatarFallback;
+				return;
+			}
+			if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 5 * 1024 * 1024) {
+				selectedAvatar = undefined;
+				avatarInput.value = '';
+				avatarPreview.src = currentProfile?.avatar_url || avatarFallback;
+				showMessage(profileMessage, 'Pilih foto JPG, PNG, atau WebP dengan ukuran maksimal 5 MB.', true);
+				return;
+			}
+			previewUrl = URL.createObjectURL(file);
+			avatarPreview.src = previewUrl;
+		});
+
+		profileForm.addEventListener('submit', async (event) => {
+			event.preventDefault();
+			if (!currentUser || !currentProfile) return;
+			const nama = document.getElementById('studentProfileName').value.trim();
+			const noTelepon = document.getElementById('studentProfilePhone').value.trim();
+			if (!nama || !/^628\d{8,13}$/.test(noTelepon)) {
+				showMessage(profileMessage, 'Isi nama dan nomor telepon dengan format 628 yang valid.', true);
+				return;
+			}
+
+			const button = document.getElementById('saveStudentProfile');
+			button.disabled = true;
+			let uploadedPath;
+			let uploadCompleted = false;
+			try {
+				let avatarUrl = currentProfile.avatar_url || null;
+				if (selectedAvatar) {
+					const extensionByType = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };
+					const extension = extensionByType[selectedAvatar.type];
+					uploadedPath = `${currentUser.id}/${Date.now()}.${extension}`;
+					const { error: uploadError } = await db.storage.from('avatars').upload(uploadedPath, selectedAvatar, {
+						cacheControl: '3600',
+						contentType: selectedAvatar.type,
+						upsert: false,
+					});
+					if (uploadError) throw new Error(`Foto profil gagal diunggah: ${uploadError.message}`);
+					uploadCompleted = true;
+					const { data } = db.storage.from('avatars').getPublicUrl(uploadedPath);
+					avatarUrl = data.publicUrl;
+				}
+
+				const { error } = await db.from('profiles')
+					.update({ nama, no_telepon: noTelepon, avatar_url: avatarUrl })
+					.eq('id', currentUser.id);
+				if (error) throw new Error(`Profil gagal diperbarui: ${error.message}`);
+				currentProfile = { ...currentProfile, nama, no_telepon: noTelepon, avatar_url: avatarUrl };
+				selectedAvatar = undefined;
+				avatarInput.value = '';
+				if (previewUrl) URL.revokeObjectURL(previewUrl);
+				previewUrl = undefined;
+				avatarPreview.src = avatarUrl || avatarFallback;
+				document.getElementById('studentName').textContent = nama;
+				document.getElementById('studentAvatar').src = avatarUrl || avatarFallback;
+				showMessage(profileMessage, 'Profil berhasil diperbarui.', false);
+			} catch (error) {
+				let cleanupMessage = '';
+				if (uploadedPath && uploadCompleted) {
+					const { error: cleanupError } = await db.storage.from('avatars').remove([uploadedPath]);
+					if (cleanupError) cleanupMessage = ` Foto yang gagal disimpan juga tidak dapat dibersihkan: ${cleanupError.message}`;
+				}
+				showMessage(profileMessage, `${error.message || error}${cleanupMessage}`, true);
+			} finally {
+				button.disabled = false;
+			}
+		});
+
+		passwordForm.addEventListener('submit', async (event) => {
+			event.preventDefault();
+			const password = document.getElementById('studentNewPassword').value;
+			const confirmation = document.getElementById('studentConfirmPassword').value;
+			if (password.length < 6 || password !== confirmation) {
+				showMessage(passwordMessage, password.length < 6 ? 'Password baru minimal 6 karakter.' : 'Konfirmasi password tidak cocok.', true);
+				return;
+			}
+			const button = document.getElementById('changeStudentPassword');
+			button.disabled = true;
+			try {
+				const { error } = await db.auth.updateUser({ password });
+				if (error) throw new Error(`Password gagal diubah: ${error.message}`);
+				passwordForm.reset();
+				showMessage(passwordMessage, 'Password berhasil diubah.', false);
+			} catch (error) {
+				showMessage(passwordMessage, error.message || String(error), true);
+			} finally {
+				button.disabled = false;
+			}
+		});
+
+		initializeProfile().catch((error) => showMessage(profileMessage, error.message || String(error), true));
+		window.addEventListener('pagehide', () => {
+			if (previewUrl) URL.revokeObjectURL(previewUrl);
+		}, { once: true });
+	</script>
+</StudentShell>

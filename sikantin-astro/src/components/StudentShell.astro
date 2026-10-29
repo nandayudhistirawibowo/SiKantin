@@ -1,0 +1,312 @@
+---
+import Layout from '../layouts/Layout.astro';
+import logo from '../assets/logo-uym.png';
+
+interface Props {
+	title: string;
+}
+
+const { title } = Astro.props;
+---
+
+<Layout title={`${title} | SiKantin Mahasiswa`} themeColor="#172b40" bodyClass="min-h-screen bg-slate-50 text-slate-800">
+	<div class="min-h-screen md:flex">
+		<button id="studentSidebarBackdrop" type="button" aria-label="Tutup menu" class="fixed inset-0 z-40 hidden bg-slate-950/60 backdrop-blur-sm md:hidden"></button>
+		<aside id="studentSidebar" class="fixed inset-y-0 left-0 z-50 hidden w-72 student-sidebar-closed flex-col border-r border-slate-200 bg-white p-5 shadow-xl md:sticky md:top-0 md:flex md:h-screen md:shadow-none">
+			<div class="flex items-center justify-between gap-3">
+				<a href="/mahasiswa/dashboard" class="flex items-center gap-3">
+					<img src={logo.src} alt="" class="h-11 w-11 rounded-full border border-slate-100 bg-white p-1" />
+					<span>
+						<span class="block text-sm font-black tracking-wide text-slate-900">SIKANTIN</span>
+						<span class="block text-[11px] text-slate-500">Portal Mahasiswa</span>
+					</span>
+				</a>
+				<button id="studentSidebarClose" type="button" aria-label="Tutup menu" class="rounded-lg p-2 text-slate-500 hover:bg-slate-100 md:hidden">
+					<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5"><path stroke-linecap="round" d="m6 6 12 12M18 6 6 18" /></svg>
+				</button>
+			</div>
+
+			<p class="mb-2 mt-9 px-3 text-[11px] font-extrabold uppercase tracking-[0.18em] text-slate-400">Menu utama</p>
+			<nav class="space-y-1" aria-label="Navigasi mahasiswa">
+				<a data-student-nav href="/mahasiswa/dashboard" class="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-bold text-slate-600 transition hover:bg-blue-50 hover:text-blue-800">
+					<span aria-hidden="true">⌂</span> Beranda
+				</a>
+				<a data-student-nav href="/mahasiswa/riwayat" class="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-bold text-slate-600 transition hover:bg-blue-50 hover:text-blue-800">
+					<span aria-hidden="true">◷</span> Riwayat Pesanan
+				</a>
+				<a data-student-nav href="/mahasiswa/favorit" class="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-bold text-slate-600 transition hover:bg-blue-50 hover:text-blue-800">
+					<span aria-hidden="true">♡</span> Favorit Saya
+				</a>
+				<a data-student-nav href="/mahasiswa/profil" class="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-bold text-slate-600 transition hover:bg-blue-50 hover:text-blue-800">
+					<span aria-hidden="true">◎</span> Profil
+				</a>
+				<a data-student-nav href="/mahasiswa/bantuan" class="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-bold text-slate-600 transition hover:bg-blue-50 hover:text-blue-800">
+					<span aria-hidden="true">?</span> Bantuan
+				</a>
+			</nav>
+
+		</aside>
+
+		<div class="min-w-0 flex-1">
+			<header class="sticky top-0 z-30 border-b border-slate-200 bg-white/95 backdrop-blur">
+				<div class="flex min-h-[4.5rem] items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
+					<div class="flex min-w-0 items-center gap-3">
+						<button id="studentMenuButton" type="button" aria-controls="studentSidebar" aria-expanded="false" aria-label="Buka menu" class="inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-slate-200 bg-white p-2 text-slate-700 shadow-sm hover:bg-slate-50">
+							<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5"><path stroke-linecap="round" d="M4 6h16M4 12h16M4 18h16" /></svg>
+						</button>
+						<div class="min-w-0">
+							<p class="truncate text-sm font-extrabold text-slate-900">{title}</p>
+							<p class="hidden text-xs text-slate-500 sm:block">Universitas Yatsi Madani</p>
+						</div>
+					</div>
+					<div class="relative flex items-center gap-2">
+						<button id="studentHeaderClose" type="button" aria-label="Tutup menu" class="inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-slate-200 bg-white p-2 text-slate-700 shadow-sm hover:bg-slate-50">
+							<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5"><path stroke-linecap="round" d="m6 6 12 12M18 6 6 18" /></svg>
+						</button>
+
+						<button id="studentProfileButton" type="button" aria-controls="studentProfileMenu" aria-expanded="false" class="flex items-center gap-2 rounded-full border border-slate-200 bg-white py-1.5 pl-1.5 pr-3 text-left transition hover:bg-slate-50">
+							<img id="studentAvatar" src={logo.src} data-avatar-fallback={logo.src} alt="" class="h-9 w-9 rounded-full bg-slate-100 object-cover" />
+							<span class="hidden min-w-0 sm:block">
+								<span id="studentName" class="block max-w-36 truncate text-xs font-extrabold text-slate-800">Mahasiswa</span>
+								<span class="block text-[11px] text-slate-500">Mahasiswa</span>
+							</span>
+							<span aria-hidden="true" class="text-xs text-slate-400">⌄</span>
+						</button>
+						<div id="studentProfileMenu" class="absolute right-0 top-full z-50 mt-2 hidden w-48 rounded-xl border border-slate-200 bg-white p-2 shadow-xl">
+							<a href="/mahasiswa/profil" class="block rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">Profil Saya</a>
+							<button id="studentLogoutButton" type="button" class="w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-rose-700 hover:bg-rose-50">Logout</button>
+						</div>
+					</div>
+				</div>
+			</header>
+			<main class="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+				<p id="studentShellMessage" role="status" aria-live="polite" class="mb-5 hidden rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700"></p>
+				<slot />
+			</main>
+		</div>
+	</div>
+
+	<script>
+		import { db } from '../scripts/supabase.js';
+
+		const menuButton = document.getElementById('studentMenuButton');
+		const headerCloseButton = document.getElementById('studentHeaderClose');
+		const sidebar = document.getElementById('studentSidebar');
+		const backdrop = document.getElementById('studentSidebarBackdrop');
+		const sidebarCloseButton = document.getElementById('studentSidebarClose');
+		const profileButton = document.getElementById('studentProfileButton');
+		const profileMenu = document.getElementById('studentProfileMenu');
+		const shellMessage = document.getElementById('studentShellMessage');
+		const desktopSidebar = window.matchMedia('(min-width: 1024px)');
+
+		function setSidebarPosition(isOpen) {
+			if (desktopSidebar.matches) {
+				sidebar.style.removeProperty('transform');
+				return;
+			}
+			sidebar.style.setProperty('transform', isOpen ? 'translateX(0)' : 'translateX(-100%)', 'important');
+		}
+
+		if (desktopSidebar.matches) {
+			sidebar.classList.remove('hidden', 'student-sidebar-closed', 'student-sidebar-collapsed');
+			menuButton.setAttribute('aria-expanded', 'true');
+			menuButton.setAttribute('aria-label', 'Tutup menu');
+		} else {
+			setSidebarPosition(false);
+		}
+
+		function closeSidebar(restoreFocus = false) {
+			const wasOpen = menuButton.getAttribute('aria-expanded') === 'true';
+			const isDrawer = window.matchMedia('(max-width: 1023px)').matches;
+			menuButton.setAttribute('aria-expanded', 'false');
+			menuButton.setAttribute('aria-label', 'Buka menu');
+			backdrop.classList.add('hidden');
+			document.body.classList.remove('overflow-hidden');
+			if (isDrawer) {
+				sidebar.classList.add('student-sidebar-closed', 'hidden');
+			} else {
+				sidebar.classList.add('student-sidebar-collapsed');
+			}
+			setSidebarPosition(false);
+			if (restoreFocus && wasOpen) menuButton.focus();
+		}
+
+		menuButton.addEventListener('click', () => {
+			const isDrawer = window.matchMedia('(max-width: 1023px)').matches;
+			const isOpen = isDrawer
+				? !sidebar.classList.contains('hidden') && !sidebar.classList.contains('student-sidebar-closed')
+				: !sidebar.classList.contains('hidden') && !sidebar.classList.contains('student-sidebar-collapsed');
+			if (isOpen) {
+				closeSidebar(true);
+				return;
+			}
+			sidebar.classList.remove('student-sidebar-collapsed');
+			if (isDrawer) {
+				sidebar.classList.remove('hidden');
+				sidebar.classList.remove('student-sidebar-closed');
+				backdrop.classList.remove('hidden');
+				document.body.classList.add('overflow-hidden');
+			}
+			setSidebarPosition(true);
+			menuButton.setAttribute('aria-expanded', 'true');
+			menuButton.setAttribute('aria-label', 'Tutup menu');
+			headerCloseButton.focus();
+		});
+
+		if (headerCloseButton) headerCloseButton.addEventListener('click', () => closeSidebar(true));
+		if (sidebarCloseButton) sidebarCloseButton.addEventListener('click', () => closeSidebar(true));
+
+		backdrop.addEventListener('click', () => closeSidebar(true));
+		document.addEventListener('keydown', (event) => {
+			if (event.key === 'Escape') {
+				closeSidebar(true);
+				profileMenu.classList.add('hidden');
+				profileButton.setAttribute('aria-expanded', 'false');
+			}
+		});
+		let wasDesktop = desktopSidebar.matches;
+		function syncSidebarBreakpoint() {
+			const isDesktop = desktopSidebar.matches;
+			if (isDesktop === wasDesktop) return;
+			wasDesktop = isDesktop;
+			backdrop.classList.add('hidden');
+			document.body.classList.remove('overflow-hidden');
+			sidebar.classList.remove('student-sidebar-collapsed');
+			if (isDesktop) {
+				sidebar.classList.remove('hidden', 'student-sidebar-closed');
+			} else {
+				sidebar.classList.add('hidden', 'student-sidebar-closed');
+			}
+			setSidebarPosition(isDesktop);
+			menuButton.setAttribute('aria-expanded', String(isDesktop));
+			menuButton.setAttribute('aria-label', isDesktop ? 'Tutup menu' : 'Buka menu');
+		}
+		desktopSidebar.addEventListener('change', syncSidebarBreakpoint);
+		window.addEventListener('resize', syncSidebarBreakpoint);
+
+		profileButton.addEventListener('click', () => {
+			const isOpen = profileButton.getAttribute('aria-expanded') === 'true';
+			profileButton.setAttribute('aria-expanded', String(!isOpen));
+			profileMenu.classList.toggle('hidden', isOpen);
+		});
+		document.addEventListener('click', (event) => {
+			if (!profileButton.contains(event.target) && !profileMenu.contains(event.target)) {
+				profileButton.setAttribute('aria-expanded', 'false');
+				profileMenu.classList.add('hidden');
+			}
+		});
+
+		document.querySelectorAll('[data-student-nav]').forEach((link) => {
+			if (link.getAttribute('href') === window.location.pathname) {
+				link.classList.add('bg-blue-50', 'text-blue-800');
+				link.setAttribute('aria-current', 'page');
+			}
+		});
+
+		document.getElementById('studentLogoutButton').addEventListener('click', async () => {
+			const { error } = await db.auth.signOut();
+			if (error) {
+				shellMessage.textContent = `Logout gagal: ${error.message}`;
+				shellMessage.classList.remove('hidden');
+				return;
+			}
+			window.location.assign('/');
+		});
+
+		async function initializeStudentShell() {
+			const { data: { session }, error: sessionError } = await db.auth.getSession();
+			if (sessionError) {
+				shellMessage.textContent = `Sesi gagal diperiksa: ${sessionError.message}`;
+				shellMessage.classList.remove('hidden');
+				return;
+			}
+			if (!session) {
+				window.location.replace(`/mahasiswa/login?redirect=${encodeURIComponent(window.location.pathname)}`);
+				return;
+			}
+
+			const { data: profile, error: profileError } = await db
+				.from('profiles')
+				.select('nama, peran, avatar_url')
+				.eq('id', session.user.id)
+				.single();
+			if (profileError) {
+				shellMessage.textContent = `Profil gagal dimuat: ${profileError.message}`;
+				shellMessage.classList.remove('hidden');
+				return;
+			}
+			if (profile.peran !== 'mahasiswa') {
+				window.location.replace('/');
+				return;
+			}
+
+			document.getElementById('studentName').textContent = profile.nama || session.user.email || 'Mahasiswa';
+			const avatar = document.getElementById('studentAvatar');
+			avatar.src = profile.avatar_url || avatar.dataset.avatarFallback;
+			avatar.onerror = () => { avatar.src = avatar.dataset.avatarFallback; };
+		}
+
+		initializeStudentShell();
+	</script>
+
+	<style>
+		@media (max-width: 1023px) {
+			header {
+				z-index: 60 !important;
+			}
+
+			#studentMenuButton,
+			#studentHeaderClose {
+				display: inline-flex !important;
+				visibility: visible !important;
+				opacity: 1 !important;
+			}
+
+			#studentSidebar {
+				position: fixed !important;
+				inset: 0 auto 0 0 !important;
+				z-index: 50 !important;
+				display: flex !important;
+				width: min(18rem, calc(100vw - 4rem)) !important;
+				height: 100dvh !important;
+				transform: translateX(-100%) !important;
+				translate: none !important;
+			}
+
+			#studentSidebar.hidden {
+				display: none !important;
+			}
+
+			#studentSidebar:not(.hidden):not(.student-sidebar-closed) {
+				transform: translateX(0) !important;
+			}
+
+			#studentSidebar.student-sidebar-closed {
+				transform: translateX(-100%) !important;
+			}
+
+			#studentSidebarBackdrop:not(.hidden) {
+				display: block !important;
+			}
+		}
+
+		@media (min-width: 1024px) {
+			#studentSidebar {
+				display: flex !important;
+				position: sticky !important;
+				height: 100vh !important;
+				transform: none !important;
+				translate: none !important;
+			}
+
+			#studentSidebar.student-sidebar-collapsed {
+				display: none !important;
+			}
+
+			#studentMenuButton,
+			#studentHeaderClose {
+				display: inline-flex !important;
+			}
+		}
+	</style>
+</Layout>
