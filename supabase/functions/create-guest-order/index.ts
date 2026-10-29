@@ -52,13 +52,34 @@ function getConfiguredAddons(value: unknown): MenuAddon[] | null {
 
 async function notifyByWhatsApp(
   phone: string,
+  tenantName: string,
+  queueNumber: string,
   orderToken: string,
   orderNumber: string,
   total: number,
+  items: Array<{ nama_menu: string; jumlah: number; subtotal: number }>,
 ): Promise<"sent" | "not_configured" | "failed"> {
   const gatewayUrl = Deno.env.get("WA_GATEWAY_URL");
   const apiKey = Deno.env.get("WA_API_KEY");
   if (!gatewayUrl || !apiKey) return "not_configured";
+
+  const configuredAppUrl = Deno.env.get("APP_URL");
+  if (!configuredAppUrl) {
+    console.error("APP_URL belum dikonfigurasi; tautan cek pesanan tidak dapat dibuat.");
+    return "failed";
+  }
+
+  let appUrl: URL;
+  try {
+    appUrl = new URL(configuredAppUrl);
+  } catch {
+    console.error("APP_URL bukan URL yang valid.");
+    return "failed";
+  }
+  if (appUrl.protocol !== "https:" && appUrl.hostname !== "localhost" && appUrl.hostname !== "127.0.0.1") {
+    console.error("APP_URL harus HTTPS, kecuali aplikasi localhost.");
+    return "failed";
+  }
 
   let endpoint: URL;
   try {
@@ -82,7 +103,19 @@ async function notifyByWhatsApp(
       },
       body: JSON.stringify({
         nomor_wa: phone,
-        pesan: `Pesanan ${orderNumber} berhasil dibuat. Total: Rp${Math.round(total).toLocaleString("id-ID")}. Token cek pesanan: ${orderToken}`,
+        pesan: [
+          `Halo! Pesanan Anda di ${tenantName} berhasil.`,
+          `Nomor Antrean: ${queueNumber}`,
+          "---------------------",
+          "Rincian Pesanan:",
+          ...items.map((item) =>
+            `- ${item.jumlah}x ${item.nama_menu} = Rp ${Math.round(item.subtotal).toLocaleString("id-ID")}`
+          ),
+          "---------------------",
+          `Total: Rp ${Math.round(total).toLocaleString("id-ID")}`,
+          `Silakan cek status pesanan Anda di: ${appUrl.origin}/cek-pesanan?token=${encodeURIComponent(orderToken)}`,
+          `Nomor pesanan: ${orderNumber}`,
+        ].join("\n"),
       }),
       signal: AbortSignal.timeout(6000),
     });
@@ -360,7 +393,7 @@ Deno.serve(async (request: Request): Promise<Response> => {
       metode_pembayaran: "qris",
       bukti_transfer: proofUrl,
     })
-    .select("id, created_at")
+    .select("id, created_at, token_pesanan, nomor_pesanan, nomor_antrean, total")
     .single();
   if (orderError || !order) {
     const { error: cleanupError } = await serviceClient.storage.from("bukti-transfer").remove([proofPath]);
@@ -383,7 +416,29 @@ Deno.serve(async (request: Request): Promise<Response> => {
     }, 500);
   }
 
-  const whatsapp = await notifyByWhatsApp(phone, tokenPesanan, nomorPesanan, total);
+  const { data: savedOrderItems, error: savedItemsError } = await serviceClient
+    .from("order_items")
+    .select("nama_menu, jumlah, subtotal")
+    .eq("order_id", order.id)
+    .order("nama_menu");
+  let whatsapp: "sent" | "not_configured" | "failed";
+  if (savedItemsError || !savedOrderItems?.length) {
+    console.error(
+      "Rincian pesanan tersimpan tidak dapat dimuat untuk notifikasi WhatsApp:",
+      savedItemsError?.message || "Tidak ada item pesanan tersimpan."
+    );
+    whatsapp = "failed";
+  } else {
+    whatsapp = await notifyByWhatsApp(
+      phone,
+      tenant.nama_tenant,
+      order.nomor_antrean,
+      order.token_pesanan,
+      order.nomor_pesanan,
+      Number(order.total),
+      savedOrderItems
+    );
+  }
   return jsonResponse({
     success: true,
     order: {

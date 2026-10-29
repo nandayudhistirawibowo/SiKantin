@@ -24,7 +24,7 @@ Order tracking uses a cryptographically random token as a bearer credential. Gue
 
 After an order reaches `Selesai`, its token can be used to submit one 1–5 star rating for the order's tenant. Ratings are stored in `tenant_reviews`; direct table access is disabled, and the `submit_guest_order_rating` RPC verifies the token and completed status before saving. Public catalog pages read aggregated averages through `get_public_tenant_ratings`. Apply `../supabase/migrations/20261029000001_tenant_reviews.sql` after the existing menu-review migration to enable this feature. Existing per-menu ratings are migrated to one rounded average per order.
 
-Daily queue numbers restart at `A-01` when every order in the tenant's current queue cycle is `Selesai` or `Dibatalkan`. The cycle identifier is persisted with each order to allow the visible queue number to be reused without violating uniqueness. Apply `../supabase/migrations/20261029000002_queue_cycles.sql`; the `create-guest-order` Edge Function now stores the cycle returned by `next_tenant_queue_number`.
+Daily queue numbers increase continuously for each tenant and restart at `A-01` when the date changes in the `Asia/Jakarta` timezone. Apply `../supabase/migrations/20261029000003_restore_daily_queue_numbering.sql` to restore this behavior if the queue-cycle migration was previously applied.
 
 ## WhatsApp order notifications
 
