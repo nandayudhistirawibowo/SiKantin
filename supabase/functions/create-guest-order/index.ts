@@ -50,6 +50,16 @@ function getConfiguredAddons(value: unknown): MenuAddon[] | null {
   return addons;
 }
 
+function normalizeWhatsAppPhone(value: string): string | null {
+  const digits = value.replace(/\D/g, "");
+  const normalized = digits.startsWith("0")
+    ? `62${digits.slice(1)}`
+    : digits.startsWith("8")
+      ? `62${digits}`
+      : digits;
+  return /^628\d{8,13}$/.test(normalized) ? normalized : null;
+}
+
 async function notifyByWhatsApp(
   phone: string,
   tenantName: string,
@@ -58,27 +68,47 @@ async function notifyByWhatsApp(
   orderNumber: string,
   total: number,
   items: Array<{ nama_menu: string; jumlah: number; subtotal: number }>,
+  messageOverride?: string,
 ): Promise<"sent" | "not_configured" | "failed"> {
   const gatewayUrl = Deno.env.get("WA_GATEWAY_URL");
   const apiKey = Deno.env.get("WA_API_KEY");
   if (!gatewayUrl || !apiKey) return "not_configured";
 
-  const configuredAppUrl = Deno.env.get("APP_URL");
-  if (!configuredAppUrl) {
-    console.error("APP_URL belum dikonfigurasi; tautan cek pesanan tidak dapat dibuat.");
-    return "failed";
-  }
+  let message: string;
+  if (messageOverride !== undefined) {
+    message = messageOverride;
+  } else {
+    const configuredAppUrl = Deno.env.get("APP_URL");
+    if (!configuredAppUrl) {
+      console.error("APP_URL belum dikonfigurasi; tautan cek pesanan tidak dapat dibuat.");
+      return "failed";
+    }
 
-  let appUrl: URL;
-  try {
-    appUrl = new URL(configuredAppUrl);
-  } catch {
-    console.error("APP_URL bukan URL yang valid.");
-    return "failed";
-  }
-  if (appUrl.protocol !== "https:" && appUrl.hostname !== "localhost" && appUrl.hostname !== "127.0.0.1") {
-    console.error("APP_URL harus HTTPS, kecuali aplikasi localhost.");
-    return "failed";
+    let appUrl: URL;
+    try {
+      appUrl = new URL(configuredAppUrl);
+    } catch {
+      console.error("APP_URL bukan URL yang valid.");
+      return "failed";
+    }
+    if (appUrl.protocol !== "https:" && appUrl.hostname !== "localhost" && appUrl.hostname !== "127.0.0.1") {
+      console.error("APP_URL harus HTTPS, kecuali aplikasi localhost.");
+      return "failed";
+    }
+
+    message = [
+      `Halo! Pesanan Anda di ${tenantName} berhasil.`,
+      `Nomor Antrean: ${queueNumber}`,
+      "---------------------",
+      "Rincian Pesanan:",
+      ...items.map((item) =>
+        `- ${item.jumlah}x ${item.nama_menu} = Rp ${Math.round(item.subtotal).toLocaleString("id-ID")}`
+      ),
+      "---------------------",
+      `Total: Rp ${Math.round(total).toLocaleString("id-ID")}`,
+      `Silakan cek status pesanan Anda di: ${appUrl.origin}/cek-pesanan?token=${encodeURIComponent(orderToken)}`,
+      `Nomor pesanan: ${orderNumber}`,
+    ].join("\n");
   }
 
   let endpoint: URL;
@@ -103,19 +133,7 @@ async function notifyByWhatsApp(
       },
       body: JSON.stringify({
         nomor_wa: phone,
-        pesan: [
-          `Halo! Pesanan Anda di ${tenantName} berhasil.`,
-          `Nomor Antrean: ${queueNumber}`,
-          "---------------------",
-          "Rincian Pesanan:",
-          ...items.map((item) =>
-            `- ${item.jumlah}x ${item.nama_menu} = Rp ${Math.round(item.subtotal).toLocaleString("id-ID")}`
-          ),
-          "---------------------",
-          `Total: Rp ${Math.round(total).toLocaleString("id-ID")}`,
-          `Silakan cek status pesanan Anda di: ${appUrl.origin}/cek-pesanan?token=${encodeURIComponent(orderToken)}`,
-          `Nomor pesanan: ${orderNumber}`,
-        ].join("\n"),
+        pesan: message,
       }),
       signal: AbortSignal.timeout(6000),
     });
@@ -262,9 +280,42 @@ Deno.serve(async (request: Request): Promise<Response> => {
   const serviceClient = createClient(supabaseUrl, serviceRoleKey, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
+  let authenticatedStudentId: string | null = null;
+  const bearerToken = /^Bearer\s+(.+)$/i.exec(request.headers.get("authorization") || "")?.[1];
+  if (bearerToken && bearerToken !== anonKey) {
+    const { data: { user }, error: userError } = await serviceClient.auth.getUser(bearerToken);
+    if (userError || !user) {
+      return jsonResponse({ error: "Sesi login tidak valid. Silakan login kembali." }, 401);
+    }
+
+    const { data: authenticatedProfile, error: authenticatedProfileError } = await serviceClient
+      .from("profiles")
+      .select("id, nim, no_telepon, peran")
+      .eq("id", user.id)
+      .maybeSingle();
+    if (authenticatedProfileError) {
+      return jsonResponse({ error: `Gagal memvalidasi profil mahasiswa: ${authenticatedProfileError.message}` }, 500);
+    }
+    if (authenticatedProfile?.peran === "mahasiswa") {
+      if (authenticatedProfile.nim !== nim) {
+        return jsonResponse({ error: "NIM tidak sesuai dengan profil akun yang login." }, 400);
+      }
+      const profilePhone = typeof authenticatedProfile.no_telepon === "string"
+        ? authenticatedProfile.no_telepon.replace(/[\s()+-]/g, "")
+        : "";
+      if (!/^628\d{8,13}$/.test(profilePhone)) {
+        return jsonResponse({ error: "Silakan isi No HP di Profil dulu sebelum membuat pesanan." }, 400);
+      }
+      if (profilePhone !== phone) {
+        return jsonResponse({ error: "Nomor HP harus sesuai dengan Profil akun yang login." }, 400);
+      }
+      authenticatedStudentId = user.id;
+    }
+  }
+
   const [{ data: profile, error: profileError }, { data: tenant, error: tenantError }] = await Promise.all([
     serviceClient.from("profiles").select("id, nama").eq("nim", nim).eq("peran", "mahasiswa").maybeSingle(),
-    serviceClient.from("tenants").select("id, nama_tenant, status_buka").eq("slug", slug).maybeSingle(),
+    serviceClient.from("tenants").select("id, nama_tenant, no_telepon, status_buka").eq("slug", slug).maybeSingle(),
   ]);
   if (profileError) return jsonResponse({ error: `Gagal memvalidasi NIM: ${profileError.message}` }, 500);
   if (!profile) return jsonResponse({ error: "NIM tidak terdaftar sebagai mahasiswa." }, 400);
@@ -380,8 +431,8 @@ Deno.serve(async (request: Request): Promise<Response> => {
     .from("orders")
     .insert({
       tenant_id: tenant.id,
-      mahasiswa_id: null,
-      nim_guest: nim,
+      mahasiswa_id: authenticatedStudentId,
+      nim_guest: authenticatedStudentId ? null : nim,
       phone,
       nama_mahasiswa: profile.nama,
       nomor_pesanan: nomorPesanan,
@@ -392,6 +443,7 @@ Deno.serve(async (request: Request): Promise<Response> => {
       total,
       metode_pembayaran: "qris",
       bukti_transfer: proofUrl,
+      tenant_whatsapp: "pending",
     })
     .select("id, created_at, token_pesanan, nomor_pesanan, nomor_antrean, total")
     .single();
@@ -439,6 +491,38 @@ Deno.serve(async (request: Request): Promise<Response> => {
       savedOrderItems
     );
   }
+  let tenantWhatsapp: "sent" | "not_configured" | "failed";
+  const tenantPhone = typeof tenant.no_telepon === "string"
+    ? normalizeWhatsAppPhone(tenant.no_telepon)
+    : null;
+  if (!tenantPhone) {
+    tenantWhatsapp = "failed";
+    console.error(`Notifikasi pemilik tenant ${tenant.id} tidak dikirim: nomor WhatsApp tenant tidak valid atau belum diisi.`);
+  } else {
+    tenantWhatsapp = await notifyByWhatsApp(
+      tenantPhone,
+      tenant.nama_tenant,
+      order.nomor_antrean,
+      order.token_pesanan,
+      order.nomor_pesanan,
+      Number(order.total),
+      [],
+      `Pesanan baru masuk! Antrean ${order.nomor_antrean}. Total Rp ${Math.round(Number(order.total)).toLocaleString("id-ID")}. Silakan cek Dashboard Tenant.`,
+    );
+  }
+  const { data: tenantWhatsappStatusOrder, error: tenantWhatsappStatusError } = await serviceClient
+    .from("orders")
+    .update({ tenant_whatsapp: tenantWhatsapp })
+    .eq("id", order.id)
+    .select("id")
+    .maybeSingle();
+  const tenantWhatsappStatusSaved = !tenantWhatsappStatusError && Boolean(tenantWhatsappStatusOrder);
+  if (!tenantWhatsappStatusSaved) {
+    console.error(
+      `Status WhatsApp tenant gagal disimpan untuk pesanan ${order.id}:`,
+      tenantWhatsappStatusError?.message || "Data pesanan tidak ditemukan saat menyimpan status."
+    );
+  }
   return jsonResponse({
     success: true,
     order: {
@@ -453,6 +537,11 @@ Deno.serve(async (request: Request): Promise<Response> => {
       items: orderItems.map(({ nama_menu, jumlah, subtotal, add_ons }) => ({ nama_menu, jumlah, subtotal, add_ons })),
     },
     whatsapp,
+    tenant_whatsapp: tenantWhatsapp,
+    tenant_whatsapp_status_saved: tenantWhatsappStatusSaved,
+    ...(!tenantWhatsappStatusSaved
+      ? { tenant_whatsapp_status_error: "Status notifikasi tenant gagal disimpan. Pastikan migrasi kolom sudah diterapkan." }
+      : {}),
   }, 201);
   } catch (error) {
     console.error("Kesalahan tidak terduga saat membuat guest order:", error);
