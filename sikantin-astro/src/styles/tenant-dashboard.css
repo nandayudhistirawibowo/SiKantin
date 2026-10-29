@@ -26,13 +26,15 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
             box-shadow: 0 4px 16px rgba(15, 23, 42, .035);
         }
         .tenant-stat-card, .tenant-panel, .tenant-order-row, .tenant-menu-item {
-            transition: transform 180ms ease, border-color 180ms ease, background-color 180ms ease, box-shadow 180ms ease;
+            transition: translate 300ms ease-in-out, transform 300ms ease-in-out, border-color 300ms ease-in-out, background-color 300ms ease-in-out, box-shadow 300ms ease-in-out;
         }
+        .tenant-panel:hover { translate: 0 -4px; box-shadow: 0 10px 20px rgba(0, 0, 0, .1); }
         .tenant-stat-card:hover, .tenant-menu-item:hover {
-            transform: translateY(-2px);
+            translate: 0 -4px;
             border-color: #bfdbfe;
-            box-shadow: 0 8px 20px rgba(15, 23, 42, .08);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, .1);
         }
+        .tenant-order-row:hover { translate: 0 -4px; box-shadow: 0 10px 20px rgba(0, 0, 0, .1); }
         .tenant-stat-card { padding: 1.2rem; }
         .tenant-stat-icon {
             display: inline-flex; width: 2.5rem; height: 2.5rem; align-items: center;
@@ -74,7 +76,8 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
             .tenant-status-button, .tenant-order-action, .tenant-logout-button, .tenant-sound-button {
                 transition-duration: 0.01ms;
             }
-            .tenant-stat-card:hover, .tenant-menu-item:hover,
+            .tenant-stat-card:hover, .tenant-menu-item:hover, .tenant-order-row:hover,
+            .tenant-panel:hover,
             .tenant-status-button:not(:disabled):hover, .tenant-order-action:not(:disabled):hover,
-            .tenant-logout-button:hover, .tenant-sound-button:hover { transform: none; }
+            .tenant-logout-button:hover, .tenant-sound-button:hover { transform: none; translate: none; }
         }

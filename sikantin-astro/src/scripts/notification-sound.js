@@ -4,6 +4,8 @@
     sound.preload = 'auto';
     const button = document.getElementById('soundToggle');
     const status = document.getElementById('soundStatus');
+    const icon = button?.querySelector('.sound-icon');
+    const label = button?.querySelector('.sound-label');
     let enabled = false;
 
     if (!button) return;
@@ -14,7 +16,9 @@
     });
 
     function setButtonState() {
-        button.textContent = enabled ? '🔔 Suara Aktif' : '🔕 Aktifkan Suara';
+        if (icon) icon.textContent = enabled ? '🔔' : '🔕';
+        if (label) label.textContent = enabled ? 'Suara Aktif' : 'Aktifkan Suara';
+        if (!icon || !label) button.textContent = enabled ? '🔔 Suara Aktif' : '🔕 Aktifkan Suara';
         button.setAttribute('aria-pressed', String(enabled));
     }
 

@@ -74,6 +74,13 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
         }
         .empty-tenant { background: radial-gradient(ellipse at 50% 0, rgba(56, 189, 248, .12), transparent 60%), rgba(255, 255, 255, .035); }
         .tenant-card[hidden], .featured-tenant[hidden] { display: none; }
+        .catalog-hero, .catalog-promo, #daftar-tenant { animation: fade-in-up 600ms cubic-bezier(.2, .7, .2, 1) both; }
+        .catalog-promo { animation-delay: 100ms; }
+        #daftar-tenant { animation-delay: 180ms; }
+        .tenant-card { transition: translate 300ms ease-in-out, box-shadow 300ms ease-in-out, border-color 300ms ease-in-out; }
+        .tenant-card:hover { translate: 0 -4px; box-shadow: 0 10px 20px rgba(0, 0, 0, .1); }
+        .tenant-card:nth-child(2n) { animation-delay: 80ms; }
+        .tenant-card:nth-child(3n) { animation-delay: 140ms; }
         @media (max-width: 640px) {
             .hero-decoration { right: -5rem; opacity: .28; }
             .hero-decoration span:nth-child(2) { transform: translateY(-1rem); }

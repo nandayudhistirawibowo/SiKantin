@@ -14,14 +14,14 @@ import '../styles/cek-pesanan.css';
 		<div class="mx-auto flex max-w-3xl items-center justify-between px-4 py-4">
 			<a href="/" class="text-sm font-bold text-blue-700 hover:underline">← Katalog Kantin</a>
 			<div class="flex items-center gap-3">
-				<button id="soundToggle" type="button" aria-pressed="false" class="rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50">🔕 Aktifkan Suara</button>
+				<button id="soundToggle" type="button" aria-pressed="false" class="rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50"><span class="sound-icon" aria-hidden="true">🔕</span> <span class="sound-label">Aktifkan Suara</span></button>
 				<span class="font-extrabold text-slate-900">Cek Pesanan</span>
 			</div>
 		</div>
 	</header>
 	<main class="mx-auto max-w-3xl px-4 py-10">
 		<p id="soundStatus" class="sr-only" aria-live="polite"></p>
-		<section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8">
+		<section class="ui-enter ui-hover-card rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8">
 			<p class="text-sm font-bold text-blue-700">Pesanan Guest</p>
 			<h1 class="mt-1 text-2xl font-extrabold text-slate-900">Lacak status pesanan</h1>
 			<p class="mt-2 text-sm text-slate-500">Masukkan token yang diberikan setelah checkout atau dikirim melalui WhatsApp.</p>
@@ -40,9 +40,12 @@ import '../styles/cek-pesanan.css';
 					Cek Pesanan
 				</button>
 			</form>
+			<div id="lookupLoading" class="skeleton-card mt-4 hidden" role="status" aria-label="Memeriksa pesanan">
+				<span class="skeleton-line w-2/3"></span><span class="skeleton-line w-1/2"></span>
+			</div>
 			<p id="lookupMessage" role="status" aria-live="polite" class="mt-4 hidden rounded-lg p-3 text-sm"></p>
 		</section>
-		<section id="orderCard" class="mt-6 hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8">
+		<section id="orderCard" class="ui-hover-card mt-6 hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8">
 			<div class="queue-number-hero rounded-2xl px-5 py-7 text-center">
 				<p class="text-xs font-extrabold uppercase tracking-[0.2em] text-emerald-800">Nomor antrean</p>
 				<p id="queueNumber" class="mt-2 text-6xl font-black leading-none tracking-tight text-emerald-950 sm:text-8xl"></p>
@@ -100,6 +103,7 @@ import '../styles/cek-pesanan.css';
 		const tokenInput = document.getElementById('orderToken');
 		const button = document.getElementById('lookupButton');
 		const message = document.getElementById('lookupMessage');
+		const lookupLoading = document.getElementById('lookupLoading');
 		const tenantRatingStars = document.getElementById('tenantRatingStars');
 		let statusChannel;
 		let activeToken = '';
@@ -224,6 +228,7 @@ import '../styles/cek-pesanan.css';
 			renderTenantReviewForm(order);
 			document.getElementById('orderTotal').textContent = formatRupiah(order.total);
 			document.getElementById('orderCard').classList.remove('hidden');
+			document.getElementById('orderCard').classList.add('ui-enter');
 		}
 
 		function renderTenantReviewForm(order) {
@@ -314,6 +319,7 @@ import '../styles/cek-pesanan.css';
 			currentOrder = undefined;
 			document.getElementById('orderCard').classList.add('hidden');
 			button.disabled = true;
+			lookupLoading.classList.remove('hidden');
 			showMessage('Memeriksa token pesanan...', false);
 			try {
 				const order = await lookupOrder(token);
@@ -326,6 +332,7 @@ import '../styles/cek-pesanan.css';
 				document.getElementById('orderCard').classList.add('hidden');
 				showMessage(`Pesanan gagal dimuat: ${error.message}`, true);
 			} finally {
+				lookupLoading.classList.add('hidden');
 				button.disabled = false;
 			}
 		});

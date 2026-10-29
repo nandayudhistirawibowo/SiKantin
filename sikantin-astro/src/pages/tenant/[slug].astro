@@ -142,7 +142,7 @@ const menuCategories = [...new Set((menuItems ?? []).map((item) => item.kategori
               <div id="menuGrid" data-count={menuItems.length} class:list={['menu-grid mt-4 grid gap-5', menuItems.length === 1 ? 'menu-grid-single' : 'sm:grid-cols-2 xl:grid-cols-2']}>
                 {menuItems.map((item) => (
                   <article
-                    class="menu-card group overflow-hidden rounded-3xl border border-white/10 bg-white shadow-lg shadow-slate-950/20 transition duration-200 hover:-translate-y-1 hover:shadow-2xl"
+                    class="menu-card group overflow-hidden rounded-3xl border border-white/10 bg-white shadow-lg shadow-slate-950/20"
                     data-menu-card
                     data-menu-category={(item.kategori || 'Menu kantin').trim().toLowerCase()}
                     data-menu-search={`${item.nama_menu} ${item.kategori || 'Menu kantin'}`.toLowerCase()}
@@ -723,7 +723,15 @@ const menuCategories = [...new Set((menuItems ?? []).map((item) => item.kategori
 
     menuCards.forEach((card) => {
       card.querySelector('[data-quantity-decrement]').addEventListener('click', () => changeCardQuantity(card, -1));
-      card.querySelector('[data-quantity-increment]').addEventListener('click', () => changeCardQuantity(card, 1));
+      const incrementButton = card.querySelector('[data-quantity-increment]');
+      incrementButton.addEventListener('click', () => {
+        changeCardQuantity(card, 1);
+        incrementButton.classList.remove('is-bouncing');
+        window.requestAnimationFrame(() => {
+          incrementButton.classList.add('is-bouncing');
+          window.setTimeout(() => incrementButton.classList.remove('is-bouncing'), 380);
+        });
+      });
       card.querySelectorAll('[data-menu-addon]').forEach((input) => {
         input.addEventListener('change', () => updateCardQuantity(card));
       });

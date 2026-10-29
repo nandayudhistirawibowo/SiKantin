@@ -37,9 +37,9 @@ import '../styles/admin-dashboard.css';
             <main id="adminHome" class="mx-auto max-w-7xl space-y-7 p-4 sm:p-7">
                 <p id="message" role="status" aria-live="polite" class="hidden rounded-lg p-3 text-sm"></p>
                 <section class="grid gap-4 sm:grid-cols-3" aria-label="Ringkasan admin">
-                    <article class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md"><p class="text-sm font-semibold text-slate-500">Mahasiswa terdaftar</p><p id="studentCount" class="mt-2 text-3xl font-extrabold text-blue-700">—</p></article>
-                    <article class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md"><p class="text-sm font-semibold text-slate-500">Tenant terdaftar</p><p id="tenantCount" class="mt-2 text-3xl font-extrabold text-emerald-700">—</p></article>
-                    <article class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md"><p class="text-sm font-semibold text-slate-500">Tenant buka</p><p id="openTenantCount" class="mt-2 text-3xl font-extrabold text-amber-600">—</p></article>
+                    <article class="ui-hover-card ui-enter rounded-xl border border-slate-200 bg-white p-5 shadow-sm"><p class="text-sm font-semibold text-slate-500">Mahasiswa terdaftar</p><p id="studentCount" class="mt-2 text-3xl font-extrabold text-blue-700">—</p></article>
+                    <article class="ui-hover-card ui-enter rounded-xl border border-slate-200 bg-white p-5 shadow-sm"><p class="text-sm font-semibold text-slate-500">Tenant terdaftar</p><p id="tenantCount" class="mt-2 text-3xl font-extrabold text-emerald-700">—</p></article>
+                    <article class="ui-hover-card ui-enter rounded-xl border border-slate-200 bg-white p-5 shadow-sm"><p class="text-sm font-semibold text-slate-500">Tenant buka</p><p id="openTenantCount" class="mt-2 text-3xl font-extrabold text-amber-600">—</p></article>
                 </section>
 
                 <section id="studentsSection" class="scroll-mt-24 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
@@ -81,7 +81,7 @@ import '../styles/admin-dashboard.css';
                     </div>
                 </section>
 
-                <section id="reportsSection" class="scroll-mt-24 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+                <section id="reportsSection" class="ui-hover-card ui-enter scroll-mt-24 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
                     <h2 class="font-extrabold text-slate-900">Laporan</h2>
                     <p class="mt-2 text-sm text-slate-600">Ringkasan akun dan tenant ditampilkan di panel ini. Rincian transaksi tetap mengikuti hak akses database.</p>
                 </section>

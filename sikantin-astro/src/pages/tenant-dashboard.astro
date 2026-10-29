@@ -17,7 +17,7 @@ import '../styles/tenant-dashboard.css';
                 </div>
             </div>
             <div class="flex items-center gap-2">
-                <button id="soundToggle" type="button" aria-pressed="false" class="tenant-sound-button">🔕 Aktifkan Suara</button>
+                <button id="soundToggle" type="button" aria-pressed="false" class="tenant-sound-button"><span class="sound-icon" aria-hidden="true">🔕</span> <span class="sound-label">Aktifkan Suara</span></button>
                 <button id="logoutButton" type="button" class="tenant-logout-button">Keluar</button>
             </div>
         </div>
@@ -45,25 +45,25 @@ import '../styles/tenant-dashboard.css';
         <p id="soundStatus" class="sr-only" aria-live="polite"></p>
 
         <section class="mb-7 grid gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="Ringkasan penjualan">
-            <article class="tenant-stat-card">
+            <article class="tenant-stat-card ui-enter">
                 <span class="tenant-stat-icon bg-blue-50 text-blue-700" aria-hidden="true">◉</span>
                 <p class="mt-4 text-sm text-slate-500">Penjualan pesanan tampil</p>
                 <p id="tenantSalesTotal" class="mt-1 text-2xl font-black text-slate-900">Rp 0</p>
                 <p class="mt-2 text-xs text-slate-500">Total dari database</p>
             </article>
-            <article class="tenant-stat-card">
+            <article class="tenant-stat-card ui-enter">
                 <span class="tenant-stat-icon bg-amber-50 text-amber-700" aria-hidden="true">▤</span>
                 <p class="mt-4 text-sm text-slate-500">Pesanan</p>
                 <p id="tenantOrderCount" class="mt-1 text-2xl font-black text-slate-900">0</p>
                 <p class="mt-2 text-xs text-slate-500">Total pesanan tenant</p>
             </article>
-            <article class="tenant-stat-card">
+            <article class="tenant-stat-card ui-enter">
                 <span class="tenant-stat-icon bg-orange-50 text-orange-700" aria-hidden="true">◷</span>
                 <p class="mt-4 text-sm text-slate-500">Perlu diproses</p>
                 <p id="tenantPendingCount" class="mt-1 text-2xl font-black text-slate-900">0</p>
                 <p class="mt-2 text-xs text-slate-500">Pesanan menunggu tindakan</p>
             </article>
-            <article class="tenant-stat-card">
+            <article class="tenant-stat-card ui-enter">
                 <span class="tenant-stat-icon bg-emerald-50 text-emerald-700" aria-hidden="true">✓</span>
                 <p class="mt-4 text-sm text-slate-500">Siap diambil</p>
                 <p id="tenantReadyCount" class="mt-1 text-2xl font-black text-slate-900">0</p>
@@ -85,7 +85,10 @@ import '../styles/tenant-dashboard.css';
                 <div><h2 class="text-lg font-extrabold text-slate-900">Pesanan terbaru</h2><p class="mt-1 text-sm text-slate-500">Notifikasi realtime aktif; pembaruan otomatis.</p></div>
                 <span class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">Database</span>
             </div>
-            <div id="ordersList" class="divide-y divide-slate-100"><p class="p-5 text-sm text-slate-500">Memuat pesanan...</p></div>
+            <div id="ordersList" class="divide-y divide-slate-100" role="status" aria-label="Memuat pesanan">
+                <div class="skeleton-card m-4"><span class="skeleton-line w-1/3"></span><span class="skeleton-line w-2/3"></span><span class="skeleton-line w-1/2"></span></div>
+                <div class="skeleton-card m-4"><span class="skeleton-line w-1/3"></span><span class="skeleton-line w-2/3"></span><span class="skeleton-line w-1/2"></span></div>
+            </div>
         </section>
 
         <section id="tenantMenuPanel" class="tenant-panel hidden">
@@ -93,7 +96,10 @@ import '../styles/tenant-dashboard.css';
                 <div><h2 class="text-lg font-extrabold text-slate-900">Menu kantin</h2><p class="mt-1 text-sm text-slate-500">Daftar menu dari database.</p></div>
                 <span class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">Database</span>
             </div>
-            <div id="tenantMenuList" class="grid gap-3 p-5 sm:grid-cols-2"><p class="text-sm text-slate-500">Memuat menu...</p></div>
+            <div id="tenantMenuList" class="grid gap-3 p-5 sm:grid-cols-2" role="status" aria-label="Memuat menu">
+                <div class="skeleton-card"><span class="skeleton-line w-2/3"></span><span class="skeleton-line w-1/2"></span></div>
+                <div class="skeleton-card"><span class="skeleton-line w-2/3"></span><span class="skeleton-line w-1/2"></span></div>
+            </div>
         </section>
         <section id="tenantHistoryPanel" class="tenant-panel hidden">
             <div class="tenant-panel-heading">
@@ -112,7 +118,7 @@ import '../styles/tenant-dashboard.css';
                         </tr>
                     </thead>
                     <tbody id="tenantHistoryBody" class="divide-y divide-slate-100">
-                        <tr><td colspan="5" class="px-5 py-4 text-sm text-slate-500">Memuat riwayat pesanan...</td></tr>
+                        <tr><td colspan="5" role="status" aria-label="Memuat riwayat pesanan"><span class="skeleton-line m-4 block w-2/3"></span></td></tr>
                     </tbody>
                 </table>
             </div>
@@ -296,7 +302,7 @@ import '../styles/tenant-dashboard.css';
             }
             menuItems.forEach((item) => {
                 const row = document.createElement('article');
-                row.className = 'tenant-menu-item bg-white';
+                row.className = 'tenant-menu-item ui-enter bg-white';
                 if (item.foto_url) {
                     const image = document.createElement('img');
                     image.src = item.foto_url;
@@ -372,7 +378,7 @@ import '../styles/tenant-dashboard.css';
 
             orders.forEach((order) => {
                 const row = document.createElement('article');
-                row.className = 'tenant-order-row';
+                row.className = 'tenant-order-row ui-enter';
                 const identity = document.createElement('div');
                 identity.className = 'min-w-[12rem] flex-1';
                 addText(
