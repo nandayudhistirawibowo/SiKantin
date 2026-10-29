@@ -122,9 +122,6 @@ import '../styles/tenant-dashboard.css';
     <script>
 	import { db } from '../scripts/supabase.js';
 	import '../scripts/notification-sound.js';
-</script>
-    <script>
-	import { db } from '../scripts/supabase.js';
         const ordersList = document.getElementById('ordersList');
         const message = document.getElementById('message');
         const connectionStatus = document.getElementById('connectionStatus');
@@ -599,12 +596,12 @@ import '../styles/tenant-dashboard.css';
             channel = db
                 .channel(`tenant-orders-${activeTenantId}`)
                 .on('postgres_changes', {
-                    event: '*',
+                    event: 'INSERT',
                     schema: 'public',
                     table: 'orders',
                     filter: `tenant_id=eq.${activeTenantId}`
                 }, (payload) => {
-                    if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+                    if (payload.eventType === 'INSERT' && payload.new?.tenant_id === activeTenantId) {
                         window.playNotificationSound?.();
                     }
                     scheduleRefresh();

@@ -1,6 +1,7 @@
 (function () {
     const soundUrl = 'https://zafuozcduvijohjnbycw.supabase.co/storage/v1/object/public/sounds/notif.mp3';
     const sound = new Audio(soundUrl);
+    sound.preload = 'auto';
     const button = document.getElementById('soundToggle');
     const status = document.getElementById('soundStatus');
     let enabled = false;
@@ -44,6 +45,8 @@
         sound.currentTime = 0;
         try {
             await sound.play();
+            sound.pause();
+            sound.currentTime = 0;
             enabled = true;
             setButtonState();
             if (status) status.textContent = 'Notifikasi suara aktif.';

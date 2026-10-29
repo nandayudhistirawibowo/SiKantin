@@ -72,7 +72,10 @@ async function notifyByWhatsApp(
 ): Promise<"sent" | "not_configured" | "failed"> {
   const gatewayUrl = Deno.env.get("WA_GATEWAY_URL");
   const apiKey = Deno.env.get("WA_API_KEY");
-  if (!gatewayUrl || !apiKey) return "not_configured";
+  if (!gatewayUrl || !apiKey) {
+    console.error("WhatsApp tidak dikonfigurasi: WA_GATEWAY_URL atau WA_API_KEY belum tersedia.");
+    return "not_configured";
+  }
 
   let message: string;
   if (messageOverride !== undefined) {
@@ -510,6 +513,7 @@ Deno.serve(async (request: Request): Promise<Response> => {
       `Pesanan baru masuk! Antrean ${order.nomor_antrean}. Total Rp ${Math.round(Number(order.total)).toLocaleString("id-ID")}. Silakan cek Dashboard Tenant.`,
     );
   }
+  console.log("Tenant WA:", tenantWhatsapp);
   const { data: tenantWhatsappStatusOrder, error: tenantWhatsappStatusError } = await serviceClient
     .from("orders")
     .update({ tenant_whatsapp: tenantWhatsapp })
