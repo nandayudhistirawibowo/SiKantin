@@ -1,212 +1,301 @@
-# Database SiKantin
+# Database Schema — SiKantin
 
-## Catatan sumber skema
+Dokumen ini merangkum skema yang dapat diverifikasi dari SQL migrations dan query aplikasi dalam repository. Dokumen ini **bukan dump skema live** dan tidak boleh digunakan sebagai DDL pemulihan tanpa membandingkan database Supabase target.
 
-Migration aktif berada di `supabase/migrations/`. Migration yang tersedia menambahkan kolom/tabel/constraint/RLS untuk fitur-fitur di bawah, tetapi tidak menyertakan migration baseline yang pertama kali membuat `profiles`, `tenants`, `menu_items`, `orders`, dan `order_items`. `sikantin-astro/database/mysql-schema.sql` adalah skema MySQL lama, bukan DDL PostgreSQL aktif.
+## 1. Catatan Sumber dan Cara Membaca
 
-Karena itu, tabel dasar berikut mencatat kontrak kolom yang dipakai kode aktif dan migration yang tersedia. Kolom bertanda **kontrak aplikasi** perlu dibandingkan dengan `pg_catalog`/schema Supabase produksi sebelum dipakai sebagai DDL pemulihan; tipe dan FK dasar tidak boleh disimpulkan dari file MySQL lama. Kolom/constraint yang secara eksplisit dibuat oleh migration memiliki tipe dan aturan yang dinyatakan langsung.
+- Migration aktif ada di [`supabase/migrations/`](./supabase/migrations/).
+- Repository tidak menyediakan migration baseline lengkap yang pertama kali membuat `profiles`, `tenants`, `menu_items`, `orders`, dan `order_items`.
+- [`sikantin-astro/database/mysql-schema.sql`](./sikantin-astro/database/mysql-schema.sql) adalah skema MySQL lama; bukan sumber tipe/FK PostgreSQL aktif.
+- Kolom yang dinyatakan **terverifikasi migration** memiliki tipe/constraint eksplisit pada SQL yang dirujuk.
+- Kolom core yang dinyatakan **kontrak aplikasi** dipakai pada query aktif, tetapi tipe/constraint baseline perlu dicocokkan dengan `pg_catalog` atau Supabase Dashboard.
+- Tipe core yang ditulis sebagai referensi membantu pembacaan kode, bukan jaminan bahwa seluruh database live identik.
 
-## Tabel
+## 2. Tabel Core
 
-### `profiles` — kontrak aplikasi + migration tambahan
+### 2.1 `profiles`
 
-| Kolom | Tipe referensi | Aturan / penggunaan |
+Profil aplikasi dipasangkan dengan identitas Supabase Auth. User baru mahasiswa dibuat melalui Edge Function; email Auth memakai pola `[NIM]@uym.ac.id`.
+
+| Kolom | Tipe referensi | Sifat / fungsi |
 |---|---|---|
-| `id` | `uuid` | Identitas yang sama dengan pengguna Supabase Auth; dipakai sebagai owner/profile id. Definisi FK baseline tidak ada dalam migration repository. |
-| `nama` | `text` | Nama yang ditampilkan. |
-| `nim` | `text` | NIM mahasiswa; dicari untuk checkout/login. Unique pada data akun mahasiswa sesuai model aplikasi. |
-| `peran` | `text` | Role aplikasi, antara lain `mahasiswa`, `pemilik_tenant`, `admin`. Trigger mencegah perubahan role oleh non-admin. |
-| `no_telepon` | `text` | Ditambahkan oleh `20261029000004_student_dashboard.sql`; dipakai saat checkout/notifikasi. |
-| `avatar_url` | `text` | Ditambahkan oleh migration mahasiswa; URL avatar. |
-| `created_at`, `updated_at` | `timestamptz` | Timestamp dasar yang dipakai/dianggap oleh aplikasi; definisi baseline perlu diverifikasi. |
+| `id` | `uuid` | ID profil yang sama dengan user Auth; baseline FK tidak disertakan dalam repo. |
+| `nama` | `text` | Nama mahasiswa/pemilik yang ditampilkan. |
+| `nim` | `text` | NIM mahasiswa; dicari dan divalidasi pada login/checkout. |
+| `peran` | `text` | Role aplikasi: `mahasiswa`, `pemilik_tenant`, atau `admin`. Trigger membatasi perubahan role. |
+| `no_telepon` | `text` | Nomor kontak/WhatsApp; ditambahkan melalui migration dashboard mahasiswa. |
+| `avatar_url` | `text` | URL avatar; ditambahkan melalui migration dashboard mahasiswa. |
+| `created_at`, `updated_at` | `timestamptz` | Timestamp bila tersedia pada baseline; definisi aktual perlu diverifikasi. |
 
-### `tenants` — kontrak aplikasi + migration
+### 2.2 `tenants`
 
-| Kolom | Tipe | Aturan / penggunaan |
-|---|---|---|
-| `id` | `uuid` | Primary key baseline; dirujuk tabel terkait. |
-| `nama_tenant` | `text` | Nama tenant; slug diperbarui otomatis saat nama berubah. |
-| `slug` | `text` | Ditambahkan oleh migration guest checkout; `NOT NULL`, unique index; dibangkitkan dari nama tenant. |
-| `pemilik_id` | `uuid` | Menghubungkan tenant ke pemilik di `profiles`; RLS pemilik membatasi baris ke `auth.uid()`. |
-| `lokasi` | `text` | Lokasi yang ditampilkan pada katalog. |
-| `jam_operasional` | `text` | Representasi tampilan kompatibilitas, format `HH:MM - HH:MM`. |
-| `jam_buka`, `jam_tutup` | `time` | Ditambahkan oleh `20261029000007_tenant_operating_hours.sql`. Keduanya harus sama-sama NULL atau terisi; tidak boleh sama. Rentang lintas tengah malam diperbolehkan. |
-| `override_until` | `timestamptz` | Batas override manual berikutnya; setelah berakhir cron menghitung jadwal dan mengosongkannya. |
-| `no_telepon` | `text` | Ditambahkan oleh migration admin. |
-| `qris_image_url` | `text` | URL gambar QRIS publik. |
-| `status_buka` | `boolean` | Status operasional efektif yang dibaca katalog dan Edge Function checkout. |
-| `created_at`, `updated_at` | `timestamptz` | Timestamp dasar; verifikasi definisi awal di database. |
-
-### `menu_items` — kontrak aplikasi + migration
-
-| Kolom | Tipe referensi | Aturan / penggunaan |
+| Kolom | Tipe referensi | Sifat / fungsi |
 |---|---|---|
 | `id` | `uuid` | Primary key baseline. |
-| `tenant_id` | `uuid` | Relasi menu ke tenant. |
-| `nama_menu` | `text` | Nama produk. |
+| `nama_tenant` | `text` | Nama tenant. Perubahan nama memicu pembaruan slug melalui trigger. |
+| `slug` | `text` | URL tenant; trigger menghasilkan slug dan migration guest checkout menambahkan unique index serta `NOT NULL`. |
+| `pemilik_id` | `uuid` | ID profil pemilik; dipakai policy pemilik tenant. FK baseline perlu diverifikasi. |
+| `lokasi` | `text` | Lokasi yang ditampilkan di katalog. |
+| `jam_operasional` | `text` | Teks kompatibilitas/tampilan untuk jam kerja lama. |
+| `jam_buka` | `time` | Jadwal otomatis WIB; ditambahkan oleh migration `20261029000007_tenant_operating_hours.sql`. |
+| `jam_tutup` | `time` | Jadwal tutup otomatis WIB; ditambahkan bersama `jam_buka`. |
+| `override_until` | `timestamptz` | Akhir override manual; scheduler tidak menimpa status sebelum waktu ini. |
+| `no_telepon` | `text` | Kontak tenant; ditambahkan pada migration admin CRUD. |
+| `qris_image_url` | `text` | URL QRIS tenant; definisi core perlu dicocokkan dengan baseline live. |
+| `status_buka` | `boolean` | Status operasional efektif yang dipakai katalog dan validasi checkout. |
+| `created_at`, `updated_at` | `timestamptz` | Timestamp baseline bila tersedia; verifikasi pada proyek live. |
+
+Constraint yang dibuat untuk jam operasi:
+
+- `(jam_buka IS NULL) = (jam_tutup IS NULL)` — keduanya harus diisi atau dikosongkan bersama.
+- `jam_buka IS NULL OR jam_buka <> jam_tutup` — jam buka dan tutup tidak boleh sama.
+- Jam tutup lebih awal daripada jam buka diperbolehkan untuk tenant yang beroperasi melewati tengah malam.
+
+### 2.3 `menu_items`
+
+| Kolom | Tipe referensi | Sifat / fungsi |
+|---|---|---|
+| `id` | `uuid` | Primary key baseline. |
+| `tenant_id` | `uuid` | Tenant pemilik menu; FK baseline perlu diverifikasi. |
+| `nama_menu` | `text` | Nama menu dan snapshot pada order item. |
+| `harga` | `numeric` | Harga satuan yang dibaca server saat checkout. |
 | `kategori` | `text` | Kategori filter menu. |
-| `harga` | `numeric` | Harga; checkout mengambil nilai server/database. |
-| `tersedia` | `boolean` | Hanya menu tersedia ditampilkan untuk pemesanan guest. |
-| `foto_url` | `text` | Gambar menu. |
-| `waktu_persiapan` | `integer NOT NULL DEFAULT 0` | Ditambahkan oleh migration admin. |
-| `add_ons` | `jsonb NOT NULL DEFAULT '[]'` | Ditambahkan oleh `20261027000009_menu_addons.sql`; check `jsonb_typeof(add_ons) = 'array'`. |
-| `created_at`, `updated_at` | `timestamptz` | Timestamp dasar, definisi baseline perlu diverifikasi. |
+| `tersedia` | `boolean` | Ketersediaan menu; guest hanya melihat menu tersedia. |
+| `foto_url` | `text` | URL foto menu. |
+| `waktu_persiapan` | `integer NOT NULL DEFAULT 0` | Ditambahkan oleh migration admin CRUD. |
+| `add_ons` | `jsonb NOT NULL DEFAULT '[]'::jsonb` | Array add-on; migration mensyaratkan `jsonb_typeof(add_ons) = 'array'`. |
+| `created_at`, `updated_at` | `timestamptz` | Kolom baseline, bila ada; definisi aktual belum disediakan repo. |
 
-### `orders` — kontrak aplikasi + migration tambahan
+Objek add-on pada JSON array memiliki `id`, `name`, dan `price`. Edge Function memvalidasi struktur, harga, duplikasi ID, dan memastikan add-on pilihan masih terkonfigurasi pada item.
 
-| Kolom | Tipe referensi | Aturan / penggunaan |
+### 2.4 `orders`
+
+| Kolom | Tipe referensi | Sifat / fungsi |
 |---|---|---|
 | `id` | `uuid` | Primary key baseline. |
-| `tenant_id` | `uuid` | Tenant yang menerima pesanan. |
-| `mahasiswa_id` | `uuid NULL` | User Auth untuk order dari mahasiswa login; NULL pada guest. |
-| `nim_guest` | `text NULL` | NIM pada order guest; ditambahkan oleh migration guest checkout. |
-| `nama_mahasiswa`, `phone` | `text` | Snapshot identitas/kontak pada saat checkout. |
-| `nomor_pesanan` | `text` | Identitas pesanan yang ditampilkan. |
-| `token_pesanan` | `text NULL` | Token rahasia untuk pelacakan guest; unique index. |
-| `nomor_antrean` | `text NULL` | Nomor antrean tenant harian, misalnya `A-01`. |
-| `tanggal_antrean` | `date NULL` | Tanggal lokal antrean; unique index gabungan parsial dengan tenant dan nomor. |
-| `status` | `text` | Status alur pesanan. |
-| `total` | `numeric` | Total pesanan. |
-| `metode_pembayaran` | `text NOT NULL DEFAULT 'qris'` | Check migration: hanya `qris` atau `tunai`. Bukti QRIS diperiksa manual. |
-| `bukti_transfer` | `text NULL` | URL bukti transfer. |
-| `alasan_pembatalan` | `text NULL` | Alasan penolakan/pembatalan. |
-| `tenant_whatsapp` | `text NOT NULL DEFAULT 'not_applicable'` | Status integrasi WhatsApp tenant, ditambahkan migration notifikasi tenant. |
+| `tenant_id` | `uuid` | Tenant penerima order. |
+| `mahasiswa_id` | `uuid NULL` | User Auth mahasiswa login; NULL untuk guest. Migration guest secara eksplisit menghapus `NOT NULL`. |
+| `nim_guest` | `text NULL` | NIM guest; ditambahkan pada migration guest checkout. |
+| `nama_mahasiswa` | `text` | Snapshot nama pembeli saat transaksi. |
+| `phone` | `text` | Snapshot nomor WhatsApp pembeli. |
+| `nomor_pesanan` | `text` | Nomor order yang dapat ditampilkan. |
+| `token_pesanan` | `text` | Token pelacakan; migration membuat unique index. Perlakukan sebagai rahasia. |
+| `nomor_antrean` | `text NULL` | Nomor antrean harian, misalnya `A-01`. |
+| `tanggal_antrean` | `date NULL` | Tanggal antrean WIB; unique index parsial bersama tenant dan nomor. |
+| `status` | `text` | Status order; tidak ada constraint enum baseline yang disertakan. |
+| `total` | `numeric` | Total hasil kalkulasi server. |
+| `metode_pembayaran` | `text NOT NULL DEFAULT 'qris'` | Check eksplisit membatasi nilai ke `qris` atau `tunai`; checkout guest aktif mengirim `qris`. |
+| `bukti_transfer` | `text NULL` | URL bukti transfer; ditulis oleh Edge Function. |
+| `alasan_pembatalan` | `text NULL` | Alasan penolakan/pembatalan order. |
+| `tenant_whatsapp` | `text NOT NULL DEFAULT 'not_applicable'` | Status integrasi WA tenant; ditambahkan migration `20261029000005_order_tenant_whatsapp.sql`. |
 | `created_at`, `updated_at` | `timestamptz` | Timestamp order; `created_at` dipakai untuk sorting/riwayat. |
 
-### `order_items` — kontrak aplikasi + migration
+Index/constraint eksplisit tambahan: unique index token pesanan; unique index parsial `(tenant_id, tanggal_antrean, nomor_antrean)` untuk baris yang memiliki tanggal dan nomor antrean.
 
-| Kolom | Tipe referensi | Aturan / penggunaan |
+### 2.5 `order_items`
+
+| Kolom | Tipe referensi | Sifat / fungsi |
 |---|---|---|
 | `id` | `uuid` | Primary key baseline. |
-| `order_id` | `uuid` | Relasi ke order. |
-| `menu_item_id` | `uuid NULL` | Referensi item menu asal. |
+| `order_id` | `uuid` | ID order induk; FK baseline perlu diverifikasi. |
+| `menu_item_id` | `uuid NULL` | Referensi menu sumber bila masih tersedia. |
 | `nama_menu` | `text` | Snapshot nama menu saat transaksi. |
-| `harga_satuan` | `numeric` | Harga snapshot per item; verifikasi tipe pada baseline aktif. |
-| `jumlah` | `integer` | Kuantitas item. |
-| `subtotal` | `numeric` | Subtotal item/add-on. |
-| `catatan` | `text NULL` | Ditambahkan oleh migration catatan item. |
-| `add_ons` | `jsonb NOT NULL DEFAULT '[]'` | Snapshot add-on; check harus berupa JSON array. |
-| `created_at` | `timestamptz` | Timestamp baseline. |
+| `harga_satuan` | `numeric` | Snapshot harga satuan; definisi baseline perlu dicek. |
+| `jumlah` | `integer` | Kuantitas menu. |
+| `subtotal` | `numeric` | Subtotal item/add-on yang dihitung server. |
+| `catatan` | `text NULL` | Catatan item; ditambahkan oleh migration `20261027000002_order_item_notes.sql`. |
+| `add_ons` | `jsonb NOT NULL DEFAULT '[]'::jsonb` | Snapshot add-on order; check memastikan nilai berbentuk array. |
+| `created_at` | `timestamptz` | Timestamp baseline bila tersedia. |
 
-### `favorites` — migration `20261029000004_student_dashboard.sql`
+Snapshot nama/harga/add-on mempertahankan rincian historis meskipun data menu berubah. FK dan aksi delete baseline harus diverifikasi sebelum membuat ulang tabel.
 
-| Kolom | Tipe | Constraint |
+## 3. Tabel Pendukung
+
+### 3.1 `favorites`
+
+Dibuat oleh migration `20261029000004_student_dashboard.sql`.
+
+| Kolom | Tipe | Constraint / fungsi |
 |---|---|---|
-| `id` | `uuid PRIMARY KEY DEFAULT gen_random_uuid()` | Identitas favorite. |
-| `user_id` | `uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE` | Pemilik favorite. |
-| `tenant_id` | `uuid NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE` | Tenant favorit. |
-| `created_at` | `timestamptz NOT NULL DEFAULT now()` | Waktu dibuat. |
-| Pasangan user/tenant | — | `UNIQUE (user_id, tenant_id)`. |
+| `id` | `uuid` | PK, `DEFAULT gen_random_uuid()`. |
+| `user_id` | `uuid NOT NULL` | FK ke `auth.users(id) ON DELETE CASCADE`. |
+| `tenant_id` | `uuid NOT NULL` | FK ke `public.tenants(id) ON DELETE CASCADE`. |
+| `created_at` | `timestamptz NOT NULL` | Default `now()`. |
+| `(user_id, tenant_id)` | — | Unique agar user tidak menyimpan tenant yang sama dua kali. |
 
 Index: `(user_id, created_at DESC)`.
 
-### `menu_reviews` — migration `20261029000000_menu_reviews.sql`
+### 3.2 `tenant_reviews`
 
-| Kolom | Tipe | Constraint |
+Dibuat oleh migration `20261029000001_tenant_reviews.sql`.
+
+| Kolom | Tipe | Constraint / fungsi |
 |---|---|---|
-| `id` | `uuid PRIMARY KEY DEFAULT gen_random_uuid()` | — |
-| `order_id` | `uuid NOT NULL REFERENCES orders(id) ON DELETE CASCADE` | — |
-| `menu_item_id` | `uuid NOT NULL REFERENCES menu_items(id) ON DELETE CASCADE` | — |
-| `rating` | `integer NOT NULL CHECK (rating BETWEEN 1 AND 5)` | Bintang 1–5. |
-| `created_at` | `timestamptz NOT NULL DEFAULT now()` | — |
-| `(order_id, menu_item_id)` | — | `UNIQUE`; satu rating menu per item pesanan. |
+| `order_id` | `uuid` | PK sekaligus FK ke `orders(id) ON DELETE CASCADE`; satu review tenant per order. |
+| `tenant_id` | `uuid NOT NULL` | FK ke `tenants(id) ON DELETE CASCADE`. |
+| `rating` | `integer NOT NULL` | Check `BETWEEN 1 AND 5`. |
+| `created_at` | `timestamptz NOT NULL` | Default `now()`. |
 
-Index: `menu_item_id`. Data rating menu lama dimigrasikan menjadi rating tenant.
+Index: `tenant_id`. RPC menolak rating sebelum order berstatus `Selesai`.
 
-### `tenant_reviews` — migration `20261029000001_tenant_reviews.sql`
+### 3.3 `menu_reviews`
 
-| Kolom | Tipe | Constraint |
+Dibuat oleh migration `20261029000000_menu_reviews.sql`. Migration berikutnya memindahkan pengalaman rating publik ke rating tenant; tabel menu reviews dapat tetap ada sebagai data historis/legacy.
+
+| Kolom | Tipe | Constraint / fungsi |
 |---|---|---|
-| `order_id` | `uuid PRIMARY KEY REFERENCES orders(id) ON DELETE CASCADE` | Satu review per pesanan. |
-| `tenant_id` | `uuid NOT NULL REFERENCES tenants(id) ON DELETE CASCADE` | Tenant yang dinilai. |
-| `rating` | `integer NOT NULL CHECK (rating BETWEEN 1 AND 5)` | Bintang 1–5. |
-| `created_at` | `timestamptz NOT NULL DEFAULT now()` | — |
+| `id` | `uuid` | PK, `DEFAULT gen_random_uuid()`. |
+| `order_id` | `uuid NOT NULL` | FK ke `orders(id) ON DELETE CASCADE`. |
+| `menu_item_id` | `uuid NOT NULL` | FK ke `menu_items(id) ON DELETE CASCADE`. |
+| `rating` | `integer NOT NULL` | Check `BETWEEN 1 AND 5`. |
+| `created_at` | `timestamptz NOT NULL` | Default `now()`. |
+| `(order_id, menu_item_id)` | — | Unique; satu rating per item pada order. |
 
-Index: `tenant_id`.
+Index: `menu_item_id`.
 
-### `tenant_daily_order_counters` — migration `20261028000000_daily_order_queue.sql`
+### 3.4 `tenant_daily_order_counters`
 
-| Kolom | Tipe | Constraint |
+Dibuat oleh migration `20261028000000_daily_order_queue.sql`.
+
+| Kolom | Tipe | Constraint / fungsi |
 |---|---|---|
-| `tenant_id` | `uuid NOT NULL REFERENCES tenants(id) ON DELETE CASCADE` | — |
-| `order_date` | `date NOT NULL` | Tanggal `Asia/Jakarta`. |
-| `last_number` | `integer NOT NULL CHECK (last_number > 0)` | Counter bertambah per tenant/tanggal. |
+| `tenant_id` | `uuid NOT NULL` | FK ke `tenants(id) ON DELETE CASCADE`. |
+| `order_date` | `date NOT NULL` | Tanggal antrean di zona `Asia/Jakarta`. |
+| `last_number` | `integer NOT NULL` | Check `last_number > 0`. |
 | `(tenant_id, order_date)` | — | Primary key gabungan. |
 
-### `messages` — migration `20261027000008_whatsapp_messages.sql`
+RLS aktif dan akses tabel dicabut dari `PUBLIC`, `anon`, serta `authenticated`. Nomor dialokasikan melalui `next_tenant_queue_number(uuid)` yang hanya dapat dieksekusi service role.
 
-| Kolom | Tipe | Constraint |
+### 3.5 `messages`
+
+Dibuat oleh migration `20261027000008_whatsapp_messages.sql` untuk pesan yang dicatat integrasi gateway.
+
+| Kolom | Tipe | Constraint / fungsi |
 |---|---|---|
-| `id` | `bigint GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY` | — |
-| `wa_message_id` | `text NOT NULL UNIQUE` | ID pesan WhatsApp. |
-| `sender_jid` | `text NOT NULL` | JID pengirim. |
-| `push_name` | `text NULL` | Nama profil pengirim. |
+| `id` | `bigint` | Identity PK. |
+| `wa_message_id` | `text NOT NULL` | Unique ID pesan WhatsApp. |
+| `sender_jid` | `text NOT NULL` | Identitas JID pengirim. |
+| `push_name` | `text NULL` | Nama profil pengirim bila tersedia. |
 | `message_type` | `text NOT NULL` | Jenis pesan. |
-| `message_text` | `text NULL` | Isi teks bila tersedia. |
-| `message_timestamp` | `timestamptz NOT NULL` | Waktu pesan. |
-| `created_at` | `timestamptz NOT NULL DEFAULT now()` | Waktu tersimpan di database. |
+| `message_text` | `text NULL` | Teks pesan bila tersedia. |
+| `message_timestamp` | `timestamptz NOT NULL` | Timestamp dari pesan. |
+| `created_at` | `timestamptz NOT NULL` | Default `now()`. |
 
-Index: `message_timestamp DESC`.
+Index: `message_timestamp DESC`. Table privilege hanya diberikan kepada `service_role` untuk select/insert/update; bukan akses dashboard pengguna.
 
-## Relasi
+## 4. ERD
 
 ```mermaid
 erDiagram
-    AUTH_USERS ||--o| PROFILES : "id / sesi Auth"
-    PROFILES ||--o| TENANTS : "pemilik_id (kontrak aplikasi)"
+    AUTH_USERS ||--o| PROFILES : "id / akun Auth"
+    PROFILES ||--o{ TENANTS : "pemilik_id"
     TENANTS ||--o{ MENU_ITEMS : memiliki
     TENANTS ||--o{ ORDERS : menerima
-    PROFILES o|--o{ ORDERS : "mahasiswa_id (NULL untuk guest)"
+    PROFILES o|--o{ ORDERS : "mahasiswa_id; NULL untuk guest"
     ORDERS ||--|{ ORDER_ITEMS : berisi
-    MENU_ITEMS o|--o{ ORDER_ITEMS : "referensi menu (snapshot tetap disimpan)"
+    MENU_ITEMS o|--o{ ORDER_ITEMS : "referensi; snapshot disimpan"
     AUTH_USERS ||--o{ FAVORITES : memiliki
     TENANTS ||--o{ FAVORITES : difavoritkan
-    ORDERS ||--o{ MENU_REVIEWS : dinilai
-    MENU_ITEMS ||--o{ MENU_REVIEWS : menerima
-    ORDERS ||--o| TENANT_REVIEWS : "satu rating tenant"
+    ORDERS ||--o| TENANT_REVIEWS : dinilai
     TENANTS ||--o{ TENANT_REVIEWS : menerima
-    TENANTS ||--o{ TENANT_DAILY_ORDER_COUNTERS : memiliki
+    ORDERS ||--o{ MENU_REVIEWS : memiliki
+    MENU_ITEMS ||--o{ MENU_REVIEWS : menerima
+    TENANTS ||--o{ TENANT_DAILY_ORDER_COUNTERS : memiliki counter
 ```
 
-Relasi dasar antar core tables di atas mengikuti query relasional aplikasi dan skema legacy; migration PostgreSQL yang tersedia secara eksplisit menyatakan FK untuk `favorites`, review, dan counter. Cocokkan seluruh constraint baseline di database aktif sebelum melakukan restore.
+ERD menunjukkan relasi logis aplikasi. Repository secara eksplisit membuat sebagian FK (favorites, reviews, counters), tetapi tidak menyertakan seluruh baseline FK core table.
 
-## Row Level Security
+## 5. RLS dan Hak Akses
 
-| Tabel | Akses RLS yang diterapkan |
+| Tabel | Akses yang dinyatakan migration | Catatan implementasi |
+|---|---|---|
+| `profiles` | Authenticated dapat membaca sesuai policy `USING (true)`; user dapat update profil sendiri; admin dapat insert/update/delete melalui policy admin. | Trigger `prevent_profile_role_escalation` mencegah non-admin mengubah role dan semua user mengubah ID profil. Jangan mengekspos data lebih luas daripada kebutuhan produk. |
+| `tenants` | Guest (`anon`) dan authenticated dapat membaca; pemilik dapat update tenant sendiri; admin dapat insert/update/delete. | RPC manual status memverifikasi `pemilik_id = auth.uid()`. |
+| `menu_items` | Authenticated dapat membaca; guest hanya menu `tersedia` yang terhubung tenant. Pemilik dapat CRUD menu tenant miliknya; admin dapat CRUD. | Hak menu owner didasarkan pada relasi tenant ke pemilik. |
+| `orders` | Authenticated dapat membaca order sendiri, order tenant miliknya, atau semua order sebagai admin. Insert langsung dibatasi untuk mahasiswa login dan `mahasiswa_id = auth.uid()`. Update owner hanya untuk order tenant miliknya; privilege update dibatasi pada `status` dan `alasan_pembatalan`. | Guest checkout ditulis Edge Function memakai service role, bukan insert langsung dari `anon`. |
+| `order_items` | Read jika parent order dapat dibaca; insert langsung untuk order mahasiswa pemilik. | Penulisan guest dilakukan Edge Function/service role. |
+| `favorites` | Select/insert/delete untuk `user_id = auth.uid()` dan role mahasiswa. | Admin tidak mendapat akses aplikasi khusus ke favorites dari migration ini. |
+| `tenant_reviews` | RLS aktif; table privileges dicabut dari `PUBLIC`, `anon`, dan `authenticated`. | Agregasi dan submit lewat RPC `SECURITY DEFINER` yang memeriksa token, rating, dan status order selesai. |
+| `menu_reviews` | RLS aktif; table privileges dicabut dari `PUBLIC`, `anon`, dan `authenticated`. | Data hanya diakses oleh fungsi dengan hak yang sesuai; fungsi agregasi menu lama dapat dihapus pada migration berikutnya. |
+| `tenant_daily_order_counters` | RLS aktif; akses table dicabut dari `PUBLIC`, `anon`, dan `authenticated`. | Alokasi nomor via RPC yang diberikan kepada service role. |
+| `messages` | RLS aktif; tidak ada akses `PUBLIC`/`anon`/`authenticated`; service role mendapat select/insert/update. | Digunakan integrasi server/gateway. |
+
+### 5.1 Storage
+
+| Bucket | Akses yang tampak pada migration | Catatan |
+|---|---|---|
+| `qris-images` | Baca publik; insert/update/delete admin authenticated. | Gambar QRIS tenant untuk katalog/checkout. |
+| `menu-images` | Baca publik; insert/update/delete admin authenticated. | Gambar katalog. |
+| `avatars` | Baca publik; user authenticated dapat insert/update/delete pada folder bernama `auth.uid()`. | URL avatar ditampilkan pada profil. |
+| `bukti-transfer` | Bucket publik dan policy baca publik; upload checkout dilakukan server dengan service role. | Bukti pembayaran adalah data sensitif; jangan membagikan URL pada presentasi atau menganggap token order melindungi file publik. Evaluasi konfigurasi aktual sebelum produksi. |
+
+RLS di atas adalah ringkasan migrasi repository, bukan audit konfigurasi Supabase live. Policies manual di dashboard dapat mengubah akses efektif.
+
+## 6. Function, Trigger, dan Integrasi Database
+
+| Nama | Fungsi |
 |---|---|
-| `profiles` | Semua user authenticated dapat membaca sesuai policy yang ada; user dapat mengubah baris sendiri; admin dapat mengubah/menghapus. Trigger mencegah non-admin mengubah `peran`. Admin dapat membuat/mengubah akun lewat jalur admin. |
-| `tenants` | `anon` dan authenticated dapat membaca tenant. Pemilik dapat mengubah tenant miliknya; admin dapat insert/update/delete. RPC status manual memvalidasi `auth.uid()` sebagai `pemilik_id`. |
-| `menu_items` | Authenticated dapat membaca; guest hanya membaca menu `tersedia` yang terhubung tenant. Pemilik tenant dapat CRUD menu sendiri; admin CRUD semua menu. |
-| `orders` | Authenticated dapat membaca order sendiri, order tenant miliknya, atau semua order sebagai admin. Insert langsung hanya untuk mahasiswa login dengan `mahasiswa_id = auth.uid()`. Update authenticated dibatasi ke status dan alasan pembatalan, dengan policy pemilik tenant. Guest order dibuat Edge Function melalui service role. |
-| `order_items` | Read jika parent order dapat diakses; insert oleh mahasiswa login untuk order miliknya. Guest order ditulis Edge Function/service role. |
-| `favorites` | Select/insert/delete hanya untuk user yang sama dan role mahasiswa. |
-| `menu_reviews` | RLS aktif dan table privileges dicabut dari `anon`/authenticated. Kirim rating, agregasi, dan pembacaan publik dilakukan lewat RPC `SECURITY DEFINER` dengan validasi token/status. |
-| `tenant_reviews` | RLS aktif dan table privileges dicabut dari `anon`/authenticated. Operasi dilakukan melalui RPC rating dan agregasi `SECURITY DEFINER`. |
-| `tenant_daily_order_counters` | RLS aktif dan akses table dicabut dari `PUBLIC`, `anon`, dan `authenticated`; nomor dialokasikan melalui RPC khusus service role. |
-| `messages` | RLS aktif; table tidak diberikan ke `PUBLIC`, `anon`, atau `authenticated`; `service_role` mendapat select/insert/update. |
-
-### Storage policies
-
-- `qris-images` dan `menu-images`: pembacaan publik; insert/update/delete oleh admin authenticated.
-- `avatars`: pembacaan publik; user authenticated dapat insert/update/delete dalam folder dengan nama `auth.uid()`.
-- `bukti-transfer`: migration mengaktifkan pembacaan publik. Upload dilakukan Edge Function dengan service role.
-
-> RLS/privilege di atas merangkum migration dalam repository, bukan audit konfigurasi proyek Supabase live. Policies tambahan yang dibuat langsung pada dashboard Supabase perlu diperiksa sebelum rilis.
-
-## Functions / triggers penting
-
-| Nama | Kegunaan |
-|---|---|
-| `set_tenant_slug` trigger | Membuat slug unik dari nama tenant. |
-| `prevent_profile_role_escalation` trigger | Mencegah perubahan ID/role profil yang tidak berwenang. |
-| `broadcast_guest_order_status` trigger | Mengirim payload Realtime saat status order guest berubah. |
-| `next_tenant_queue_number(uuid)` | Mengalokasikan nomor antrean per tenant dan tanggal WIB; execute dibatasi ke `service_role`. |
-| `lookup_guest_order_with_queue(text)` | Mencari ringkasan order dan item menggunakan token. |
-| `submit_guest_order_rating(text, integer)` | Validasi token/status selesai dan menyimpan rating tenant 1–5. |
+| `is_admin()` | `SECURITY DEFINER`; mengecek `profiles.peran = 'admin'` untuk `auth.uid()`. |
+| `prevent_profile_role_escalation()` | Trigger untuk mencegah perubahan ID dan membatasi perubahan role admin-only. |
+| `set_tenant_slug()` | Membuat slug tenant dan menjaga keunikannya pada insert/perubahan nama. |
+| `broadcast_guest_order_status()` | Trigger mengirim broadcast saat status order dengan token berubah. |
+| `next_tenant_queue_number(uuid)` | Mengalokasikan nomor antrean dengan counter per tenant/tanggal WIB; execute dibatasi ke service role. |
+| `lookup_guest_order_with_queue(text)` | Mengembalikan order/item untuk token yang valid. Token harus diperlakukan rahasia. |
+| `submit_guest_order_rating(text, integer)` | Menyimpan rating tenant 1–5 hanya untuk order selesai yang cocok dengan token. |
 | `get_public_tenant_ratings(uuid)` | Menghasilkan agregat rating tenant. |
-| `refresh_tenant_open_status()` | Fungsi scheduler; mempertahankan override aktif, selain itu menghitung status sesuai jadwal WIB. |
-| `set_tenant_manual_status(uuid, boolean)` | Memastikan pemanggil pemilik tenant, memperbarui status, dan menghitung `override_until` berikutnya. |
+| `refresh_tenant_open_status()` | Scheduler menghitung status sesuai jadwal WIB bila override tidak aktif. |
+| `set_tenant_manual_status(uuid, boolean)` | Memastikan pemanggil pemilik tenant dan menyimpan status manual serta batas override. |
 
-## Migrasi operasional jadwal
+### 6.1 Edge Functions
 
-`20261029000007_tenant_operating_hours.sql` menambah `jam_buka`, `jam_tutup`, `override_until`, constraint pasangan jam, dua fungsi jadwal, dan cron `refresh-tenant-open-status` per menit. Format lama `jam_operasional` `HH:MM-HH:MM`, `HH.MM–HH.MM`, dan dash sejenis di-backfill jika valid. Nilai bebas yang tidak cocok tetap perlu diatur ulang oleh admin.
+- `create-guest-order`: memvalidasi data checkout, profil/NIM, tenant, status buka, menu, harga, add-on, bukti QRIS, membuat antrean dan order, lalu mencoba notifikasi.
+- `validate-nim`: validasi NIM mahasiswa untuk checkout.
+- `lookup-guest-order`: endpoint lookup terkait pelacakan guest (fungsi RPC juga tersedia pada migration).
+- `create-user`: hanya admin; membuat mahasiswa NIM/nama tanpa password admin dan mengirim link set password, atau membuat pemilik tenant sesuai payload.
+- `manage-user`: tindakan administratif termasuk hapus user dengan validasi role.
+- `admin-reset-password`: hanya admin dan hanya target mahasiswa; mengatur password sementara dan menandai user wajib menggantinya saat login. Password sementara dikembalikan sebagai respons untuk admin sehingga harus diperlakukan sebagai kredensial sensitif.
+
+## 7. Jadwal dan Override
+
+Migration `20261029000007_tenant_operating_hours.sql`:
+
+1. Membuat/mengaktifkan ekstensi `pg_cron`.
+2. Menambahkan `jam_buka time`, `jam_tutup time`, dan `override_until timestamptz`.
+3. Mencoba mengisi kolom jam dari `jam_operasional` lama bila format dan nilainya valid.
+4. Menambahkan constraint pasangan jam dan waktu berbeda.
+5. Membuat fungsi sinkronisasi status pada waktu `Asia/Jakarta`.
+6. Membuat RPC manual yang memastikan akun adalah pemilik tenant.
+7. Menjadwalkan cron `refresh-tenant-open-status` setiap menit.
+
+Migration perlu diterapkan pada proyek Supabase yang benar dan diverifikasi setelah deploy. Repository lokal tidak membuktikan bahwa cron extension, izin, atau job sudah aktif di database produksi.
+
+## 8. Saran Verifikasi Skema Live
+
+Sebelum backup/restore atau menjalankan migrasi ulang, bandingkan skema Supabase dengan migration:
+
+```sql
+SELECT
+    table_name,
+    column_name,
+    data_type,
+    is_nullable,
+    column_default
+FROM information_schema.columns
+WHERE table_schema = 'public'
+  AND table_name IN (
+      'profiles', 'tenants', 'menu_items', 'orders', 'order_items',
+      'favorites', 'tenant_reviews', 'menu_reviews',
+      'tenant_daily_order_counters', 'messages'
+  )
+ORDER BY table_name, ordinal_position;
+```
+
+Periksa juga:
+
+- Foreign keys dan `ON DELETE` action untuk tabel core.
+- Unique/check constraints, khususnya token order, antrean harian, NIM, add-on, dan jam operasi.
+- Policies aktif pada `pg_policies`, privilege tabel, dan konfigurasi Storage.
+- Extension `pg_cron`, job yang terdaftar, dan status eksekusi cron.
+- RPC `SECURITY DEFINER`, `EXECUTE` grants, serta `search_path` yang digunakan.
+
+Jangan menaruh service-role key, secret gateway, token order nyata, email pribadi, atau bukti QRIS ke dokumen maupun tangkapan layar.

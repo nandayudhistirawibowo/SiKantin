@@ -1,118 +1,173 @@
 # Flowchart SiKantin
 
-Diagram menggambarkan alur yang tersedia pada aplikasi saat ini. Cabang QRIS tetap manual; notifikasi WhatsApp tidak menjadi syarat keberhasilan penyimpanan pesanan.
+Diagram berikut membedakan alur yang tersedia saat ini dari kondisi eksternal yang harus disiapkan (email, Supabase, dan gateway WhatsApp). QRIS adalah proses manual. Verifikasi pembayaran saat ini dilakukan tenant; aksi verifikasi admin belum tersedia di dashboard.
 
-## Mahasiswa (Guest)
+## 1. Guest Flow
 
 ```mermaid
 flowchart TD
-    A[Buka web SiKantin] --> B[Pilih tenant yang buka]
-    B --> C[Lihat / cari menu]
-    C --> D[Pilih jumlah dan add-on]
-    D --> E[Isi NIM dan nomor WhatsApp]
+    A[Buka beranda SiKantin] --> B[Pilih tenant yang buka]
+    B --> C[Lihat, cari, dan pilih menu]
+    C --> D[Atur jumlah dan add-on]
+    D --> E[Isi NIM dan nomor HP/WhatsApp]
     E --> F[Unggah bukti transfer QRIS]
-    F --> G{Input valid dan tenant buka?}
-    G -- Tidak --> H[Tampilkan kesalahan; perbaiki checkout]
-    H --> E
-    G -- Ya --> I[Edge Function validasi harga dan menu]
-    I --> J[Simpan order dan order_items]
-    J --> K[Alokasikan nomor antrean dan token]
-    K --> L[Coba kirim notifikasi melalui gateway WhatsApp]
-    L --> M[Tampilkan konfirmasi dan token]
-    M --> N[Periksa QRIS secara manual oleh tenant]
-    N --> O[Tenant memperbarui status pesanan]
-    O --> P[Mahasiswa buka Cek Pesanan dengan token]
-    P --> Q{Status pesanan selesai?}
-    Q -- Belum --> P
-    Q -- Ya --> R[Opsional: beri rating tenant]
+    F --> G[Kirim checkout ke Edge Function]
+    G --> H{NIM terdaftar, tenant buka, menu dan bukti valid?}
+    H -- Tidak --> I[Tampilkan alasan gagal; pembeli memperbaiki input]
+    I --> E
+    H -- Ya --> J[Server baca harga dan add-on dari database]
+    J --> K[Server hitung total dan nomor antrean WIB]
+    K --> L[Simpan order dan order_items]
+    L --> M[Buat token pelacakan]
+    M --> N[Coba kirim konfirmasi melalui gateway WhatsApp]
+    N --> O[Tampilkan konfirmasi, token, dan nomor antrean]
+    O --> P[Tenant memeriksa bukti QRIS secara manual]
+    P --> Q{Bukti sesuai?}
+    Q -- Tidak --> R[Tenant menolak/membatalkan dan mencatat alasan]
+    Q -- Ya --> S[Tenant memproses pesanan]
+    S --> T[Status diperbarui: Siap diambil lalu Selesai]
+    R --> U[Pembeli membuka Cek Pesanan dengan token]
+    T --> U
+    U --> V[Lihat status, antrean, dan rincian order]
+    V --> W{Order selesai?}
+    W -- Belum --> U
+    W -- Ya --> X[Opsional: kirim rating tenant bintang 1-5]
+    N -. Gateway gagal: order tetap ditelusuri dengan token .-> O
 ```
 
-## Mahasiswa (Login)
+## 2. Mahasiswa Login Flow
 
 ```mermaid
 flowchart TD
-    A[Login dengan NIM dan password] --> B[Validasi akun dan role mahasiswa]
-    B --> C[Buka dashboard mahasiswa]
-    C --> D[Pilih tenant dan menu]
-    D --> E[Checkout; data profil/NIM/telepon diisi otomatis bila tersedia]
-    E --> F[Konfirmasi item dan unggah bukti QRIS]
-    F --> G{Tenant buka dan checkout valid?}
-    G -- Tidak --> H[Tampilkan pesan; kembali ke katalog]
-    H --> D
-    G -- Ya --> I[Edge Function simpan order, item, nomor antrean, dan token]
-    I --> J[Coba kirim notifikasi WhatsApp]
-    J --> K[Pelacakan status realtime / Cek Pesanan]
-    K --> L{Pesanan selesai?}
-    L -- Tidak --> K
-    L -- Ya --> M[Kirim rating tenant]
-    M --> N[Rating tampil pada agregat tenant]
+    A[Admin mendaftarkan NIM dan nama] --> B[Auth user dibuat tanpa password admin]
+    B --> C[Kirim link pengaturan ke alamat NIM]
+    C --> D[Mahasiswa membuka link dan membuat password]
+    D --> E[Login memakai NIM dan password]
+    E --> F{Akun perlu mengganti password sementara?}
+    F -- Ya --> G[Arahkan ke halaman update password]
+    G --> E
+    F -- Tidak --> H[Buka dashboard mahasiswa]
+    H --> I[Tampilkan sapaan, favorit, dan tiga order terbaru]
+    I --> J[Pilih tenant dan menu]
+    J --> K[Checkout dengan NIM dan nomor HP dari profil]
+    K --> L{Profil lengkap dan valid?}
+    L -- Tidak --> M[Isi/perbaiki profil]
+    M --> K
+    L -- Ya --> N[Unggah bukti QRIS dan kirim checkout]
+    N --> O[Server validasi dan simpan order, item, token, serta antrean]
+    O --> P[Coba kirim notifikasi WhatsApp]
+    P --> Q[Pantau order via token/realtime]
+    Q --> R[Lihat order pada riwayat akun]
+    R --> S{Status Selesai?}
+    S -- Tidak --> Q
+    S -- Ya --> T[Kirim rating tenant]
+    P -. Pengiriman tidak tersedia/gagal .-> Q
 ```
 
-## Tenant
+> Link pengaturan password mengandalkan pengiriman email Supabase ke alamat `[NIM]@uym.ac.id`. Pastikan domain/pemetaan email, SMTP, dan Redirect URLs dikonfigurasi sebelum demo.
+
+## 3. Tenant Flow
 
 ```mermaid
 flowchart TD
-    A[Login pemilik tenant] --> B[Dashboard memeriksa sesi, role, dan kepemilikan]
-    B --> C[Terima pesanan baru melalui Realtime]
-    C --> D{Pembayaran QRIS?}
-    D -- Ya --> E[Periksa bukti transfer secara manual]
-    D -- Tidak --> F[Periksa detail pesanan]
-    E --> G{Pembayaran sesuai?}
-    G -- Tidak --> H[Tolak pesanan dan isi alasan]
-    G -- Ya --> I[Ubah status: Diproses]
-    F --> I
-    I --> J[Siapkan pesanan]
-    J --> K[Ubah status: Siap diambil]
-    K --> L[Pesanan diambil]
-    L --> M[Ubah status: Selesai]
-    H --> N[Status database/realtime diperbarui]
-    M --> N
-    N --> O[Notifikasi WhatsApp dicoba sesuai status/integrasi]
+    A[Pemilik login] --> B[Dashboard memvalidasi sesi, role, dan tenant]
+    B --> C[Terima order baru melalui database/Realtime]
+    C --> D[Lihat antrean, rincian, dan bukti QRIS]
+    D --> E{Pembayaran terverifikasi manual?}
+    E -- Tidak --> F[Tolak order dan isi alasan]
+    E -- Ya --> G[Klik Verifikasi Pembayaran]
+    G --> H[Status menjadi Diproses]
+    H --> I[Siapkan menu]
+    I --> J[Ubah status menjadi Siap diambil]
+    J --> K[Pembeli mengambil order]
+    K --> L[Ubah status menjadi Selesai]
+    F --> M[Status dan alasan disimpan]
+    L --> M
+    M --> N[Coba kirim notifikasi WhatsApp sesuai integrasi]
+    M --> O[Pembeli melihat status pada halaman cek order]
 ```
 
-### Status operasional tenant
+### Buka/tutup tenant
 
 ```mermaid
 flowchart TD
-    A[Admin menetapkan jam_buka dan jam_tutup WIB] --> B[pg_cron berjalan setiap menit]
-    B --> C{override_until masih di masa depan?}
-    C -- Ya --> D[Pertahankan status manual]
-    C -- Tidak --> E[Hitung status menurut jadwal Asia/Jakarta]
-    E --> F[Perbarui status_buka dan hapus override yang kedaluwarsa]
+    A[Admin menyimpan jam_buka dan jam_tutup WIB] --> B[pg_cron berjalan setiap menit]
+    B --> C{override_until masih aktif?}
+    C -- Ya --> D[Pertahankan status manual tenant]
+    C -- Tidak --> E[Hitung status menurut waktu Asia/Jakarta]
+    E --> F[Update status_buka dan bersihkan override kedaluwarsa]
     G[Tenant menekan Buka/Tutup Manual] --> H[RPC memverifikasi pemilik tenant]
-    H --> I[Simpan status dan batas jadwal berikutnya pada override_until]
+    H --> I[Simpan status_buka dan batas jadwal berikutnya]
     I --> B
 ```
 
-## Admin
+## 4. Admin Flow
 
 ```mermaid
 flowchart TD
-    A[Login admin] --> B[Validasi sesi dan role admin]
-    B --> C[Kelola mahasiswa dan pemilik tenant]
-    B --> D[Tambah / ubah tenant, jam operasional, dan QRIS]
-    B --> E[Tambah / ubah menu, harga, ketersediaan, dan add-on]
-    B --> F[Melihat ringkasan data yang tersedia]
-    D --> G[Jadwal otomatis digunakan scheduler]
-    H[Verifikasi bukti pembayaran] -. Pada aplikasi saat ini .-> I[Dilakukan oleh pemilik tenant, bukan dashboard admin]
+    A[Admin login] --> B[Dashboard memvalidasi sesi dan role admin]
+    B --> C[Kelola tenant, pemilik, kontak, QRIS, dan jam operasi]
+    B --> D[Kelola menu, harga, add-on, foto, dan ketersediaan]
+    B --> E[Daftarkan mahasiswa dengan NIM dan nama]
+    E --> F[Buat Auth user tanpa password yang ditetapkan admin]
+    F --> G[Kirim link set password ke email berbasis NIM]
+    B --> H[Pilih mahasiswa dan minta reset password darurat]
+    H --> I[Edge Function memvalidasi JWT dan role admin]
+    I --> J{Target terdaftar sebagai mahasiswa?}
+    J -- Tidak --> K[Tolak permintaan]
+    J -- Ya --> L[Set password sementara dan tandai wajib ganti]
+    L --> M[Admin menyampaikan instruksi secara aman]
+    M --> N[Mahasiswa login dan membuat password baru]
+    B -. Verifikasi pembayaran tidak tersedia di dashboard admin .-> O[Verifikasi dilakukan pemilik tenant]
 ```
 
-## Batas Integrasi WhatsApp
+## 5. Sequence Checkout dan WhatsApp
 
 ```mermaid
 sequenceDiagram
-    participant Web as Browser
+    autonumber
+    actor Buyer as Guest/Mahasiswa
+    participant Web as Astro Web
     participant EF as Supabase Edge Function
-    participant DB as PostgreSQL
-    participant GW as Gateway Node.js
-    participant WA as WhatsApp via Baileys
+    participant DB as Supabase PostgreSQL
+    participant Storage as Supabase Storage
+    participant Gateway as Gateway WhatsApp
+    participant WA as WhatsApp/Baileys
 
-    Web->>EF: Checkout dengan data pesanan dan bukti QRIS
-    EF->>DB: Validasi dan simpan order serta detail
-    DB-->>EF: Order tersimpan + token + antrean
-    EF->>GW: Coba kirim pesan melalui HTTPS
-    GW->>WA: Kirim menggunakan sesi gateway
-    WA-->>GW: Hasil pengiriman
-    GW-->>EF: Hasil berhasil/gagal
-    EF-->>Web: Konfirmasi order; status notifikasi terpisah
+    Buyer->>Web: Pilih item, isi identitas, unggah bukti
+    Web->>EF: Checkout multipart/form-data
+    EF->>DB: Validasi NIM, tenant, menu, harga, add-on
+    DB-->>EF: Data tervalidasi
+    EF->>Storage: Simpan bukti transfer
+    EF->>DB: Alokasikan nomor antrean per tenant/tanggal WIB
+    EF->>DB: Simpan order dan order_items
+    DB-->>EF: Order, token, total, antrean
+    EF->>Gateway: Coba kirim notifikasi order
+    Gateway->>WA: Kirim pesan menggunakan sesi gateway
+    WA-->>Gateway: Hasil kirim atau gagal
+    Gateway-->>EF: Hasil notifikasi
+    EF-->>Web: Konfirmasi order dan token
+    Web-->>Buyer: Nomor pesanan, antrean, dan token
+    Note over Buyer,DB: Token menjadi jalur pelacakan jika pesan WhatsApp gagal
+```
+
+## 6. Cek Status dan Rating
+
+```mermaid
+sequenceDiagram
+    actor Buyer as Pembeli
+    participant Web as Halaman Cek Pesanan
+    participant DB as RPC Supabase
+    participant Tenant as Dashboard Tenant
+
+    Buyer->>Web: Masukkan token
+    Web->>DB: lookup_guest_order_with_queue(token)
+    DB-->>Web: Ringkasan order dan item
+    Web-->>Buyer: Status, antrean, total, dan rincian
+    Tenant->>DB: Perbarui status order
+    DB-->>Web: Realtime status update
+    Web-->>Buyer: Render status terbaru
+    Buyer->>Web: Kirim rating setelah selesai
+    Web->>DB: submit_guest_order_rating(token, rating)
+    DB-->>Web: Validasi order selesai dan simpan rating
 ```

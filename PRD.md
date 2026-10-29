@@ -1,120 +1,225 @@
-# Product Requirements Document — SiKantin
+# Product Requirements Document (PRD) — SiKantin
 
-## 1. Ringkasan
+**Produk:** SiKantin — Sistem Informasi Kantin Universitas Yatsi Madani
 
-SiKantin adalah aplikasi pemesanan dan pengelolaan kantin untuk lingkungan Universitas Yatsi Madani (UYM). Pengunjung dapat menemukan tenant, melihat menu, membuat pesanan tanpa akun, membayar melalui QRIS secara manual, lalu memantau status menggunakan token. Mahasiswa yang login mendapat profil dan pengisian data checkout yang lebih praktis. Tenant mengelola pesanan serta status operasional; admin mengelola data platform.
+**Jenis dokumen:** Ringkasan kebutuhan produk dan kondisi implementasi
 
-## 2. Latar Belakang
+**Audiens:** Tim produk, frontend, backend, QA, operator kampus, dan presenter
 
-Pemesanan kantin secara langsung dapat menyebabkan antrean, menyulitkan mahasiswa melihat pilihan menu, dan membuat tenant sulit mengatur pesanan masuk. SiKantin menyediakan katalog kampus yang dapat diakses melalui web dan menghubungkan pelanggan dengan tenant melalui status pesanan serta notifikasi WhatsApp.
+**Status:** Menggambarkan aplikasi dan migrasi yang tersedia di repository. Bagian yang belum tersedia ditandai secara eksplisit, bukan diasumsikan sudah berjalan.
 
-## 3. Tujuan dan Indikator Keberhasilan
+## 1. Ringkasan Produk
 
-- Mahasiswa dapat menemukan tenant/menu dan membuat pesanan guest tanpa registrasi.
-- Setiap pesanan yang berhasil dibuat mempunyai nomor pesanan, nomor antrean harian, dan token pelacakan.
-- Tenant dapat melihat pesanan dan memperbarui statusnya dari dashboard.
-- Status buka/tutup otomatis mengikuti jadwal WIB; tenant tetap dapat mengubah status secara manual sampai batas jadwal berikutnya.
-- Bukti pembayaran QRIS dapat diperiksa manusia sebelum pesanan diproses.
-- Admin dapat mengelola tenant, pemilik, mahasiswa, dan menu.
-- Notifikasi WhatsApp berfungsi sebagai kanal pemberitahuan, bukan sumber data pesanan.
+SiKantin adalah aplikasi web untuk menemukan tenant kantin kampus, melihat katalog menu, membuat pesanan, dan mengikuti status pesanan. Pengunjung dapat checkout sebagai guest; mahasiswa yang login memperoleh checkout dengan data profil, favorit, riwayat, dan akses untuk memberi rating setelah pesanan selesai. Tenant menangani pesanan dan operasional kantinnya. Admin mengelola akun, tenant, menu, dan jadwal.
 
-## 4. Target Pengguna
+Transaksi disimpan pada Supabase. Bukti QRIS diperiksa manusia; aplikasi tidak mengonfirmasi pembayaran dari jaringan pembayaran. WhatsApp digunakan sebagai kanal notifikasi tambahan melalui gateway terpisah yang menggunakan Baileys. Status pesanan dan token pelacakan tetap bersumber dari database.
 
-| Pengguna | Kebutuhan utama |
+## 2. Latar Belakang dan Masalah
+
+Pemesanan langsung di kantin berpotensi menimbulkan antrean pada jam istirahat. Mahasiswa juga perlu mengetahui tenant yang tersedia, harga/menu, dan status pesanan tanpa harus mendatangi setiap kantin. Bagi tenant, pesanan dari beberapa pembeli perlu ditata agar antrean, pembayaran, dan proses penyiapan lebih mudah dikelola.
+
+SiKantin menyatukan katalog tenant dan menu dengan alur pemesanan web. Setelah checkout, pembeli menerima nomor pesanan, nomor antrean, dan token untuk melihat status. Tenant mengelola order dari dashboard; WhatsApp dapat membantu menyampaikan informasi status tanpa menjadi satu-satunya sumber informasi.
+
+## 3. Tujuan Produk
+
+1. Memudahkan mahasiswa menemukan kantin dan menu kampus melalui web.
+2. Memungkinkan pemesanan tanpa membuat akun, serta menyediakan pengalaman lebih personal untuk mahasiswa login.
+3. Memberikan tenant satu tempat untuk melihat antrean dan memperbarui status pesanan.
+4. Memberikan nomor antrean harian per tenant dan token pelacakan pesanan.
+5. Mengurangi ketergantungan pada komunikasi manual dengan menyediakan status database, realtime, dan notifikasi WhatsApp tambahan.
+6. Mengelola jadwal buka/tutup otomatis sambil mempertahankan override manual tenant.
+7. Membatasi akses data melalui autentikasi, role, Row Level Security (RLS), dan validasi server-side.
+
+## 4. Indikator Keberhasilan
+
+- Pengunjung dapat menemukan tenant, membuka katalog, dan memulai checkout dari perangkat mobile maupun desktop.
+- Checkout yang berhasil membuat satu order dengan detail item, total hasil hitung server, nomor antrean, dan token unik.
+- Mahasiswa dapat melacak order dengan token, termasuk jika tidak memiliki akun.
+- Tenant dapat menemukan order baru dan mengubah status sesuai alur yang tersedia.
+- Perubahan status disimpan di database; realtime dan WhatsApp bertindak sebagai kanal tambahan.
+- Status tenant mengikuti jam buka/tutup WIB, kecuali selama override manual masih aktif.
+- Data sensitif dan operasi role terjaga oleh policy database atau Edge Function yang melakukan pemeriksaan identitas/role.
+- Build web berhasil; alur yang bergantung pada konfigurasi eksternal diuji pada environment Supabase yang sesuai.
+
+## 5. Target Pengguna dan Kebutuhan
+
+| Persona | Kebutuhan | Hasil yang diharapkan |
+|---|---|---|
+| Mahasiswa guest | Cepat memesan tanpa registrasi dan tidak kehilangan cara melacak order. | Checkout dengan NIM/nomor HP, nomor antrean, token, dan halaman cek pesanan. |
+| Mahasiswa login | Tidak berulang kali mengisi informasi; ingin mengakses pesanan dan kantin favorit. | Profil, auto-fill checkout, riwayat, favorit, dan rating. |
+| Pemilik tenant | Mengetahui pesanan baru, memeriksa bukti QRIS, mengelola status, dan mengatur jam operasional. | Dashboard tenant dengan order, antrean, tombol status, menu, dan override buka/tutup. |
+| Admin | Mengelola data platform dan membantu pemulihan akun mahasiswa. | Dashboard CRUD pengguna/tenant/menu, konfigurasi jadwal, dan Edge Function reset password. |
+
+## 6. Ruang Lingkup Fitur per Role
+
+### 6.1 Mahasiswa / Pengunjung Guest
+
+- Melihat katalog tenant, lokasi, status buka/tutup, rating, dan kisaran harga yang tersedia.
+- Membuka katalog menu per tenant; mencari, menyaring kategori, mengurutkan harga, memilih jumlah, dan add-on.
+- Memasukkan NIM dan nomor HP/WhatsApp secara manual.
+- Mengunggah bukti pembayaran QRIS sesuai batas format/ukuran aplikasi.
+- Melihat konfirmasi, nomor pesanan, nomor antrean, dan token.
+- Membuka halaman **Cek Pesanan** dengan token untuk melihat item, total, status, dan pembaruan realtime.
+- Memberi rating tenant setelah pesanan berstatus selesai.
+
+### 6.2 Mahasiswa Login
+
+- Login memakai NIM dan password; alamat Auth dibentuk dengan pola `[NIM]@uym.ac.id`.
+- Akun mahasiswa baru dibuat admin menggunakan NIM dan nama, tanpa password yang ditentukan admin.
+- Mahasiswa mengatur password dari link reset/pengaturan yang dikirim ke alamat NIM. Alamat tersebut harus dapat menerima email agar alur dapat diselesaikan.
+- Memperbarui profil, nomor HP, avatar, dan password.
+- Memilih tenant favorit dan melihatnya di dashboard.
+- Checkout dengan data NIM dan nomor HP dari profil terisi otomatis. Profil harus memenuhi validasi sebelum checkout.
+- Melihat maksimal tiga pesanan terbaru di dashboard serta daftar riwayat penuh.
+- Memberi rating tenant setelah pesanan selesai melalui token/order yang tersedia.
+- Jika akun ditandai perlu reset password, dashboard mengarahkan mahasiswa ke halaman ganti password sebelum penggunaan fitur mahasiswa.
+
+### 6.3 Pemilik Tenant
+
+- Login ke dashboard dan hanya mengelola data tenant yang terkait dengan akunnya.
+- Melihat ringkasan penjualan, pesanan baru, pesanan yang perlu diproses, pesanan siap diambil, dan riwayat.
+- Memeriksa detail pesanan serta bukti pembayaran QRIS yang diunggah.
+- Untuk pesanan QRIS, melakukan tindakan verifikasi manual pada dashboard tenant: menerima ke proses atau menolak dengan alasan.
+- Mengubah status order melalui kontrol dashboard: status proses, siap diambil, dan selesai sesuai status awal.
+- Mengelola ketersediaan dan informasi menu tenant pada cakupan akses yang diberikan aplikasi.
+- Membuka/menutup tenant secara manual. Jika jadwal tersedia, status manual berlaku sampai perubahan jadwal berikutnya.
+- Melihat pembaruan status pesanan dan status operasional melalui realtime.
+
+### 6.4 Admin
+
+- Mengelola data pengguna, termasuk mahasiswa dan pemilik tenant.
+- Mendaftarkan mahasiswa dengan NIM dan nama saja; password tidak dimasukkan pada formulir admin.
+- Mengelola tenant, pemilik, kontak, QRIS, serta jam buka/tutup.
+- Mengelola menu, harga, ketersediaan, gambar, dan add-on.
+- Memicu reset password mahasiswa melalui Edge Function `admin-reset-password`; endpoint memverifikasi role admin dan hanya menerima target ber-role mahasiswa.
+- **Batasan verifikasi pembayaran:** implementasi yang tersedia menempatkan tindakan verifikasi bukti QRIS di dashboard tenant. Dashboard admin belum menyediakan tindakan verifikasi pembayaran. Jangan mempresentasikan verifikasi pembayaran sebagai fitur admin yang sudah tersedia.
+- Melihat ringkasan data yang tersedia pada dashboard.
+
+## 7. Aturan Produk dan Operasional
+
+### 7.1 Jadwal Tenant
+
+- `jam_buka` dan `jam_tutup` menggunakan tipe `time` dan zona interpretasi `Asia/Jakarta` (WIB).
+- Jadwal berulang setiap hari; belum ada konfigurasi hari operasional atau hari libur.
+- Jam buka lebih kecil dari jam tutup berarti rentang pada hari yang sama dengan awal inklusif dan akhir eksklusif.
+- Jam tutup lebih kecil dari jam buka berarti jadwal melintasi tengah malam.
+- Jam yang sama ditolak; kedua kolom harus sama-sama terisi atau sama-sama kosong.
+- `pg_cron` menjalankan sinkronisasi setiap menit. Perubahan status dapat terlambat hingga satu interval scheduler.
+- Override manual disimpan di `override_until` dan dipertahankan hingga batas jadwal buka/tutup berikutnya. Setelah itu scheduler menerapkan status sesuai jadwal.
+- Tanpa jadwal, scheduler tidak memiliki rentang untuk dihitung; tenant tetap dapat mengubah status manual.
+- Mengubah jadwal melalui panel admin menghapus override aktif agar konfigurasi terbaru berlaku.
+
+### 7.2 Order dan Antrean
+
+- Order dibuat melalui Edge Function yang memvalidasi tenant buka, NIM yang terdaftar, profil login bila ada, menu tersedia, add-on yang sah, kuantitas, harga, bukti transfer, dan total.
+- Nilai harga dan subtotal dihitung dari data yang dibaca server, bukan dipercaya dari browser.
+- Nomor antrean dibuat oleh fungsi database per tenant dan tanggal lokal WIB, misalnya `A-01`; counter dimulai kembali pada tanggal berikutnya.
+- Token order adalah kredensial pelacakan. Token tidak boleh dibagikan secara publik.
+- Checkout guest yang aktif saat ini menggunakan QRIS dan status awal `Menunggu Verifikasi`.
+
+### 7.3 Status Pesanan
+
+Status yang dijumpai pada implementasi saat ini:
+
+1. `Menunggu Verifikasi` — order QRIS baru menunggu pemeriksaan tenant.
+2. `Menunggu` — status pesanan menunggu yang dapat muncul pada alur dashboard.
+3. `Diproses` — tenant menerima/verifikasi pembayaran dan mulai menyiapkan pesanan.
+4. `Siap diambil` — pembeli dapat mengambil pesanan.
+5. `Selesai` — order selesai; rating dapat diberikan.
+6. `Dibatalkan` — pesanan ditolak/dibatalkan; alasan dapat disimpan.
+
+Status disimpan sebagai teks pada baseline yang ada. Seluruh transisi perlu mengikuti tombol dan validasi status pada dashboard; daftar di atas bukan pernyataan bahwa setiap transisi bebas dilakukan.
+
+### 7.4 Pembayaran dan WhatsApp
+
+- QRIS adalah pembayaran manual. Unggah bukti tidak otomatis mengonfirmasi dana diterima.
+- Tenant memeriksa bukti sebelum menandai pembayaran terverifikasi/memproses pesanan.
+- Baileys digunakan oleh gateway WhatsApp terpisah. Ketersediaan bergantung pada koneksi gateway, konfigurasi environment, dan sesi WhatsApp.
+- Kegagalan pengiriman WA tidak boleh diperlakukan sebagai bukti order tidak tersimpan. Pembeli tetap dapat memakai token dan dashboard.
+- Nomor antrean/status database menjadi sumber data; notifikasi hanya kanal penyampaian.
+
+## 8. Alur Bisnis Utama
+
+1. Pembeli membuka beranda dan memilih tenant yang buka.
+2. Pembeli memilih menu, jumlah, dan add-on.
+3. Guest mengisi NIM serta nomor HP; mahasiswa login memakai data profil yang telah diisi otomatis.
+4. Checkout mengirim informasi order dan bukti QRIS. Edge Function melakukan validasi ulang ke Supabase.
+5. Server menghitung harga dan total, membuat token, mendapatkan nomor antrean, lalu menyimpan `orders` dan `order_items`.
+6. Sistem mencoba mengirim WhatsApp melalui gateway terpisah dan menampilkan konfirmasi order.
+7. Tenant memeriksa bukti pembayaran secara manual, menerima/menolak order, lalu memperbarui status hingga siap diambil/selesai.
+8. Pembeli melacak order melalui token dan realtime. Setelah selesai, pembeli dapat mengirim rating bintang.
+
+## 9. Kebutuhan Nonfungsional
+
+- **Responsif:** halaman publik dan dashboard harus dapat digunakan pada viewport mobile dan desktop.
+- **Aksesibilitas:** kontrol menggunakan label, fokus keyboard, status live yang relevan, dan mempertimbangkan `prefers-reduced-motion`.
+- **Keamanan:** jangan mengekspos service-role key ke browser; role dan hak akses database ditegakkan server-side/RLS.
+- **Integritas transaksi:** server menghitung harga, subtotal, status tenant, dan kelayakan item sebelum menyimpan order.
+- **Ketersediaan:** halaman lacak order tetap bersumber dari database ketika WhatsApp tidak tersedia.
+- **SEO:** beranda dan katalog tenant memiliki title/description/metadata sosial; halaman private menggunakan `noindex`.
+- **Privasi:** gunakan akun, NIM, nomor, token, QRIS, dan bukti sintetis untuk demonstrasi. Jangan menampilkan data produksi.
+
+## 10. Tech Stack dan Arsitektur
+
+| Komponen | Teknologi / tanggung jawab |
 |---|---|
-| Mahasiswa / pengunjung | Menemukan kantin, memesan dengan langkah singkat, mengetahui antrean/status, dan memberi rating setelah pesanan selesai. |
-| Pemilik tenant | Mengatur operasional, melihat pesanan baru, memeriksa bukti transfer, dan menyampaikan perkembangan pesanan. |
-| Admin kampus | Menjaga data akun, tenant, menu, jadwal, dan informasi QRIS tetap tertata. |
+| Frontend | Astro, HTML, JavaScript, Tailwind CSS, komponen dan script Astro. |
+| Hosting web | Adapter Vercel untuk deployment aplikasi. |
+| Database | Supabase PostgreSQL, SQL migrations, RPC dan trigger. |
+| Auth | Supabase Auth; profil dan role aplikasi berada di `public.profiles`. |
+| File | Supabase Storage untuk avatar, gambar menu, QRIS, dan bukti transfer. |
+| Akses data | RLS dan privilege Postgres; beberapa operasi guest berjalan melalui Edge Function/RPC terkontrol. |
+| Realtime | Supabase Realtime untuk status tenant dan pesanan. |
+| Serverless | Supabase Edge Functions (Deno/TypeScript) untuk checkout, validasi NIM, pengelolaan akun, dan notifikasi. |
+| Operasional otomatis | Ekstensi PostgreSQL `pg_cron` untuk sinkronisasi status tenant tiap menit. |
+| WhatsApp | Gateway Node.js terpisah dengan Baileys; Ngrok dapat digunakan sebagai tunnel saat pengembangan lokal. |
 
-## 5. Ruang Lingkup Fitur per Peran
+## 11. Batasan dan Risiko
 
-### Mahasiswa tanpa login
+- QRIS manual; tidak ada payment gateway atau konfirmasi pembayaran otomatis.
+- Baileys adalah integrasi WhatsApp tidak resmi dan bergantung pada layanan/sesi eksternal. Perubahan protokol, pemblokiran akun, jaringan, atau gateway dapat memengaruhi notifikasi.
+- Email akun mahasiswa memakai alamat sintetis berbasis NIM. Reset password hanya bekerja bila alamat tersebut dapat menerima email atau dikonfigurasi untuk pengiriman.
+- Password reset admin menggunakan password sementara tetap yang ditentukan implementasi saat ini. Akses dan penyampaian harus dibatasi, mahasiswa wajib menggantinya, dan mekanisme ini sebaiknya ditinjau sebelum penggunaan produksi.
+- Scheduler memerlukan `pg_cron`, izin, dan migration diterapkan pada proyek Supabase.
+- Penomoran antrean ditentukan per tenant/tanggal WIB, bukan antrean kampus global.
+- Jadwal saat ini berulang tiap hari tanpa kalender libur, hari khusus, atau jadwal mingguan.
+- Baseline DDL core tables tidak seluruhnya tersedia di repository. Tipe/FK/constraint aktual core table perlu dicocokkan dengan database Supabase sebelum restore/migrasi.
+- Policies yang dibuat langsung pada Supabase Dashboard tidak otomatis tercatat dalam repository dan perlu diaudit saat deployment.
+- Dashboard admin belum memiliki aksi verifikasi pembayaran; verifikasi berjalan dari dashboard pemilik tenant.
 
-- Menjelajah tenant dan menu yang tersedia.
-- Memfilter tenant buka dan mencari/mengurutkan menu.
-- Mengisi NIM dan nomor WhatsApp, memilih jumlah serta add-on, dan mengunggah bukti transfer.
-- Menerima token/nomor antrean lalu melacak status pesanan.
-- Memberi rating tenant setelah pesanan selesai.
+## 12. Di Luar Ruang Lingkup
 
-### Mahasiswa login
+- Pembayaran otomatis, settlement, refund otomatis, dan rekonsiliasi QRIS.
+- Kalender libur atau jadwal operasional berbeda per hari.
+- Sistem reward/poin produksi (dashboard dapat menampilkan dummy).
+- Penggantian gateway WhatsApp, implementasi Baileys, atau pembuatan ulang sesi.
+- Klaim bahwa WhatsApp pasti terkirim pada setiap order.
+- Verifikasi pembayaran dari dashboard admin sebelum fitur tersebut benar-benar diimplementasikan.
 
-- Login memakai NIM dan password akun.
-- Mengelola nama, nomor WhatsApp, foto profil, dan password.
-- Menandai tenant favorit.
-- Checkout dengan data profil yang diisi otomatis bila tersedia.
-- Melihat riwayat pesanan akun dan membuka pelacakan token.
+## 13. Kriteria Penerimaan
 
-### Pemilik tenant
+### Pembeli
 
-- Melihat pesanan masuk, ringkasan penjualan/pesanan, menu, dan riwayat.
-- Memeriksa bukti transfer QRIS secara manual sebelum mengubah pesanan ke status diproses.
-- Memperbarui status pesanan; perubahan dapat disampaikan lewat WhatsApp dan realtime.
-- Mengubah status kantin secara manual. Override berlaku sampai pergantian jadwal buka/tutup berikutnya.
+- Guest dapat menelusuri tenant/menu, mengisi identitas, mengunggah bukti, dan menerima token serta antrean bila checkout valid.
+- Pesanan dapat dicari melalui token dan menunjukkan status yang tersimpan.
+- Mahasiswa login dapat auto-fill profil, melihat favorit/riwayat, dan memberi rating setelah selesai.
+
+### Tenant
+
+- Tenant hanya dapat mengakses pesanan/operasional tenant miliknya.
+- Bukti QRIS tersedia untuk pemeriksaan manual.
+- Tenant dapat mengubah status order sesuai alur dashboard dan melakukan override manual buka/tutup.
+- Status otomatis menghormati jadwal WIB dan override sampai jadwal berikutnya.
 
 ### Admin
 
-- Mengelola profil pengguna dan role, tenant, pemilik, menu, jam operasional, dan aset gambar terkait.
-- Menetapkan jam buka dan tutup dalam waktu WIB. Jadwal lama dengan format jam yang dikenali dimigrasikan otomatis.
-- Memantau ringkasan data yang tersedia pada dashboard.
+- Admin dapat membuat mahasiswa menggunakan NIM dan nama tanpa menetapkan password.
+- Reset password hanya dapat dipanggil oleh admin dan targetnya hanya mahasiswa.
+- Panel admin menyediakan CRUD tenant/menu dan field jadwal; verifikasi pembayaran dicatat sebagai tindakan tenant saat ini.
 
-> **Catatan proses:** verifikasi bukti QRIS saat ini dilakukan oleh pemilik tenant melalui dashboard tenant; dashboard admin yang ada belum menyediakan tindakan verifikasi pembayaran.
+### Teknis
 
-## 6. Aturan Operasional Tenant
-
-- Jadwal berulang setiap hari menggunakan zona waktu `Asia/Jakarta` (WIB).
-- `jam_buka < jam_tutup`: tenant buka pada rentang `[jam_buka, jam_tutup)`.
-- `jam_buka > jam_tutup`: jadwal melintasi tengah malam; tenant buka sejak jam buka sampai tengah malam dan dari tengah malam sampai jam tutup.
-- Jam buka dan tutup yang sama ditolak. Kedua nilai harus diisi bersama atau sama-sama kosong.
-- Supabase `pg_cron` menjalankan sinkronisasi status setiap menit. Pemrosesan tidak bergantung pada tenant/browser yang sedang membuka halaman.
-- Tombol manual memanggil RPC yang memvalidasi pemilik tenant dan menyimpan `override_until` pada batas jadwal berikutnya. Sampai waktu itu, scheduler tidak mengganti status manual.
-- Pada batas tersebut, scheduler menghitung status dari jadwal dan menghapus `override_until`.
-- Jika jadwal belum dikonfigurasi, sinkronisasi otomatis tidak mengubah status. Perubahan manual bertahan sampai jadwal dikonfigurasi.
-- Perubahan jadwal admin membatalkan override yang sedang berjalan sehingga scheduler kembali memakai jadwal terbaru.
-
-## 7. Alur Bisnis Pesanan
-
-1. Pengunjung memilih tenant yang buka dan item/menu.
-2. Checkout memvalidasi input, identitas NIM, status tenant, ketersediaan item, dan harga berdasarkan database.
-3. Untuk pembayaran QRIS, pengguna mengunggah bukti transfer. Tidak ada payment gateway yang mengonfirmasi pembayaran otomatis.
-4. Sistem membuat pesanan dan detail item, memberikan nomor antrean per tenant/tanggal WIB serta token pelacakan.
-5. Edge Function mencoba mengirim notifikasi melalui gateway WhatsApp yang berjalan terpisah. Kegagalan notifikasi tidak membatalkan pesanan yang sudah tersimpan.
-6. Tenant memeriksa pembayaran dan memperbarui status. Perubahan status tersedia lewat dashboard/realtime dan notifikasi WhatsApp sesuai integrasi.
-7. Mahasiswa melacak pesanan dengan token; setelah status selesai, rating tenant dapat dikirim.
-
-### Status pesanan utama
-
-`Menunggu Verifikasi` → `Diproses` → `Siap diambil` → `Selesai`
-
-Pesanan dapat menjadi `Dibatalkan` bila ditolak/dibatalkan. Status yang tersedia pada dashboard bergantung pada alur transisi yang diizinkan aplikasi.
-
-## 8. Batasan dan Di Luar Ruang Lingkup
-
-- Pembayaran QRIS bersifat manual: unggah bukti dan verifikasi visual, bukan integrasi payment gateway.
-- WhatsApp bergantung pada koneksi gateway dan sesi Baileys; pesan gagal tidak menghapus data pesanan.
-- Nomor antrean kembali mulai dari awal pada tanggal lokal berikutnya.
-- Jadwal buka/tutup berlaku harian, belum mendukung hari libur, jadwal per hari, atau pengecualian khusus.
-- Status otomatis diperbarui hingga satu interval cron (sekitar satu menit) setelah batas jadwal.
-- Pembuatan akun mahasiswa/pemilik dilakukan melalui admin, bukan pendaftaran mandiri.
-- Fitur baru ini tidak mengubah protokol atau implementasi QRIS, gateway WhatsApp, maupun Baileys.
-
-## 9. Tech Stack
-
-| Lapisan | Teknologi |
-|---|---|
-| Web | Astro, HTML, Tailwind CSS, JavaScript |
-| Hosting web | Vercel adapter |
-| Database/Auth/Realtime/Storage | Supabase PostgreSQL, Supabase Auth, Realtime, Storage, Row Level Security, RPC |
-| Serverless | Supabase Edge Functions (Deno/TypeScript) |
-| Operasional terjadwal | PostgreSQL `pg_cron`, sinkronisasi per menit |
-| WhatsApp | Node.js gateway terpisah dan Baileys |
-
-## 10. Ketergantungan dan Kriteria Penerimaan
-
-- Migration jadwal telah diterapkan pada Supabase dan extension `pg_cron` aktif.
-- Tenant dengan jadwal terisi berubah status pada batas jadwal; jadwal lintas tengah malam juga dihitung benar.
-- RPC manual hanya dapat dipanggil pemilik tenantnya dan menetapkan `override_until` ke batas berikutnya.
-- Override aktif tidak ditimpa cron; setelah berakhir, status otomatis kembali sesuai jadwal.
-- Tanpa jadwal, kontrol manual tetap bekerja.
-- Admin dapat menyimpan jam buka dan tutup yang valid; nilai parsial/sama ditolak dengan pesan yang jelas.
-- Di layar kecil, tombol sidebar mahasiswa hanya menampilkan satu ikon sesuai keadaan drawer.
-- Build Astro lulus dan perubahan tampilan tidak mengubah alur QRIS atau gateway WhatsApp.
+- Build Astro lulus.
+- Migration database terpasang dan cron job berjalan pada Supabase target.
+- Edge Function dan redirect email diuji pada proyek yang memiliki konfigurasi environment dan redirect URL sesuai domain aplikasi.
+- Skenario QRIS/WA tidak berubah hanya karena perubahan dokumentasi atau UI.
