@@ -10,7 +10,6 @@ interface Props {
 }
 
 import '../styles/global.css';
-import favicon from '../assets/favicon-uym.png';
 import logo from '../assets/logo-uym.png';
 
 const {
@@ -50,7 +49,7 @@ const socialImage = new URL(ogImage || logo.src, siteUrl).href;
 		<meta name="twitter:title" content={title} />
 		<meta name="twitter:description" content={description} />
 		<meta name="twitter:image" content={socialImage} />
-		<link rel="icon" type="image/png" href={favicon.src} />
+		<link rel="icon" type="image/png" sizes="512x512" href="/favicon.png" />
 		<link rel="preconnect" href="https://fonts.googleapis.com" />
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 		<link
