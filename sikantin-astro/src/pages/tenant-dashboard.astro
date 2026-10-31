@@ -17,7 +17,6 @@ import '../styles/tenant-dashboard.css';
                 </div>
             </div>
             <div class="flex items-center gap-2">
-                <button id="soundToggle" type="button" aria-pressed="false" class="tenant-sound-button"><span class="sound-icon" aria-hidden="true">🔕</span> <span class="sound-label">Aktifkan Suara</span></button>
                 <button id="logoutButton" type="button" class="tenant-logout-button">Keluar</button>
             </div>
         </div>
@@ -128,16 +127,42 @@ import '../styles/tenant-dashboard.css';
     </div>
     <script>
 	import { db } from '../scripts/supabase.js';
-	import '../scripts/notification-sound.js';
         const ordersList = document.getElementById('ordersList');
         const message = document.getElementById('message');
         const connectionStatus = document.getElementById('connectionStatus');
+        const notificationSound = new Audio('https://zafuozcduvijohjnbycw.supabase.co/storage/v1/object/public/sounds/notif.mp3');
+        notificationSound.preload = 'auto';
+        let notificationSoundEnabled = false;
         let activeTenantId;
         let tenantIsOpen = false;
         let tenantOrders = [];
         let tenantStatusChannel;
         let refreshTimer;
         let channel;
+
+        window.playNotificationSound = function () {
+            if (!notificationSoundEnabled) return;
+            notificationSound.volume = 1;
+            notificationSound.currentTime = 0;
+            notificationSound.play().catch((error) => {
+                console.error('Notification sound could not be played.', error);
+                notificationSoundEnabled = false;
+            });
+        };
+
+        notificationSound.volume = 0;
+        notificationSound.muted = false;
+        notificationSound.play()
+            .then(() => {
+                notificationSound.pause();
+                notificationSound.currentTime = 0;
+                notificationSound.volume = 1;
+                notificationSoundEnabled = true;
+            })
+            .catch((error) => {
+                notificationSound.volume = 1;
+                console.warn('Silent notification audio unlock was blocked.', error);
+            });
 
         function showMessage(text, isError) {
             message.textContent = text;
