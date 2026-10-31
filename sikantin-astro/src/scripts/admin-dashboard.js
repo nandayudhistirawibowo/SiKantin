@@ -312,9 +312,13 @@ async function initialize() {
         .from('profiles')
         .select('id, peran')
         .eq('id', session.user.id)
-        .single();
+        .maybeSingle();
     if (profileError) {
         setMessage(message, `Gagal memuat profil: ${profileError.message}`, true);
+        return;
+    }
+    if (!profile) {
+        setMessage(message, 'Akun admin tidak ditemukan.', true);
         return;
     }
     if (profile.peran !== 'admin') {
@@ -710,8 +714,9 @@ tenantForm.addEventListener('submit', async (event) => {
             const { error } = await db.from('tenants').update(fields).eq('id', id);
             if (error) throw new Error(`Tenant gagal diperbarui: ${error.message}`);
         } else {
-            const { data, error } = await db.from('tenants').insert({ ...fields, status_buka: false }).select('id').single();
+            const { data, error } = await db.from('tenants').insert({ ...fields, status_buka: false }).select('id').maybeSingle();
             if (error) throw new Error(`Tenant gagal dibuat: ${error.message}`);
+            if (!data?.id) throw new Error('Tenant gagal dibuat: data tenant tidak ditemukan setelah disimpan.');
             tenantId = data.id;
             createdTenantId = tenantId;
             if (file) {
@@ -772,8 +777,9 @@ menuForm.addEventListener('submit', async (event) => {
             const { error } = await db.from('menu_items').update(fields).eq('id', id);
             if (error) throw new Error(`Menu gagal diperbarui: ${error.message}`);
         } else {
-            const { data, error } = await db.from('menu_items').insert({ ...fields, tersedia: true }).select('id').single();
+            const { data, error } = await db.from('menu_items').insert({ ...fields, tersedia: true }).select('id').maybeSingle();
             if (error) throw new Error(`Menu gagal dibuat: ${error.message}`);
+            if (!data?.id) throw new Error('Menu gagal dibuat: data menu tidak ditemukan setelah disimpan.');
             createdMenuId = data.id;
             if (file) {
                 uploadedImage = await uploadImage('menu-images', data.id, file);

@@ -98,8 +98,9 @@ import '../../styles/login.css';
 					.from('profiles')
 					.select('peran')
 					.eq('id', data.user.id)
-					.single();
+					.maybeSingle();
 				if (profileError) throw new Error(`Profil gagal dimuat: ${profileError.message}`);
+				if (!profile) throw new Error('Akun admin tidak ditemukan.');
 				if (profile.peran !== 'admin') throw new Error('Akun ini bukan akun administrator.');
 				window.location.assign('/admin/dashboard');
 			} catch (error) {
