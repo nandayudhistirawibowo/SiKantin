@@ -105,7 +105,7 @@ async function notifyByWhatsApp(
     }
 
     message = [
-      `Halo! Pesanan Anda di ${notification.tenantName} berhasil.`,
+      `Halo! Pesanan Anda di Pemilik Kantin${notification.tenantName} berhasil.`,
       `Nomor Antrean: ${notification.queueNumber}`,
       "---------------------",
       "Rincian Pesanan:",

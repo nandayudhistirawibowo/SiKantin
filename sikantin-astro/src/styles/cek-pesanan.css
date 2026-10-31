@@ -18,23 +18,28 @@
 .order-step:not(:last-child)::after {
 	position: absolute;
 	top: 1rem;
-	left: calc(50% + 1.35rem);
-	width: calc(100% - 2.7rem);
+	left: calc(50% + 1.1rem);
+	width: calc(100% - 2.2rem);
 	height: 2px;
 	background: #e2e8f0;
 	content: "";
+	transform: scaleX(0);
+	transform-origin: left center;
+	transition: transform .6s cubic-bezier(.22, 1, .36, 1), background-color .3s ease;
 }
 .order-step-indicator {
+	position: relative;
 	z-index: 1;
 	display: grid;
-	width: 2rem;
-	height: 2rem;
+	width: 2.1rem;
+	height: 2.1rem;
 	place-items: center;
 	border: 2px solid #cbd5e1;
 	border-radius: 9999px;
 	background: white;
 	font-size: .75rem;
 	font-weight: 800;
+	transition: border-color .25s ease, background-color .25s ease, color .25s ease;
 }
 .order-step.is-current,
 .order-step.is-complete { color: #047857; }
@@ -44,7 +49,37 @@
 	background: #10b981;
 	color: white;
 }
-.order-step.is-complete:not(:last-child)::after { background: #10b981; }
+.order-step.is-complete:not(:last-child)::after {
+	background: #10b981;
+	transform: scaleX(1);
+}
+.order-step.is-current .order-step-indicator {
+	animation: step-bounce .55s cubic-bezier(.34, 1.56, .64, 1) both;
+	box-shadow: 0 0 0 0 rgba(16, 185, 129, .45);
+}
+.order-step.is-current .order-step-indicator::after {
+	position: absolute;
+	width: 2.1rem;
+	height: 2.1rem;
+	border-radius: inherit;
+	content: "";
+	animation: step-pulse 1.8s ease-out .55s infinite;
+}
+.step-check {
+	width: 1rem;
+	height: 1rem;
+	overflow: visible;
+}
+.step-check path {
+	fill: none;
+	stroke: currentColor;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+	stroke-width: 2.2;
+	stroke-dasharray: 16;
+	stroke-dashoffset: 16;
+	animation: step-check-draw .4s ease-out forwards;
+}
 .tenant-rating-stars {
 	display: flex;
 	align-items: center;
@@ -61,3 +96,31 @@
 .tenant-rating-star[data-active="true"] { color: #eab308; }
 .tenant-rating-star:hover { transform: scale(1.12); }
 .tenant-rating-star:focus-within { outline: 2px solid #2563eb; outline-offset: 3px; }
+
+@keyframes step-pulse {
+	0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, .4); }
+	70% { box-shadow: 0 0 0 .55rem rgba(16, 185, 129, 0); }
+	100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+@keyframes step-bounce {
+	0% { transform: translateY(0) scale(.92); }
+	55% { transform: translateY(-.3rem) scale(1.08); }
+	100% { transform: translateY(0) scale(1); }
+}
+@keyframes step-check-draw {
+	to { stroke-dashoffset: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.order-step:not(:last-child)::after,
+	.order-step-indicator,
+	.tenant-rating-star {
+		transition: none;
+	}
+	.order-step.is-current .order-step-indicator,
+	.order-step.is-current .order-step-indicator::after,
+	.step-check path {
+		animation: none;
+	}
+	.step-check path { stroke-dashoffset: 0; }
+}

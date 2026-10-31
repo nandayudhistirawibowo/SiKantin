@@ -59,18 +59,22 @@ import '../styles/cek-pesanan.css';
 				</div>
 				<span id="orderStatus" class="rounded-full bg-amber-50 px-3 py-1.5 text-sm font-extrabold text-amber-800"></span>
 			</div>
-			<ol id="orderStepper" class="order-stepper my-6 grid grid-cols-3 gap-2" aria-label="Tahapan pesanan">
+			<ol id="orderStepper" class="order-stepper my-6 grid grid-cols-4 gap-1 sm:gap-2" aria-label="Tahapan pesanan">
 				<li data-order-step class="order-step">
 					<span data-step-indicator class="order-step-indicator">1</span>
 					<span class="mt-2 block text-center text-xs font-bold sm:text-sm">Diterima</span>
 				</li>
 				<li data-order-step class="order-step">
 					<span data-step-indicator class="order-step-indicator">2</span>
-					<span class="mt-2 block text-center text-xs font-bold sm:text-sm">Disiapkan</span>
+					<span class="mt-2 block text-center text-xs font-bold sm:text-sm">Dimasak</span>
 				</li>
 				<li data-order-step class="order-step">
 					<span data-step-indicator class="order-step-indicator">3</span>
 					<span class="mt-2 block text-center text-xs font-bold sm:text-sm">Siap Diambil</span>
+				</li>
+				<li data-order-step class="order-step">
+					<span data-step-indicator class="order-step-indicator">4</span>
+					<span class="mt-2 block text-center text-xs font-bold sm:text-sm">Selesai</span>
 				</li>
 			</ol>
 			<p id="cancelledOrderMessage" class="hidden rounded-xl bg-rose-50 p-4 text-sm font-semibold text-rose-700">Pesanan ini dibatalkan.</p>
@@ -88,6 +92,7 @@ import '../styles/cek-pesanan.css';
 					<button id="tenantReviewSubmit" type="submit" class="mt-4 rounded-lg bg-blue-700 px-4 py-2 text-sm font-bold text-white transition hover:bg-blue-800 disabled:cursor-wait disabled:opacity-60">Kirim Rating</button>
 					<p id="tenantReviewResult" class="mt-3 text-xs text-slate-500" aria-live="polite"></p>
 				</form>
+				<button id="finishOrderButton" type="button" class="mt-3 w-full rounded-lg border border-slate-300 px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-100">Selesaikan Pesanan</button>
 			</section>
 			<div class="mt-5 flex justify-between border-t border-slate-100 pt-4 font-extrabold text-slate-900">
 				<span>Total</span><span id="orderTotal"></span>
@@ -172,22 +177,30 @@ import '../styles/cek-pesanan.css';
 		function updateStepperUI(status) {
 			const normalizedStatus = typeof status === 'string' ? status.trim().toLocaleLowerCase('id-ID') : '';
 			const activeStep = normalizedStatus === 'selesai'
-				? 3
+				? 4
 				: normalizedStatus === 'siap diambil'
-					? 2
-					: ['disiapkan', 'diproses'].includes(normalizedStatus)
-						? 1
-						: 0;
+					? 3
+					: ['dimasak', 'diproses'].includes(normalizedStatus)
+						? 2
+						: 1;
 			const cancelled = normalizedStatus === 'dibatalkan';
 			const stepper = document.getElementById('orderStepper');
 			stepper.classList.toggle('hidden', cancelled);
 			document.getElementById('cancelledOrderMessage').classList.toggle('hidden', !cancelled);
 			stepper.querySelectorAll('[data-order-step]').forEach((step, index) => {
-				step.classList.toggle('is-complete', !cancelled && index < activeStep);
-				step.classList.toggle('is-current', !cancelled && index === activeStep);
+				const isComplete = !cancelled
+					&& (index < activeStep - 1 || (normalizedStatus === 'selesai' && index === activeStep - 1));
+				const isCurrent = !cancelled && normalizedStatus !== 'selesai' && index === activeStep - 1;
+				step.classList.toggle('is-complete', isComplete);
+				step.classList.toggle('is-current', isCurrent);
 				step.removeAttribute('aria-current');
-				if (!cancelled && index === activeStep) step.setAttribute('aria-current', 'step');
-				step.querySelector('[data-step-indicator]').textContent = index < activeStep ? '✓' : String(index + 1);
+				if (isCurrent) step.setAttribute('aria-current', 'step');
+				const indicator = step.querySelector('[data-step-indicator]');
+				if (isComplete) {
+					indicator.innerHTML = '<svg class="step-check" viewBox="0 0 16 16" aria-hidden="true"><path d="m3 8 3.2 3.2L13 4.5"></path></svg>';
+				} else {
+					indicator.textContent = String(index + 1);
+				}
 			});
 		}
 
@@ -371,12 +384,17 @@ import '../styles/cek-pesanan.css';
 				submitButton.textContent = 'Perbarui Rating';
 				updateRatingStars(rating);
 				document.getElementById('realtimeMessage').textContent = 'Rating tenant berhasil disimpan.';
+				window.location.assign('/');
 			} catch (error) {
 				result.textContent = `Rating gagal disimpan: ${error.message}`;
 				result.className = 'w-full text-xs text-rose-700';
 			} finally {
 				submitButton.disabled = false;
 			}
+		});
+
+		document.getElementById('finishOrderButton').addEventListener('click', () => {
+			window.location.assign('/');
 		});
 
 		const initialToken = new URLSearchParams(window.location.search).get('token');
