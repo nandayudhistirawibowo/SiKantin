@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://sikantin.ndhistira.my.id/sitemap.xml
