@@ -18,17 +18,6 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-function generateActivationCode(): string {
-  const bytes = crypto.getRandomValues(new Uint8Array(8));
-  const value = Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("").toUpperCase();
-  return `AKT-${value}`;
-}
-
-async function hashActivationCode(code: string): Promise<string> {
-  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(code));
-  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
-}
-
 async function rollbackUser(
   serviceClient: SupabaseClient,
   userId: string,
@@ -105,7 +94,6 @@ Deno.serve(async (request: Request): Promise<Response> => {
   const password = typeof payload.password === "string" ? payload.password : "";
   const submittedEmail = typeof payload.email === "string" ? payload.email.trim().toLowerCase() : "";
   const submittedPhone = typeof payload.no_telepon === "string" ? payload.no_telepon.trim() : "";
-  const activationCode = peran === "mahasiswa" ? generateActivationCode() : "";
 
   if (peran !== "mahasiswa" && peran !== "pemilik_tenant") {
     return jsonResponse({ error: "Role yang diizinkan hanya mahasiswa atau pemilik tenant." }, 400);
@@ -121,6 +109,7 @@ Deno.serve(async (request: Request): Promise<Response> => {
   }
   let email: string;
   let nama: string;
+  let temporaryPassword: string | null = null;
   if (peran === "mahasiswa") {
     if (!/^\d{6,20}$/.test(nim)) {
       return jsonResponse({ error: "NIM harus berisi 6 sampai 20 digit." }, 400);
@@ -130,6 +119,7 @@ Deno.serve(async (request: Request): Promise<Response> => {
     }
     email = `${nim}@uym.ac.id`;
     nama = submittedName;
+    temporaryPassword = crypto.randomUUID();
   } else {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(submittedEmail) || submittedEmail.length > 254) {
       return jsonResponse({ error: "Email tidak valid." }, 400);
@@ -140,11 +130,11 @@ Deno.serve(async (request: Request): Promise<Response> => {
 
   const { data: createdAuthUser, error: createAuthError } = await serviceClient.auth.admin.createUser({
     email,
-    password: peran === "pemilik_tenant" ? password : `${crypto.randomUUID()}${crypto.randomUUID()}`,
+    password: temporaryPassword || password,
     email_confirm: true,
     user_metadata: {
       full_name: nama,
-      ...(peran === "mahasiswa" ? { initial_password_required: true } : {}),
+      ...(peran === "mahasiswa" ? { is_temp_password: true } : {}),
     },
   });
   if (createAuthError || !createdAuthUser.user) {
@@ -157,10 +147,7 @@ Deno.serve(async (request: Request): Promise<Response> => {
     no_telepon: submittedPhone,
     peran,
   };
-  if (peran === "mahasiswa") {
-    profile.nim = nim;
-    profile.activation_code = await hashActivationCode(activationCode);
-  }
+  if (peran === "mahasiswa") profile.nim = nim;
 
   const { error: profileInsertError } = await serviceClient.from("profiles").insert(profile);
   if (profileInsertError) {
@@ -192,23 +179,27 @@ Deno.serve(async (request: Request): Promise<Response> => {
     }
   }
 
-  let activationWhatsapp: "sent" | "not_configured" | "failed" | undefined;
+  let whatsappStatus: "sent" | "not_configured" | "failed" | undefined;
   if (peran === "mahasiswa") {
-    const appSiteUrl = (Deno.env.get("APP_SITE_URL") || "https://sikantin.ndhistira.my.id").replace(/\/+$/, "");
-    activationWhatsapp = await notifyByWhatsApp({
+    whatsappStatus = await notifyByWhatsApp({
       phone: submittedPhone,
-      message: `Akun SiKantin kamu sudah dibuat.\nNIM: ${nim}\nKode aktivasi: ${activationCode}\nAtur password: ${appSiteUrl}/mahasiswa/set-password-awal\nJangan bagikan kode ini kepada siapa pun.`,
+      message: `Halo ${nama}! Akun SiKantin lo udah dibuat.\nNIM: ${nim}\nPassword Sementara: ${temporaryPassword}\nSilakan login di: https://sikantin.ndhistira.my.id/mahasiswa/login\nJangan lupa ganti password setelah login.`,
     });
   }
 
   return jsonResponse({
     message: peran === "mahasiswa"
-      ? activationWhatsapp === "sent"
-        ? "Mahasiswa berhasil didaftarkan. Kode aktivasi dikirim melalui WhatsApp."
-        : "Mahasiswa berhasil didaftarkan, tetapi kode aktivasi gagal dikirim melalui WhatsApp."
+      ? whatsappStatus === "sent"
+        ? "Mahasiswa berhasil didaftarkan. Password sementara dikirim melalui WhatsApp."
+        : "Mahasiswa berhasil didaftarkan, tetapi WhatsApp gagal dikirim."
       : "User berhasil dibuat.",
     user_id: createdAuthUser.user.id,
     peran,
-    ...(peran === "mahasiswa" ? { activation_code: activationCode, whatsapp_status: activationWhatsapp } : {}),
+    ...(peran === "mahasiswa"
+      ? {
+        whatsapp_status: whatsappStatus,
+        ...(whatsappStatus === "sent" ? {} : { temporary_password: temporaryPassword }),
+      }
+      : {}),
   }, 201);
 });

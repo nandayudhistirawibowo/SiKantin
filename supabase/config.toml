@@ -18,6 +18,3 @@ verify_jwt = false
 
 [functions.notify-order-rejected]
 verify_jwt = true
-
-[functions.activate-student-account]
-verify_jwt = false

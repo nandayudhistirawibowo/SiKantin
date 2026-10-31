@@ -338,7 +338,7 @@ function updateNewUserRoleFields() {
     document.getElementById('userIdentifierLabel').firstChild.textContent = isTenant ? 'Email' : 'NIM';
     document.getElementById('identifierHelp').textContent = isTenant
         ? 'Pemilik tenant login menggunakan email ini.'
-        : 'Akun login menggunakan NIM. Kode aktivasi password dikirim melalui WhatsApp.';
+        : 'Akun mahasiswa login menggunakan NIM. Password sementara dikirim melalui WhatsApp.';
     identifier.type = isTenant ? 'email' : 'text';
     identifier.inputMode = isTenant ? 'email' : 'numeric';
     if (isTenant) identifier.removeAttribute('pattern');
@@ -360,7 +360,7 @@ function updateNewUserRoleFields() {
         : 'Nomor WhatsApp mahasiswa';
     document.getElementById('newUserPhoneHelp').textContent = isTenant
         ? 'Opsional. Gunakan format 628 tanpa tanda + atau spasi.'
-        : 'Wajib untuk pengiriman kode aktivasi. Gunakan format 628 tanpa tanda + atau spasi.';
+        : 'Wajib untuk pengiriman password sementara. Gunakan format 628 tanpa tanda + atau spasi.';
 }
 
 function openUserEdit(profile) {
@@ -635,11 +635,11 @@ createUserForm.addEventListener('submit', async (event) => {
         if (peran === 'mahasiswa') {
             const whatsappSent = data?.whatsapp_status === 'sent';
             const statusMessage = whatsappSent
-                ? 'Kode aktivasi sudah dikirim ke WhatsApp mahasiswa.'
-                : 'Pengiriman WhatsApp gagal. Berikan kode ini langsung kepada mahasiswa.';
+                ? 'Password sementara sudah dikirim ke WhatsApp mahasiswa.'
+                : `WhatsApp gagal dikirim. Sampaikan password sementara ini secara aman: ${data.temporary_password || 'tidak tersedia'}.`;
             setMessage(
                 modalMessage,
-                `Mahasiswa berhasil didaftarkan. Kode aktivasi: ${data.activation_code}. ${statusMessage}`,
+                `Mahasiswa berhasil didaftarkan. ${statusMessage}`,
                 !whatsappSent
             );
         } else {

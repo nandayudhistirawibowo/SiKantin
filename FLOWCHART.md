@@ -39,36 +39,31 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    A[Admin mendaftarkan NIM, nama, dan nomor WhatsApp] --> B[Auth user dibuat dengan password acak internal]
-    B --> C[Simpan hash kode aktivasi satu kali]
-    C --> D[Kirim NIM dan kode aktivasi melalui WhatsApp]
-    D --> E[Mahasiswa membuka halaman atur password pertama kali]
-    E --> F[Masukkan NIM, kode, dan password baru]
-    F --> G[Edge Function cocokkan hash dan konsumsi kode]
-    G --> H[Supabase Auth menetapkan password tanpa email]
-    H --> I[Login memakai NIM dan password]
-    I --> J{Akun perlu mengganti password sementara?}
-    J -- Ya --> K[Arahkan ke halaman update password]
-    K --> I
-    J -- Tidak --> L[Buka dashboard mahasiswa]
-    L --> M[Tampilkan sapaan, favorit, dan tiga order terbaru]
-    M --> N[Pilih tenant dan menu]
-    N --> O[Checkout dengan NIM dan nomor HP dari profil]
-    O --> P{Profil lengkap dan valid?}
-    P -- Tidak --> Q[Isi/perbaiki profil]
-    Q --> O
-    P -- Ya --> R[Unggah bukti QRIS dan kirim checkout]
-    R --> S[Server validasi dan simpan order, item, token, serta antrean]
-    S --> T[Coba kirim notifikasi WhatsApp]
-    T --> U[Pantau order via token/realtime]
-    U --> V[Lihat order pada riwayat akun]
-    V --> W{Status Selesai?}
-    W -- Tidak --> U
-    W -- Ya --> X[Kirim rating tenant]
-    T -. Pengiriman tidak tersedia/gagal .-> U
+    A[Admin mendaftarkan NIM, nama, dan nomor WhatsApp] --> B[Auth user dibuat dengan password sementara acak]
+    B --> C[Kirim NIM dan password sementara melalui WhatsApp]
+    C --> D[Mahasiswa login memakai NIM dan password sementara]
+    D --> E{Password sementara?}
+    E -- Ya --> F[Wajib ganti password melalui Profil]
+    F --> G[Masuk ke dashboard mahasiswa]
+    E -- Tidak --> G
+    G --> H[Tampilkan sapaan, favorit, dan tiga order terbaru]
+    H --> I[Pilih tenant dan menu]
+    I --> J[Checkout dengan NIM dan nomor HP dari profil]
+    J --> K{Profil lengkap dan valid?}
+    K -- Tidak --> L[Isi/perbaiki profil]
+    L --> J
+    K -- Ya --> M[Unggah bukti QRIS dan kirim checkout]
+    M --> N[Server validasi dan simpan order, item, token, serta antrean]
+    N --> O[Coba kirim notifikasi WhatsApp]
+    O --> P[Pantau order via token/realtime]
+    P --> Q[Lihat order pada riwayat akun]
+    Q --> R{Status Selesai?}
+    R -- Tidak --> P
+    R -- Ya --> S[Kirim rating tenant]
+    O -. Pengiriman tidak tersedia/gagal .-> P
 ```
 
-> Email `[NIM]@uym.ac.id` hanya dipakai sebagai identitas internal Supabase Auth. Aktivasi dan reset password tidak mengirim email.
+> Email `[NIM]@uym.ac.id` hanya dipakai sebagai identitas internal Supabase Auth. Password sementara dikirim melalui WhatsApp, bukan email.
 
 ## 3. Tenant Flow
 
@@ -113,9 +108,9 @@ flowchart TD
     B --> C[Kelola tenant, pemilik, kontak, QRIS, dan jam operasi]
     B --> D[Kelola menu, harga, add-on, foto, dan ketersediaan]
     B --> E[Daftarkan mahasiswa dengan NIM, nama, dan nomor WhatsApp]
-    E --> F[Buat Auth user dengan password acak yang tidak dibagikan]
-    F --> G[Simpan hash kode aktivasi dan kirim kode via WhatsApp]
-    G --> H[Mahasiswa membuat password melalui activate-student-account]
+    E --> F[Buat Auth user dengan password sementara acak]
+    F --> G[Kirim NIM dan password sementara melalui WhatsApp]
+    G --> H[Mahasiswa login dan wajib mengganti password melalui Profil]
     B --> I[Pilih mahasiswa dan minta reset password darurat]
     I --> J[Edge Function memvalidasi JWT dan role admin]
     J --> K{Target terdaftar sebagai mahasiswa?}

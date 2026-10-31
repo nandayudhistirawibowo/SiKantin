@@ -41,15 +41,16 @@ import logo from '../../assets/logo-uym.png';
 			<div class="mb-6">
 				<p class="text-xs font-extrabold uppercase tracking-[0.16em] text-blue-700">Keamanan</p>
 				<h2 class="mt-1 text-xl font-black text-slate-900">Ganti Password</h2>
-				<p class="mt-2 text-sm text-slate-500">Gunakan password baru minimal 6 karakter.</p>
+				<p id="temporaryPasswordNotice" class="mt-2 hidden rounded-lg bg-amber-50 p-3 text-sm font-semibold text-amber-800">Demi keamanan akun, ganti password sementara sebelum melanjutkan.</p>
+				<p class="mt-2 text-sm text-slate-500">Gunakan password baru minimal 8 karakter.</p>
 			</div>
 			<p id="studentPasswordMessage" role="status" aria-live="polite" class="mb-5 hidden rounded-xl p-3 text-sm"></p>
 			<form id="studentPasswordForm" class="space-y-4">
 				<label for="studentNewPassword" class="block text-sm font-bold text-slate-700">Password baru
-					<input id="studentNewPassword" type="password" minlength="6" autocomplete="new-password" required class="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2.5 font-normal outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
+					<input id="studentNewPassword" type="password" minlength="8" maxlength="128" autocomplete="new-password" required class="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2.5 font-normal outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
 				</label>
 				<label for="studentConfirmPassword" class="block text-sm font-bold text-slate-700">Konfirmasi password baru
-					<input id="studentConfirmPassword" type="password" minlength="6" autocomplete="new-password" required class="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2.5 font-normal outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
+					<input id="studentConfirmPassword" type="password" minlength="8" maxlength="128" autocomplete="new-password" required class="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2.5 font-normal outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
 				</label>
 				<button id="changeStudentPassword" type="submit" class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm font-extrabold text-slate-700 transition hover:bg-slate-50 disabled:cursor-wait disabled:opacity-60">Ganti Password</button>
 			</form>
@@ -92,6 +93,10 @@ import logo from '../../assets/logo-uym.png';
 			}
 			currentUser = session.user;
 			currentProfile = profile;
+			if (currentUser.user_metadata?.is_temp_password === true) {
+				document.getElementById('temporaryPasswordNotice').classList.remove('hidden');
+				document.getElementById('studentNewPassword').focus();
+			}
 			document.getElementById('studentProfileName').value = profile.nama || '';
 			document.getElementById('studentProfileNim').value = profile.nim || '';
 			document.getElementById('studentProfilePhone').value = profile.no_telepon || '';
@@ -179,17 +184,34 @@ import logo from '../../assets/logo-uym.png';
 			event.preventDefault();
 			const password = document.getElementById('studentNewPassword').value;
 			const confirmation = document.getElementById('studentConfirmPassword').value;
-			if (password.length < 6 || password !== confirmation) {
-				showMessage(passwordMessage, password.length < 6 ? 'Password baru minimal 6 karakter.' : 'Konfirmasi password tidak cocok.', true);
+			if (password.length < 8 || password.length > 128 || password !== confirmation) {
+				showMessage(
+					passwordMessage,
+					password.length < 8 || password.length > 128
+						? 'Password baru harus berisi 8 sampai 128 karakter.'
+						: 'Konfirmasi password tidak cocok.',
+					true
+				);
 				return;
 			}
 			const button = document.getElementById('changeStudentPassword');
 			button.disabled = true;
 			try {
-				const { error } = await db.auth.updateUser({ password });
+				if (!currentUser) throw new Error('Sesi tidak tersedia. Silakan login kembali.');
+				const { data, error } = await db.auth.updateUser({
+					password,
+					data: {
+						...currentUser.user_metadata,
+						is_temp_password: false,
+						password_reset_required: false,
+					},
+				});
 				if (error) throw new Error(`Password gagal diubah: ${error.message}`);
+				if (!data.user) throw new Error('Password berhasil diperbarui, tetapi data sesi tidak tersedia. Login kembali.');
+				currentUser = data.user;
 				passwordForm.reset();
-				showMessage(passwordMessage, 'Password berhasil diubah.', false);
+				document.getElementById('temporaryPasswordNotice').classList.add('hidden');
+				showMessage(passwordMessage, 'Password berhasil diubah. Akun kamu sudah aman.', false);
 			} catch (error) {
 				showMessage(passwordMessage, error.message || String(error), true);
 			} finally {
