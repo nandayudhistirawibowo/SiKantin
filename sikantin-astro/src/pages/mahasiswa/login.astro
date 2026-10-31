@@ -22,10 +22,11 @@ import logo from '../../assets/logo-uym.png';
 			<button id="studentLoginButton" type="submit" class="w-full rounded-xl bg-blue-500 px-4 py-3 font-extrabold text-white transition hover:bg-blue-400 disabled:cursor-wait disabled:opacity-60">Masuk ke Dashboard</button>
 		</form>
 		<div class="mt-4 text-center">
-			<a href="/mahasiswa/lupa-password" class="text-sm font-bold text-sky-300 underline-offset-4 hover:text-white hover:underline">Lupa Password? / Atur password pertama kali</a>
+			<a href="/mahasiswa/set-password-awal" class="text-sm font-bold text-sky-300 underline-offset-4 hover:text-white hover:underline">Atur Password Pertama Kali</a>
+			<p class="mt-2 text-xs text-blue-100/55">Lupa password? Hubungi administrator untuk meminta reset.</p>
 		</div>
 		<p id="studentLoginMessage" role="status" aria-live="polite" class="mt-4 hidden rounded-xl p-3 text-sm"></p>
-		<p class="mt-6 text-center text-xs leading-5 text-blue-100/55">Masuk menggunakan NIM dan password. Jika belum pernah mengatur password, silakan atur password dulu lewat link yang dikirim ke email/NIM.</p>
+		<p class="mt-6 text-center text-xs leading-5 text-blue-100/55">Masuk menggunakan NIM dan password. Mahasiswa baru memerlukan kode aktivasi dari administrator untuk membuat password pertama kali.</p>
 	</main>
 
 	<script>
@@ -38,6 +39,10 @@ import logo from '../../assets/logo-uym.png';
 		function showMessage(text, isError) {
 			message.textContent = text;
 			message.className = `mt-4 rounded-xl p-3 text-sm ${isError ? 'bg-rose-950 text-rose-200' : 'bg-emerald-950 text-emerald-200'}`;
+		}
+
+		if (new URLSearchParams(window.location.search).get('password_set') === '1') {
+			showMessage('Password berhasil dibuat! Silakan login.', false);
 		}
 
 		form.addEventListener('submit', async (event) => {
@@ -72,7 +77,7 @@ import logo from '../../assets/logo-uym.png';
 			} catch (error) {
 				const { error: signOutError } = await db.auth.signOut();
 				const errorMessage = error instanceof Error ? error.message : String(error);
-				const passwordHint = ' Silakan atur password dulu lewat link yang dikirim ke email/NIM. Gunakan tautan di bawah jika link belum diterima.';
+				const passwordHint = ' Jika belum pernah membuat password, gunakan Kode Aktivasi dari WhatsApp administrator.';
 				showMessage(signOutError
 					? `${errorMessage} Sesi gagal ditutup: ${signOutError.message}${passwordHint}`
 					: `${errorMessage}${passwordHint}`, true);

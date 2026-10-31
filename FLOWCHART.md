@@ -1,6 +1,6 @@
 # Flowchart SiKantin
 
-Diagram berikut membedakan alur yang tersedia saat ini dari kondisi eksternal yang harus disiapkan (email, Supabase, dan gateway WhatsApp). QRIS adalah proses manual. Verifikasi pembayaran saat ini dilakukan tenant; aksi verifikasi admin belum tersedia di dashboard.
+Diagram berikut membedakan alur yang tersedia saat ini dari kondisi eksternal yang harus disiapkan (Supabase dan gateway WhatsApp). QRIS adalah proses manual. Verifikasi pembayaran saat ini dilakukan tenant; aksi verifikasi admin belum tersedia di dashboard.
 
 ## 1. Guest Flow
 
@@ -39,32 +39,36 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    A[Admin mendaftarkan NIM dan nama] --> B[Auth user dibuat tanpa password admin]
-    B --> C[Kirim link pengaturan ke alamat NIM]
-    C --> D[Mahasiswa membuka link dan membuat password]
-    D --> E[Login memakai NIM dan password]
-    E --> F{Akun perlu mengganti password sementara?}
-    F -- Ya --> G[Arahkan ke halaman update password]
-    G --> E
-    F -- Tidak --> H[Buka dashboard mahasiswa]
-    H --> I[Tampilkan sapaan, favorit, dan tiga order terbaru]
-    I --> J[Pilih tenant dan menu]
-    J --> K[Checkout dengan NIM dan nomor HP dari profil]
-    K --> L{Profil lengkap dan valid?}
-    L -- Tidak --> M[Isi/perbaiki profil]
-    M --> K
-    L -- Ya --> N[Unggah bukti QRIS dan kirim checkout]
-    N --> O[Server validasi dan simpan order, item, token, serta antrean]
-    O --> P[Coba kirim notifikasi WhatsApp]
-    P --> Q[Pantau order via token/realtime]
-    Q --> R[Lihat order pada riwayat akun]
-    R --> S{Status Selesai?}
-    S -- Tidak --> Q
-    S -- Ya --> T[Kirim rating tenant]
-    P -. Pengiriman tidak tersedia/gagal .-> Q
+    A[Admin mendaftarkan NIM, nama, dan nomor WhatsApp] --> B[Auth user dibuat dengan password acak internal]
+    B --> C[Simpan hash kode aktivasi satu kali]
+    C --> D[Kirim NIM dan kode aktivasi melalui WhatsApp]
+    D --> E[Mahasiswa membuka halaman atur password pertama kali]
+    E --> F[Masukkan NIM, kode, dan password baru]
+    F --> G[Edge Function cocokkan hash dan konsumsi kode]
+    G --> H[Supabase Auth menetapkan password tanpa email]
+    H --> I[Login memakai NIM dan password]
+    I --> J{Akun perlu mengganti password sementara?}
+    J -- Ya --> K[Arahkan ke halaman update password]
+    K --> I
+    J -- Tidak --> L[Buka dashboard mahasiswa]
+    L --> M[Tampilkan sapaan, favorit, dan tiga order terbaru]
+    M --> N[Pilih tenant dan menu]
+    N --> O[Checkout dengan NIM dan nomor HP dari profil]
+    O --> P{Profil lengkap dan valid?}
+    P -- Tidak --> Q[Isi/perbaiki profil]
+    Q --> O
+    P -- Ya --> R[Unggah bukti QRIS dan kirim checkout]
+    R --> S[Server validasi dan simpan order, item, token, serta antrean]
+    S --> T[Coba kirim notifikasi WhatsApp]
+    T --> U[Pantau order via token/realtime]
+    U --> V[Lihat order pada riwayat akun]
+    V --> W{Status Selesai?}
+    W -- Tidak --> U
+    W -- Ya --> X[Kirim rating tenant]
+    T -. Pengiriman tidak tersedia/gagal .-> U
 ```
 
-> Link pengaturan password mengandalkan pengiriman email Supabase ke alamat `[NIM]@uym.ac.id`. Pastikan domain/pemetaan email, SMTP, dan Redirect URLs dikonfigurasi sebelum demo.
+> Email `[NIM]@uym.ac.id` hanya dipakai sebagai identitas internal Supabase Auth. Aktivasi dan reset password tidak mengirim email.
 
 ## 3. Tenant Flow
 
@@ -108,16 +112,17 @@ flowchart TD
     A[Admin login] --> B[Dashboard memvalidasi sesi dan role admin]
     B --> C[Kelola tenant, pemilik, kontak, QRIS, dan jam operasi]
     B --> D[Kelola menu, harga, add-on, foto, dan ketersediaan]
-    B --> E[Daftarkan mahasiswa dengan NIM dan nama]
-    E --> F[Buat Auth user tanpa password yang ditetapkan admin]
-    F --> G[Kirim link set password ke email berbasis NIM]
-    B --> H[Pilih mahasiswa dan minta reset password darurat]
-    H --> I[Edge Function memvalidasi JWT dan role admin]
-    I --> J{Target terdaftar sebagai mahasiswa?}
-    J -- Tidak --> K[Tolak permintaan]
-    J -- Ya --> L[Set password sementara dan tandai wajib ganti]
-    L --> M[Admin menyampaikan instruksi secara aman]
-    M --> N[Mahasiswa login dan membuat password baru]
+    B --> E[Daftarkan mahasiswa dengan NIM, nama, dan nomor WhatsApp]
+    E --> F[Buat Auth user dengan password acak yang tidak dibagikan]
+    F --> G[Simpan hash kode aktivasi dan kirim kode via WhatsApp]
+    G --> H[Mahasiswa membuat password melalui activate-student-account]
+    B --> I[Pilih mahasiswa dan minta reset password darurat]
+    I --> J[Edge Function memvalidasi JWT dan role admin]
+    J --> K{Target terdaftar sebagai mahasiswa?}
+    K -- Tidak --> L[Tolak permintaan]
+    K -- Ya --> M[Set password sementara dan tandai wajib ganti]
+    M --> N[Admin menyampaikan instruksi secara aman]
+    N --> O[Mahasiswa login dan membuat password baru]
     B -. Verifikasi pembayaran tidak tersedia di dashboard admin .-> O[Verifikasi dilakukan pemilik tenant]
 ```
 

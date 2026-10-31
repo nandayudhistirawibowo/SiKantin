@@ -15,7 +15,7 @@ Dokumen ini merangkum skema yang dapat diverifikasi dari SQL migrations dan quer
 
 ### 2.1 `profiles`
 
-Profil aplikasi dipasangkan dengan identitas Supabase Auth. User baru mahasiswa dibuat melalui Edge Function; email Auth memakai pola `[NIM]@uym.ac.id`.
+Profil aplikasi dipasangkan dengan identitas Supabase Auth. User mahasiswa memakai email internal `[NIM]@uym.ac.id` untuk autentikasi Supabase; alamat ini tidak digunakan untuk mengirim email.
 
 | Kolom | Tipe referensi | Sifat / fungsi |
 |---|---|---|
@@ -25,6 +25,7 @@ Profil aplikasi dipasangkan dengan identitas Supabase Auth. User baru mahasiswa 
 | `peran` | `text` | Role aplikasi: `mahasiswa`, `pemilik_tenant`, atau `admin`. Trigger membatasi perubahan role. |
 | `no_telepon` | `text` | Nomor kontak/WhatsApp; ditambahkan melalui migration dashboard mahasiswa. |
 | `avatar_url` | `text` | URL avatar; ditambahkan melalui migration dashboard mahasiswa. |
+| `activation_code` | `text NULL` | Hash SHA-256 kode aktivasi satu kali; ditambahkan oleh migration `20261031000000_student_activation_codes.sql` dan tidak dapat dibaca/ditulis client authenticated. |
 | `created_at`, `updated_at` | `timestamptz` | Timestamp bila tersedia pada baseline; definisi aktual perlu diverifikasi. |
 
 ### 2.2 `tenants`
@@ -209,7 +210,7 @@ ERD menunjukkan relasi logis aplikasi. Repository secara eksplisit membuat sebag
 
 | Tabel | Akses yang dinyatakan migration | Catatan implementasi |
 |---|---|---|
-| `profiles` | Authenticated dapat membaca sesuai policy `USING (true)`; user dapat update profil sendiri; admin dapat insert/update/delete melalui policy admin. | Trigger `prevent_profile_role_escalation` mencegah non-admin mengubah role dan semua user mengubah ID profil. Jangan mengekspos data lebih luas daripada kebutuhan produk. |
+| `profiles` | Authenticated hanya dapat membaca kolom profil yang diperlukan; user dapat update kolom profil yang diizinkan sendiri; admin dapat insert/update/delete melalui policy admin. | Migration aktivasi membatasi hak kolom agar hash `activation_code` tidak bisa dibaca/ditulis client. Trigger `prevent_profile_role_escalation` tetap mencegah perubahan role dan ID profil. |
 | `tenants` | Guest (`anon`) dan authenticated dapat membaca; pemilik dapat update tenant sendiri; admin dapat insert/update/delete. | RPC manual status memverifikasi `pemilik_id = auth.uid()`. |
 | `menu_items` | Authenticated dapat membaca; guest hanya menu `tersedia` yang terhubung tenant. Pemilik dapat CRUD menu tenant miliknya; admin dapat CRUD. | Hak menu owner didasarkan pada relasi tenant ke pemilik. |
 | `orders` | Authenticated dapat membaca order sendiri, order tenant miliknya, atau semua order sebagai admin. Insert langsung dibatasi untuk mahasiswa login dan `mahasiswa_id = auth.uid()`. Update owner hanya untuk order tenant miliknya; privilege update dibatasi pada `status` dan `alasan_pembatalan`. | Guest checkout ditulis Edge Function memakai service role, bukan insert langsung dari `anon`. |
@@ -251,7 +252,8 @@ RLS di atas adalah ringkasan migrasi repository, bukan audit konfigurasi Supabas
 - `create-guest-order`: memvalidasi data checkout, profil/NIM, tenant, status buka, menu, harga, add-on, bukti QRIS, membuat antrean dan order, lalu mencoba notifikasi.
 - `validate-nim`: validasi NIM mahasiswa untuk checkout.
 - `lookup-guest-order`: endpoint lookup terkait pelacakan guest (fungsi RPC juga tersedia pada migration).
-- `create-user`: hanya admin; membuat mahasiswa NIM/nama tanpa password admin dan mengirim link set password, atau membuat pemilik tenant sesuai payload.
+- `create-user`: hanya admin; membuat akun mahasiswa dengan password acak yang tidak dibagikan, menyimpan hash kode aktivasi, dan mengirim NIM/kode ke nomor WhatsApp mahasiswa. Akun pemilik tenant tetap mengikuti payload email/password.
+- `activate-student-account`: memvalidasi NIM dan hash kode aktivasi, mengonsumsi kode sekali pakai, lalu menetapkan password melalui Supabase Auth Admin tanpa mengirim email.
 - `manage-user`: tindakan administratif termasuk hapus user dengan validasi role.
 - `admin-reset-password`: hanya admin dan hanya target mahasiswa; mengatur password sementara dan menandai user wajib menggantinya saat login. Password sementara dikembalikan sebagai respons untuk admin sehingga harus diperlakukan sebagai kredensial sensitif.
 

@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { notifyByWhatsApp } from "../_shared/notify-whatsapp.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -58,101 +59,6 @@ function normalizeWhatsAppPhone(value: string): string | null {
       ? `62${digits}`
       : digits;
   return /^628\d{8,13}$/.test(normalized) ? normalized : null;
-}
-
-async function notifyByWhatsApp(
-  phone: string,
-  tenantName: string,
-  queueNumber: string,
-  orderToken: string,
-  orderNumber: string,
-  total: number,
-  items: Array<{ nama_menu: string; jumlah: number; subtotal: number }>,
-  messageOverride?: string,
-): Promise<"sent" | "not_configured" | "failed"> {
-  const gatewayUrl = Deno.env.get("WA_GATEWAY_URL");
-  const apiKey = Deno.env.get("WA_API_KEY");
-  if (!gatewayUrl || !apiKey) {
-    console.error("WhatsApp tidak dikonfigurasi: WA_GATEWAY_URL atau WA_API_KEY belum tersedia.");
-    return "not_configured";
-  }
-
-  let message: string;
-  if (messageOverride !== undefined) {
-    message = messageOverride;
-  } else {
-    const configuredAppUrl = Deno.env.get("APP_URL");
-    if (!configuredAppUrl) {
-      console.error("APP_URL belum dikonfigurasi; tautan cek pesanan tidak dapat dibuat.");
-      return "failed";
-    }
-
-    let appUrl: URL;
-    try {
-      appUrl = new URL(configuredAppUrl);
-    } catch {
-      console.error("APP_URL bukan URL yang valid.");
-      return "failed";
-    }
-    if (appUrl.protocol !== "https:" && appUrl.hostname !== "localhost" && appUrl.hostname !== "127.0.0.1") {
-      console.error("APP_URL harus HTTPS, kecuali aplikasi localhost.");
-      return "failed";
-    }
-
-    message = [
-      `Halo! Pesanan Anda di ${tenantName} berhasil.`,
-      `Nomor Antrean: ${queueNumber}`,
-      "---------------------",
-      "Rincian Pesanan:",
-      ...items.map((item) =>
-        `- ${item.jumlah}x ${item.nama_menu} = Rp ${Math.round(item.subtotal).toLocaleString("id-ID")}`
-      ),
-      "---------------------",
-      `Total: Rp ${Math.round(total).toLocaleString("id-ID")}`,
-      `Silakan cek status pesanan Anda di: ${appUrl.origin}/cek-pesanan?token=${encodeURIComponent(orderToken)}`,
-      `Nomor pesanan: ${orderNumber}`,
-    ].join("\n");
-  }
-
-  let endpoint: URL;
-  try {
-    endpoint = new URL("/send", gatewayUrl);
-  } catch {
-    console.error("WA_GATEWAY_URL bukan URL yang valid.");
-    return "failed";
-  }
-  if (endpoint.protocol !== "https:" && endpoint.hostname !== "localhost" && endpoint.hostname !== "127.0.0.1") {
-    console.error("WA_GATEWAY_URL harus HTTPS, kecuali gateway localhost.");
-    return "failed";
-  }
-
-  try {
-    const response = await fetch(endpoint, {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-        "ngrok-skip-browser-warning": "1",
-      },
-      body: JSON.stringify({
-        nomor_wa: phone,
-        pesan: message,
-      }),
-      signal: AbortSignal.timeout(6000),
-    });
-    const responseBody = await response.json().catch(() => null);
-    if (!response.ok || responseBody?.success !== true) {
-      console.error(
-        `Gateway WhatsApp gagal mengirim pesan (HTTP ${response.status}):`,
-        responseBody?.message || "Respons bukan JSON sukses; periksa URL tunnel ngrok dan status gateway."
-      );
-      return "failed";
-    }
-    return "sent";
-  } catch (error) {
-    console.error("Notifikasi WhatsApp gagal dikirim:", error);
-    return "failed";
-  }
 }
 
 Deno.serve(async (request: Request): Promise<Response> => {
@@ -484,15 +390,15 @@ Deno.serve(async (request: Request): Promise<Response> => {
     );
     whatsapp = "failed";
   } else {
-    whatsapp = await notifyByWhatsApp(
+    whatsapp = await notifyByWhatsApp({
       phone,
-      tenant.nama_tenant,
-      order.nomor_antrean,
-      order.token_pesanan,
-      order.nomor_pesanan,
-      Number(order.total),
-      savedOrderItems
-    );
+      tenantName: tenant.nama_tenant,
+      queueNumber: order.nomor_antrean,
+      orderToken: order.token_pesanan,
+      orderNumber: order.nomor_pesanan,
+      total: Number(order.total),
+      items: savedOrderItems,
+    });
   }
   let tenantWhatsapp: "sent" | "not_configured" | "failed";
   const tenantPhone = typeof tenant.no_telepon === "string"
@@ -502,16 +408,10 @@ Deno.serve(async (request: Request): Promise<Response> => {
     tenantWhatsapp = "failed";
     console.error(`Notifikasi pemilik tenant ${tenant.id} tidak dikirim: nomor WhatsApp tenant tidak valid atau belum diisi.`);
   } else {
-    tenantWhatsapp = await notifyByWhatsApp(
-      tenantPhone,
-      tenant.nama_tenant,
-      order.nomor_antrean,
-      order.token_pesanan,
-      order.nomor_pesanan,
-      Number(order.total),
-      [],
-      `Pesanan baru masuk! Antrean ${order.nomor_antrean}. Total Rp ${Math.round(Number(order.total)).toLocaleString("id-ID")}. Silakan cek Dashboard Tenant.`,
-    );
+    tenantWhatsapp = await notifyByWhatsApp({
+      phone: tenantPhone,
+      message: `Pesanan baru masuk! Antrean ${order.nomor_antrean}. Total Rp ${Math.round(Number(order.total)).toLocaleString("id-ID")}. Silakan cek Dashboard Tenant.`,
+    });
   }
   console.log("Tenant WA:", tenantWhatsapp);
   const { data: tenantWhatsappStatusOrder, error: tenantWhatsappStatusError } = await serviceClient

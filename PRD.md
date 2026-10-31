@@ -65,8 +65,9 @@ SiKantin menyatukan katalog tenant dan menu dengan alur pemesanan web. Setelah c
 ### 6.2 Mahasiswa Login
 
 - Login memakai NIM dan password; alamat Auth dibentuk dengan pola `[NIM]@uym.ac.id`.
-- Akun mahasiswa baru dibuat admin menggunakan NIM dan nama, tanpa password yang ditentukan admin.
-- Mahasiswa mengatur password dari link reset/pengaturan yang dikirim ke alamat NIM. Alamat tersebut harus dapat menerima email agar alur dapat diselesaikan.
+- Akun mahasiswa baru dibuat admin menggunakan NIM, nama, dan nomor WhatsApp; sistem membuat password Auth acak yang tidak dibagikan.
+- Kode aktivasi sekali pakai dikirim melalui WhatsApp, sedangkan hash-nya disimpan pada profil. Mahasiswa memasukkan NIM, kode, dan password baru pada halaman atur password pertama kali; aktivasi memperbarui password Auth tanpa mengirim email.
+- Jika lupa password setelah aktivasi, mahasiswa menghubungi admin untuk reset manual; tautan reset email tidak digunakan.
 - Memperbarui profil, nomor HP, avatar, dan password.
 - Memilih tenant favorit dan melihatnya di dashboard.
 - Checkout dengan data NIM dan nomor HP dari profil terisi otomatis. Profil harus memenuhi validasi sebelum checkout.
@@ -88,7 +89,8 @@ SiKantin menyatukan katalog tenant dan menu dengan alur pemesanan web. Setelah c
 ### 6.4 Admin
 
 - Mengelola data pengguna, termasuk mahasiswa dan pemilik tenant.
-- Mendaftarkan mahasiswa dengan NIM dan nama saja; password tidak dimasukkan pada formulir admin.
+- Mendaftarkan mahasiswa dengan NIM, nama, dan nomor WhatsApp; password tidak dimasukkan pada formulir admin.
+- Mengirim kode aktivasi satu kali melalui WhatsApp dan menampilkan kode tersebut kepada admin sebagai cadangan jika pengiriman gagal.
 - Mengelola tenant, pemilik, kontak, QRIS, serta jam buka/tutup.
 - Mengelola menu, harga, ketersediaan, gambar, dan add-on.
 - Memicu reset password mahasiswa melalui Edge Function `admin-reset-password`; endpoint memverifikasi role admin dan hanya menerima target ber-role mahasiswa.
@@ -178,7 +180,7 @@ Status disimpan sebagai teks pada baseline yang ada. Seluruh transisi perlu meng
 
 - QRIS manual; tidak ada payment gateway atau konfirmasi pembayaran otomatis.
 - Baileys adalah integrasi WhatsApp tidak resmi dan bergantung pada layanan/sesi eksternal. Perubahan protokol, pemblokiran akun, jaringan, atau gateway dapat memengaruhi notifikasi.
-- Email akun mahasiswa memakai alamat sintetis berbasis NIM. Reset password hanya bekerja bila alamat tersebut dapat menerima email atau dikonfigurasi untuk pengiriman.
+- Email Auth mahasiswa memakai alamat internal sintetis berbasis NIM untuk autentikasi Supabase; aplikasi tidak mengirim email untuk aktivasi atau reset password.
 - Password reset admin menggunakan password sementara tetap yang ditentukan implementasi saat ini. Akses dan penyampaian harus dibatasi, mahasiswa wajib menggantinya, dan mekanisme ini sebaiknya ditinjau sebelum penggunaan produksi.
 - Scheduler memerlukan `pg_cron`, izin, dan migration diterapkan pada proyek Supabase.
 - Penomoran antrean ditentukan per tenant/tanggal WIB, bukan antrean kampus global.
@@ -213,7 +215,8 @@ Status disimpan sebagai teks pada baseline yang ada. Seluruh transisi perlu meng
 
 ### Admin
 
-- Admin dapat membuat mahasiswa menggunakan NIM dan nama tanpa menetapkan password.
+- Admin dapat membuat mahasiswa menggunakan NIM, nama, dan nomor WhatsApp tanpa menetapkan password yang diketahui.
+- Aktivasi password pertama kali memerlukan kode acak satu kali; database hanya menyimpan hash kode dan client authenticated tidak memiliki akses baca/tulis ke kolom tersebut.
 - Reset password hanya dapat dipanggil oleh admin dan targetnya hanya mahasiswa.
 - Panel admin menyediakan CRUD tenant/menu dan field jadwal; verifikasi pembayaran dicatat sebagai tindakan tenant saat ini.
 
@@ -221,5 +224,5 @@ Status disimpan sebagai teks pada baseline yang ada. Seluruh transisi perlu meng
 
 - Build Astro lulus.
 - Migration database terpasang dan cron job berjalan pada Supabase target.
-- Edge Function dan redirect email diuji pada proyek yang memiliki konfigurasi environment dan redirect URL sesuai domain aplikasi.
+- Edge Function aktivasi dan gateway WhatsApp diuji pada proyek Supabase yang memiliki secret dan konfigurasi runtime sesuai domain aplikasi.
 - Skenario QRIS/WA tidak berubah hanya karena perubahan dokumentasi atau UI.

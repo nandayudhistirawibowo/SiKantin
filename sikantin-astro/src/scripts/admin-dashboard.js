@@ -331,13 +331,14 @@ function updateNewUserRoleFields() {
     const isTenant = document.getElementById('newUserRole').value === 'pemilik_tenant';
     const identifier = document.getElementById('userIdentifier');
     const phoneField = document.getElementById('newUserPhoneField');
+    const phoneInput = document.getElementById('newUserPhone');
     const nameField = document.getElementById('newUserNameField');
     const passwordField = document.getElementById('newUserPasswordField');
     const passwordInput = document.getElementById('newUserPassword');
     document.getElementById('userIdentifierLabel').firstChild.textContent = isTenant ? 'Email' : 'NIM';
     document.getElementById('identifierHelp').textContent = isTenant
         ? 'Pemilik tenant login menggunakan email ini.'
-        : 'Akun menggunakan NIM sebagai login. Link pengaturan password akan dikirim ke alamat NIM.';
+        : 'Akun login menggunakan NIM. Kode aktivasi password dikirim melalui WhatsApp.';
     identifier.type = isTenant ? 'email' : 'text';
     identifier.inputMode = isTenant ? 'email' : 'numeric';
     if (isTenant) identifier.removeAttribute('pattern');
@@ -352,9 +353,14 @@ function updateNewUserRoleFields() {
     passwordInput.required = isTenant;
     passwordInput.disabled = !isTenant;
     passwordInput.value = '';
-    phoneField.classList.toggle('hidden', !isTenant);
-    phoneField.classList.toggle('block', isTenant);
-    if (!isTenant) document.getElementById('newUserPhone').value = '';
+    phoneField.classList.remove('hidden');
+    phoneInput.required = !isTenant;
+    document.getElementById('newUserPhoneLabel').textContent = isTenant
+        ? 'Nomor WhatsApp pemilik tenant'
+        : 'Nomor WhatsApp mahasiswa';
+    document.getElementById('newUserPhoneHelp').textContent = isTenant
+        ? 'Opsional. Gunakan format 628 tanpa tanda + atau spasi.'
+        : 'Wajib untuk pengiriman kode aktivasi. Gunakan format 628 tanpa tanda + atau spasi.';
 }
 
 function openUserEdit(profile) {
@@ -610,6 +616,7 @@ createUserForm.addEventListener('submit', async (event) => {
     if (peran === 'mahasiswa') {
         body.nim = identifier;
         body.nama = String(formData.get('nama') || '').trim();
+        body.no_telepon = String(formData.get('no_telepon') || '').trim();
     }
     else {
         body.email = identifier;
@@ -624,9 +631,21 @@ createUserForm.addEventListener('submit', async (event) => {
             setMessage(document.getElementById('modalMessage'), `User gagal dibuat: ${error?.message || data?.error || 'Edge Function menolak permintaan.'}`, true);
             return;
         }
-        setMessage(document.getElementById('modalMessage'), data?.message || 'User berhasil dibuat.', false);
+        const modalMessage = document.getElementById('modalMessage');
+        if (peran === 'mahasiswa') {
+            const whatsappSent = data?.whatsapp_status === 'sent';
+            const statusMessage = whatsappSent
+                ? 'Kode aktivasi sudah dikirim ke WhatsApp mahasiswa.'
+                : 'Pengiriman WhatsApp gagal. Berikan kode ini langsung kepada mahasiswa.';
+            setMessage(
+                modalMessage,
+                `Mahasiswa berhasil didaftarkan. Kode aktivasi: ${data.activation_code}. ${statusMessage}`,
+                !whatsappSent
+            );
+        } else {
+            setMessage(modalMessage, data?.message || 'User berhasil dibuat.', false);
+        }
         await loadAdminData();
-        window.setTimeout(() => closeDialog(userModal), 1000);
     } catch (error) {
         setMessage(document.getElementById('modalMessage'), `User gagal dibuat: ${error.message}`, true);
     } finally {

@@ -103,10 +103,10 @@ import '../styles/admin-dashboard.css';
             <label id="userIdentifierLabel" class="block text-sm font-bold" for="userIdentifier">NIM
                 <input id="userIdentifier" name="identifier" inputmode="numeric" pattern="[0-9]{6,20}" autocomplete="username" required class="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal">
             </label>
-            <p id="identifierHelp" class="-mt-2 text-xs text-slate-500">Akun menggunakan NIM sebagai login. Link pengaturan password akan dikirim ke alamat NIM.</p>
-            <label id="newUserPhoneField" class="hidden text-sm font-bold" for="newUserPhone">Nomor WhatsApp pemilik tenant
+            <p id="identifierHelp" class="-mt-2 text-xs text-slate-500">Akun login menggunakan NIM. Kode aktivasi password dikirim melalui WhatsApp.</p>
+            <label id="newUserPhoneField" class="block text-sm font-bold" for="newUserPhone"><span id="newUserPhoneLabel">Nomor WhatsApp mahasiswa</span>
                 <input id="newUserPhone" name="no_telepon" type="tel" inputmode="numeric" autocomplete="tel" maxlength="16" pattern="628[0-9]{8,13}" placeholder="6281234567890" class="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal">
-                <span class="mt-1 block text-xs font-normal text-slate-500">Opsional. Gunakan format 628 tanpa tanda + atau spasi.</span>
+                <span id="newUserPhoneHelp" class="mt-1 block text-xs font-normal text-slate-500">Wajib untuk pengiriman kode aktivasi. Gunakan format 628 tanpa tanda + atau spasi.</span>
             </label>
             <label id="newUserPasswordField" class="block text-sm font-bold" for="newUserPassword">Password
                 <input id="newUserPassword" name="password" type="password" required minlength="8" maxlength="128" autocomplete="new-password" class="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal">

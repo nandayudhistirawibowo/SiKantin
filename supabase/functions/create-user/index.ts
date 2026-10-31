@@ -1,4 +1,5 @@
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { notifyByWhatsApp } from "../_shared/notify-whatsapp.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -15,6 +16,17 @@ function jsonResponse(body: Record<string, unknown>, status = 200): Response {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function generateActivationCode(): string {
+  const bytes = crypto.getRandomValues(new Uint8Array(8));
+  const value = Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("").toUpperCase();
+  return `AKT-${value}`;
+}
+
+async function hashActivationCode(code: string): Promise<string> {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(code));
+  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
 async function rollbackUser(
@@ -93,6 +105,7 @@ Deno.serve(async (request: Request): Promise<Response> => {
   const password = typeof payload.password === "string" ? payload.password : "";
   const submittedEmail = typeof payload.email === "string" ? payload.email.trim().toLowerCase() : "";
   const submittedPhone = typeof payload.no_telepon === "string" ? payload.no_telepon.trim() : "";
+  const activationCode = peran === "mahasiswa" ? generateActivationCode() : "";
 
   if (peran !== "mahasiswa" && peran !== "pemilik_tenant") {
     return jsonResponse({ error: "Role yang diizinkan hanya mahasiswa atau pemilik tenant." }, 400);
@@ -102,6 +115,9 @@ Deno.serve(async (request: Request): Promise<Response> => {
   }
   if (peran === "pemilik_tenant" && submittedPhone && !/^628\d{8,13}$/.test(submittedPhone)) {
     return jsonResponse({ error: "Nomor WhatsApp harus memakai format 628 yang valid." }, 400);
+  }
+  if (peran === "mahasiswa" && !/^628\d{8,13}$/.test(submittedPhone)) {
+    return jsonResponse({ error: "Nomor WhatsApp mahasiswa wajib memakai format 628 yang valid." }, 400);
   }
   let email: string;
   let nama: string;
@@ -124,11 +140,11 @@ Deno.serve(async (request: Request): Promise<Response> => {
 
   const { data: createdAuthUser, error: createAuthError } = await serviceClient.auth.admin.createUser({
     email,
-    ...(peran === "pemilik_tenant" ? { password } : {}),
+    password: peran === "pemilik_tenant" ? password : `${crypto.randomUUID()}${crypto.randomUUID()}`,
     email_confirm: true,
     user_metadata: {
       full_name: nama,
-      ...(peran === "mahasiswa" ? { password_reset_required: true } : {}),
+      ...(peran === "mahasiswa" ? { initial_password_required: true } : {}),
     },
   });
   if (createAuthError || !createdAuthUser.user) {
@@ -138,10 +154,13 @@ Deno.serve(async (request: Request): Promise<Response> => {
   const profile: Record<string, string> = {
     id: createdAuthUser.user.id,
     nama,
-    no_telepon: peran === "pemilik_tenant" ? submittedPhone : "",
+    no_telepon: submittedPhone,
     peran,
   };
-  if (peran === "mahasiswa") profile.nim = nim;
+  if (peran === "mahasiswa") {
+    profile.nim = nim;
+    profile.activation_code = await hashActivationCode(activationCode);
+  }
 
   const { error: profileInsertError } = await serviceClient.from("profiles").insert(profile);
   if (profileInsertError) {
@@ -150,20 +169,6 @@ Deno.serve(async (request: Request): Promise<Response> => {
       error: `Gagal menyimpan profil: ${profileInsertError.message}`,
       ...(cleanupErrors.length ? { cleanup_errors: cleanupErrors } : {}),
     }, 500);
-  }
-
-  if (peran === "mahasiswa") {
-    const appSiteUrl = (Deno.env.get("APP_SITE_URL") || "https://sikantin.ndhistira.my.id").replace(/\/+$/, "");
-    const { error: passwordLinkError } = await authClient.auth.resetPasswordForEmail(email, {
-      redirectTo: `${appSiteUrl}/mahasiswa/update-password`,
-    });
-    if (passwordLinkError) {
-      const cleanupErrors = await rollbackUser(serviceClient, createdAuthUser.user.id);
-      return jsonResponse({
-        error: `Akun mahasiswa gagal diselesaikan karena link pengaturan password tidak dapat dikirim: ${passwordLinkError.message}`,
-        ...(cleanupErrors.length ? { cleanup_errors: cleanupErrors } : {}),
-      }, 502);
-    }
   }
 
   if (peran === "pemilik_tenant") {
@@ -187,11 +192,23 @@ Deno.serve(async (request: Request): Promise<Response> => {
     }
   }
 
+  let activationWhatsapp: "sent" | "not_configured" | "failed" | undefined;
+  if (peran === "mahasiswa") {
+    const appSiteUrl = (Deno.env.get("APP_SITE_URL") || "https://sikantin.ndhistira.my.id").replace(/\/+$/, "");
+    activationWhatsapp = await notifyByWhatsApp({
+      phone: submittedPhone,
+      message: `Akun SiKantin kamu sudah dibuat.\nNIM: ${nim}\nKode aktivasi: ${activationCode}\nAtur password: ${appSiteUrl}/mahasiswa/set-password-awal\nJangan bagikan kode ini kepada siapa pun.`,
+    });
+  }
+
   return jsonResponse({
     message: peran === "mahasiswa"
-      ? "Mahasiswa berhasil didaftarkan. Link pengaturan password dikirim ke alamat NIM."
+      ? activationWhatsapp === "sent"
+        ? "Mahasiswa berhasil didaftarkan. Kode aktivasi dikirim melalui WhatsApp."
+        : "Mahasiswa berhasil didaftarkan, tetapi kode aktivasi gagal dikirim melalui WhatsApp."
       : "User berhasil dibuat.",
     user_id: createdAuthUser.user.id,
     peran,
+    ...(peran === "mahasiswa" ? { activation_code: activationCode, whatsapp_status: activationWhatsapp } : {}),
   }, 201);
 });
