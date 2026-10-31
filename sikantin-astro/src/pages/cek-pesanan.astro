@@ -14,13 +14,11 @@ import '../styles/cek-pesanan.css';
 		<div class="mx-auto flex max-w-3xl items-center justify-between px-4 py-4">
 			<a href="/" class="text-sm font-bold text-blue-700 hover:underline">← Katalog Kantin</a>
 			<div class="flex items-center gap-3">
-				<button id="soundToggle" type="button" aria-pressed="false" class="rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50"><span class="sound-icon" aria-hidden="true">🔕</span> <span class="sound-label">Aktifkan Suara</span></button>
 				<span class="font-extrabold text-slate-900">Cek Pesanan</span>
 			</div>
 		</div>
 	</header>
 	<main class="mx-auto max-w-3xl px-4 py-10">
-		<p id="soundStatus" class="sr-only" aria-live="polite"></p>
 		<section class="ui-enter ui-hover-card rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8">
 			<p class="text-sm font-bold text-blue-700">Pesanan Guest</p>
 			<h1 class="mt-1 text-2xl font-extrabold text-slate-900">Lacak status pesanan</h1>
@@ -102,7 +100,6 @@ import '../styles/cek-pesanan.css';
 	</main>
 	<script>
 		import { db } from '../scripts/supabase.js';
-		import '../scripts/notification-sound.js';
 
 		const form = document.getElementById('lookupForm');
 		const tokenInput = document.getElementById('orderToken');
@@ -110,10 +107,36 @@ import '../styles/cek-pesanan.css';
 		const message = document.getElementById('lookupMessage');
 		const lookupLoading = document.getElementById('lookupLoading');
 		const tenantRatingStars = document.getElementById('tenantRatingStars');
+		const notificationSound = new Audio('https://zafuozcduvijohjnbycw.supabase.co/storage/v1/object/public/sounds/notif.mp3');
+		notificationSound.preload = 'auto';
 		let statusChannel;
 		let activeToken = '';
 		let currentOrder;
 		let hoveredRating = 0;
+		let statusChangeSoundRequested = false;
+
+		window.playNotificationSound = function () {
+			statusChangeSoundRequested = true;
+			notificationSound.volume = 1;
+			notificationSound.currentTime = 0;
+			notificationSound.play().catch((error) => {
+				console.warn('Notification sound could not be played.', error);
+			});
+		};
+
+		notificationSound.volume = 0;
+		notificationSound.play()
+			.then(() => {
+				if (!statusChangeSoundRequested) {
+					notificationSound.pause();
+					notificationSound.currentTime = 0;
+				}
+				notificationSound.volume = 1;
+			})
+			.catch((error) => {
+				notificationSound.volume = 1;
+				console.warn('Silent notification audio unlock was blocked.', error);
+			});
 
 		function updateRatingStars(rating) {
 			tenantRatingStars.querySelectorAll('[data-rating-option]').forEach((label) => {
@@ -162,7 +185,7 @@ import '../styles/cek-pesanan.css';
 				updated_at: updatedAt || currentOrder.updated_at,
 			};
 			renderOrder(currentOrder);
-			if (nextStatus === 'Siap Diambil') window.playNotificationSound?.();
+			window.playNotificationSound?.();
 		}
 
 		function showMessage(text, isError) {
