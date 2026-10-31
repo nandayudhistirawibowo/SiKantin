@@ -5,8 +5,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, apikey, x-client-info, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
-const temporaryPassword = "Sikantin123!";
-
 function jsonResponse(body: Record<string, unknown>, status = 200): Response {
   return new Response(JSON.stringify(body), {
     status,
@@ -78,7 +76,7 @@ Deno.serve(async (request: Request): Promise<Response> => {
 
   const { data: targetProfile, error: targetProfileError } = await serviceClient
     .from("profiles")
-    .select("peran")
+    .select("peran, nim")
     .eq("id", targetId)
     .maybeSingle();
   if (targetProfileError) {
@@ -90,6 +88,9 @@ Deno.serve(async (request: Request): Promise<Response> => {
   if (targetProfile.peran !== "mahasiswa") {
     return jsonResponse({ error: "Reset password hanya tersedia untuk akun mahasiswa." }, 403);
   }
+  if (typeof targetProfile.nim !== "string" || !/^\d{6,20}$/.test(targetProfile.nim)) {
+    return jsonResponse({ error: "NIM mahasiswa tidak valid; password tidak dapat direset." }, 500);
+  }
 
   const { data: targetAuth, error: targetAuthError } = await serviceClient.auth.admin.getUserById(targetId);
   if (targetAuthError || !targetAuth.user) {
@@ -97,10 +98,11 @@ Deno.serve(async (request: Request): Promise<Response> => {
   }
 
   const { error: updateError } = await serviceClient.auth.admin.updateUserById(targetId, {
-    password: temporaryPassword,
+    password: targetProfile.nim,
     user_metadata: {
       ...targetAuth.user.user_metadata,
-      password_reset_required: true,
+      is_temp_password: true,
+      password_reset_required: false,
     },
   });
   if (updateError) {
@@ -108,8 +110,8 @@ Deno.serve(async (request: Request): Promise<Response> => {
   }
 
   return jsonResponse({
-    message: "Password berhasil direset. Mahasiswa wajib menggantinya saat login.",
-    temporary_password: temporaryPassword,
+    message: "Password berhasil direset menjadi NIM. Mahasiswa wajib menggantinya setelah login.",
+    password: targetProfile.nim,
     user_id: targetId,
   });
 });

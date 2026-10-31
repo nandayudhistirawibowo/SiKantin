@@ -1,5 +1,4 @@
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { notifyByWhatsApp } from "../_shared/notify-whatsapp.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -104,12 +103,9 @@ Deno.serve(async (request: Request): Promise<Response> => {
   if (peran === "pemilik_tenant" && submittedPhone && !/^628\d{8,13}$/.test(submittedPhone)) {
     return jsonResponse({ error: "Nomor WhatsApp harus memakai format 628 yang valid." }, 400);
   }
-  if (peran === "mahasiswa" && !/^628\d{8,13}$/.test(submittedPhone)) {
-    return jsonResponse({ error: "Nomor WhatsApp mahasiswa wajib memakai format 628 yang valid." }, 400);
-  }
   let email: string;
   let nama: string;
-  let temporaryPassword: string | null = null;
+  let initialPassword = password;
   if (peran === "mahasiswa") {
     if (!/^\d{6,20}$/.test(nim)) {
       return jsonResponse({ error: "NIM harus berisi 6 sampai 20 digit." }, 400);
@@ -119,7 +115,7 @@ Deno.serve(async (request: Request): Promise<Response> => {
     }
     email = `${nim}@uym.ac.id`;
     nama = submittedName;
-    temporaryPassword = crypto.randomUUID();
+    initialPassword = nim;
   } else {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(submittedEmail) || submittedEmail.length > 254) {
       return jsonResponse({ error: "Email tidak valid." }, 400);
@@ -130,7 +126,7 @@ Deno.serve(async (request: Request): Promise<Response> => {
 
   const { data: createdAuthUser, error: createAuthError } = await serviceClient.auth.admin.createUser({
     email,
-    password: temporaryPassword || password,
+    password: initialPassword,
     email_confirm: true,
     user_metadata: {
       full_name: nama,
@@ -141,10 +137,10 @@ Deno.serve(async (request: Request): Promise<Response> => {
     return jsonResponse({ error: `Gagal membuat akun Auth: ${createAuthError?.message || "User tidak dikembalikan."}` }, 400);
   }
 
-  const profile: Record<string, string> = {
+  const profile: Record<string, string | null> = {
     id: createdAuthUser.user.id,
     nama,
-    no_telepon: submittedPhone,
+    no_telepon: peran === "mahasiswa" ? null : submittedPhone,
     peran,
   };
   if (peran === "mahasiswa") profile.nim = nim;
@@ -179,27 +175,11 @@ Deno.serve(async (request: Request): Promise<Response> => {
     }
   }
 
-  let whatsappStatus: "sent" | "not_configured" | "failed" | undefined;
-  if (peran === "mahasiswa") {
-    whatsappStatus = await notifyByWhatsApp({
-      phone: submittedPhone,
-      message: `Halo ${nama}! Akun SiKantin lo udah dibuat.\nNIM: ${nim}\nPassword Sementara: ${temporaryPassword}\nSilakan login di: https://sikantin.ndhistira.my.id/mahasiswa/login\nJangan lupa ganti password setelah login.`,
-    });
-  }
-
   return jsonResponse({
     message: peran === "mahasiswa"
-      ? whatsappStatus === "sent"
-        ? "Mahasiswa berhasil didaftarkan. Password sementara dikirim melalui WhatsApp."
-        : "Mahasiswa berhasil didaftarkan, tetapi WhatsApp gagal dikirim."
+      ? "Mahasiswa berhasil didaftarkan. Password awal sama dengan NIM; mahasiswa wajib menggantinya setelah login."
       : "User berhasil dibuat.",
     user_id: createdAuthUser.user.id,
     peran,
-    ...(peran === "mahasiswa"
-      ? {
-        whatsapp_status: whatsappStatus,
-        ...(whatsappStatus === "sent" ? {} : { temporary_password: temporaryPassword }),
-      }
-      : {}),
   }, 201);
 });

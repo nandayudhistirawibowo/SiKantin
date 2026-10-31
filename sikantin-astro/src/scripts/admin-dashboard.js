@@ -331,14 +331,13 @@ function updateNewUserRoleFields() {
     const isTenant = document.getElementById('newUserRole').value === 'pemilik_tenant';
     const identifier = document.getElementById('userIdentifier');
     const phoneField = document.getElementById('newUserPhoneField');
-    const phoneInput = document.getElementById('newUserPhone');
     const nameField = document.getElementById('newUserNameField');
     const passwordField = document.getElementById('newUserPasswordField');
     const passwordInput = document.getElementById('newUserPassword');
     document.getElementById('userIdentifierLabel').firstChild.textContent = isTenant ? 'Email' : 'NIM';
     document.getElementById('identifierHelp').textContent = isTenant
         ? 'Pemilik tenant login menggunakan email ini.'
-        : 'Akun mahasiswa login menggunakan NIM. Password sementara dikirim melalui WhatsApp.';
+        : 'Akun mahasiswa login menggunakan NIM. Password awal sama dengan NIM dan wajib diganti setelah login.';
     identifier.type = isTenant ? 'email' : 'text';
     identifier.inputMode = isTenant ? 'email' : 'numeric';
     if (isTenant) identifier.removeAttribute('pattern');
@@ -353,14 +352,8 @@ function updateNewUserRoleFields() {
     passwordInput.required = isTenant;
     passwordInput.disabled = !isTenant;
     passwordInput.value = '';
-    phoneField.classList.remove('hidden');
-    phoneInput.required = !isTenant;
-    document.getElementById('newUserPhoneLabel').textContent = isTenant
-        ? 'Nomor WhatsApp pemilik tenant'
-        : 'Nomor WhatsApp mahasiswa';
-    document.getElementById('newUserPhoneHelp').textContent = isTenant
-        ? 'Opsional. Gunakan format 628 tanpa tanda + atau spasi.'
-        : 'Wajib untuk pengiriman password sementara. Gunakan format 628 tanpa tanda + atau spasi.';
+    phoneField.classList.toggle('hidden', !isTenant);
+    document.getElementById('newUserPhone').disabled = !isTenant;
 }
 
 function openUserEdit(profile) {
@@ -526,7 +519,7 @@ async function deleteUser(profile) {
 
 async function resetStudentPassword(profile) {
     if (profile.peran !== 'mahasiswa') return;
-    if (!window.confirm(`Reset password ${profile.nama || profile.nim}? Password sementara akan ditampilkan dan wajib diganti saat login.`)) return;
+    if (!window.confirm(`Reset password ${profile.nama || profile.nim}? Password akan diatur menjadi NIM dan wajib diganti setelah login.`)) return;
     const { data, error } = await db.functions.invoke('admin-reset-password', {
         body: { user_id: profile.id }
     });
@@ -534,7 +527,7 @@ async function resetStudentPassword(profile) {
         setMessage(message, `Reset password gagal: ${error?.message || data.error}`, true);
         return;
     }
-    setMessage(message, `Password sementara untuk ${profile.nama || profile.nim}: ${data.temporary_password}. Minta mahasiswa login dan segera menggantinya.`, false);
+    setMessage(message, `Password ${profile.nama || profile.nim} berhasil diatur menjadi NIM (${data.password}). Mahasiswa wajib menggantinya setelah login.`, false);
 }
 
 async function deleteTenant(tenant) {
@@ -616,7 +609,6 @@ createUserForm.addEventListener('submit', async (event) => {
     if (peran === 'mahasiswa') {
         body.nim = identifier;
         body.nama = String(formData.get('nama') || '').trim();
-        body.no_telepon = String(formData.get('no_telepon') || '').trim();
     }
     else {
         body.email = identifier;
@@ -633,14 +625,10 @@ createUserForm.addEventListener('submit', async (event) => {
         }
         const modalMessage = document.getElementById('modalMessage');
         if (peran === 'mahasiswa') {
-            const whatsappSent = data?.whatsapp_status === 'sent';
-            const statusMessage = whatsappSent
-                ? 'Password sementara sudah dikirim ke WhatsApp mahasiswa.'
-                : `WhatsApp gagal dikirim. Sampaikan password sementara ini secara aman: ${data.temporary_password || 'tidak tersedia'}.`;
             setMessage(
                 modalMessage,
-                `Mahasiswa berhasil didaftarkan. ${statusMessage}`,
-                !whatsappSent
+                'Mahasiswa berhasil didaftarkan. Password awal sama dengan NIM; minta mahasiswa menggantinya setelah login.',
+                false
             );
         } else {
             setMessage(modalMessage, data?.message || 'User berhasil dibuat.', false);

@@ -65,8 +65,8 @@ SiKantin menyatukan katalog tenant dan menu dengan alur pemesanan web. Setelah c
 ### 6.2 Mahasiswa Login
 
 - Login memakai NIM dan password; alamat Auth dibentuk dengan pola `[NIM]@uym.ac.id`.
-- Akun mahasiswa baru dibuat admin menggunakan NIM, nama, dan nomor WhatsApp; sistem membuat password Auth sementara acak dan mengirimkannya melalui WhatsApp tanpa mengirim email.
-- Setelah login pertama kali, mahasiswa wajib mengganti password sementara melalui Profil. Password baru diperbarui melalui Supabase Auth.
+- Akun mahasiswa baru dibuat admin menggunakan NIM dan nama; password Auth awal sama dengan NIM. Pendaftaran tidak meminta nomor WhatsApp dan tidak mengirim email maupun WhatsApp.
+- Setelah login dengan password awal, mahasiswa diarahkan untuk mengganti password melalui Profil. Password baru diperbarui melalui Supabase Auth.
 - Jika lupa password, mahasiswa menghubungi admin untuk reset manual; tautan reset email tidak digunakan.
 - Memperbarui profil, nomor HP, avatar, dan password.
 - Memilih tenant favorit dan melihatnya di dashboard.
@@ -89,8 +89,7 @@ SiKantin menyatukan katalog tenant dan menu dengan alur pemesanan web. Setelah c
 ### 6.4 Admin
 
 - Mengelola data pengguna, termasuk mahasiswa dan pemilik tenant.
-- Mendaftarkan mahasiswa dengan NIM, nama, dan nomor WhatsApp; password tidak dimasukkan pada formulir admin.
-- Mengirim password sementara melalui WhatsApp; jika pengiriman gagal, menampilkan password sementara kepada admin untuk disampaikan secara aman.
+- Mendaftarkan mahasiswa dengan NIM dan nama; password awal diatur sama dengan NIM.
 - Mengelola tenant, pemilik, kontak, QRIS, serta jam buka/tutup.
 - Mengelola menu, harga, ketersediaan, gambar, dan add-on.
 - Memicu reset password mahasiswa melalui Edge Function `admin-reset-password`; endpoint memverifikasi role admin dan hanya menerima target ber-role mahasiswa.
@@ -181,7 +180,7 @@ Status disimpan sebagai teks pada baseline yang ada. Seluruh transisi perlu meng
 - QRIS manual; tidak ada payment gateway atau konfirmasi pembayaran otomatis.
 - Baileys adalah integrasi WhatsApp tidak resmi dan bergantung pada layanan/sesi eksternal. Perubahan protokol, pemblokiran akun, jaringan, atau gateway dapat memengaruhi notifikasi.
 - Email Auth mahasiswa memakai alamat internal sintetis berbasis NIM untuk autentikasi Supabase; aplikasi tidak mengirim email.
-- Password reset admin menggunakan password sementara tetap yang ditentukan implementasi saat ini. Akses dan penyampaian harus dibatasi, mahasiswa wajib menggantinya, dan mekanisme ini sebaiknya ditinjau sebelum penggunaan produksi.
+- Reset password admin mengatur password menjadi NIM dan mengharuskan mahasiswa menggantinya setelah login. Karena NIM mudah diketahui, mekanisme ini berisiko dan sebaiknya diganti dengan kredensial sementara acak untuk produksi.
 - Scheduler memerlukan `pg_cron`, izin, dan migration diterapkan pada proyek Supabase.
 - Penomoran antrean ditentukan per tenant/tanggal WIB, bukan antrean kampus global.
 - Jadwal saat ini berulang tiap hari tanpa kalender libur, hari khusus, atau jadwal mingguan.
@@ -215,8 +214,8 @@ Status disimpan sebagai teks pada baseline yang ada. Seluruh transisi perlu meng
 
 ### Admin
 
-- Admin dapat membuat mahasiswa menggunakan NIM, nama, dan nomor WhatsApp tanpa menetapkan password yang diketahui.
-- Password sementara mahasiswa dibuat acak dan dikirim ke nomor WhatsApp yang didaftarkan admin; setelah login, mahasiswa wajib menggantinya melalui Profil.
+- Admin dapat membuat mahasiswa menggunakan NIM dan nama; password awal diatur sama dengan NIM tanpa pengiriman email/WhatsApp.
+- Setelah login, mahasiswa diarahkan untuk mengganti password awal melalui Profil.
 - Reset password hanya dapat dipanggil oleh admin dan targetnya hanya mahasiswa.
 - Panel admin menyediakan CRUD tenant/menu dan field jadwal; verifikasi pembayaran dicatat sebagai tindakan tenant saat ini.
 

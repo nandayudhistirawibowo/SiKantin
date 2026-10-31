@@ -251,9 +251,9 @@ RLS di atas adalah ringkasan migrasi repository, bukan audit konfigurasi Supabas
 - `create-guest-order`: memvalidasi data checkout, profil/NIM, tenant, status buka, menu, harga, add-on, bukti QRIS, membuat antrean dan order, lalu mencoba notifikasi.
 - `validate-nim`: validasi NIM mahasiswa untuk checkout.
 - `lookup-guest-order`: endpoint lookup terkait pelacakan guest (fungsi RPC juga tersedia pada migration).
-- `create-user`: hanya admin; membuat akun mahasiswa dengan password sementara acak, menandai akun agar password wajib diganti, dan mengirim NIM/password sementara ke nomor WhatsApp mahasiswa. Jika WhatsApp gagal, password sementara dikembalikan hanya kepada admin untuk disampaikan secara aman. Akun pemilik tenant tetap mengikuti payload email/password.
+- `create-user`: hanya admin; membuat akun mahasiswa dengan password awal sama dengan NIM dan menandai akun agar password wajib diganti setelah login. Pendaftaran mahasiswa tidak meminta nomor WhatsApp atau mengirim pesan. Akun pemilik tenant tetap mengikuti payload email/password.
 - `manage-user`: tindakan administratif termasuk hapus user dengan validasi role.
-- `admin-reset-password`: hanya admin dan hanya target mahasiswa; mengatur password sementara dan menandai user wajib menggantinya saat login. Password sementara dikembalikan sebagai respons untuk admin sehingga harus diperlakukan sebagai kredensial sensitif.
+- `admin-reset-password`: hanya admin dan hanya target mahasiswa; mengatur password menjadi NIM dan menandai user agar diarahkan mengganti password melalui Profil setelah login.
 
 ## 7. Jadwal dan Override
 

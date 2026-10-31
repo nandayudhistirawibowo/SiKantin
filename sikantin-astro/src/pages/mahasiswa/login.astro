@@ -10,7 +10,7 @@ import logo from '../../assets/logo-uym.png';
 			<img src={logo.src} alt="" class="mx-auto h-16 w-16 rounded-full bg-white p-1" />
 			<p class="mt-4 text-xs font-extrabold uppercase tracking-[0.2em] text-sky-300">SiKantin UYM</p>
 			<h1 class="mt-2 text-3xl font-black">Login Mahasiswa</h1>
-			<p class="mt-2 text-sm text-blue-100/65">Masuk menggunakan NIM dan password akun mahasiswa.</p>
+			<p class="mt-2 text-sm text-blue-100/65">Masuk menggunakan NIM dan password. Untuk akun baru atau reset admin, password awal sama dengan NIM.</p>
 		</div>
 		<form id="studentLoginForm" class="space-y-4">
 			<label for="studentNim" class="block text-sm font-bold">NIM
@@ -22,7 +22,7 @@ import logo from '../../assets/logo-uym.png';
 			<button id="studentLoginButton" type="submit" class="w-full rounded-xl bg-blue-500 px-4 py-3 font-extrabold text-white transition hover:bg-blue-400 disabled:cursor-wait disabled:opacity-60">Masuk ke Dashboard</button>
 		</form>
 		<p id="studentLoginMessage" role="status" aria-live="polite" class="mt-4 hidden rounded-xl p-3 text-sm"></p>
-		<p class="mt-6 text-center text-xs leading-5 text-blue-100/55">Masuk menggunakan NIM dan password. Setelah login pertama kali, mahasiswa wajib mengganti password sementara melalui Profil.</p>
+		<p class="mt-6 text-center text-xs leading-5 text-blue-100/55">Setelah login dengan password awal, segera ganti password melalui Profil.</p>
 	</main>
 
 	<script>
@@ -59,11 +59,6 @@ import logo from '../../assets/logo-uym.png';
 					window.location.assign('/mahasiswa/profil?change_password=1');
 					return;
 				}
-				if (data.user.user_metadata?.password_reset_required === true) {
-					window.location.assign('/mahasiswa/update-password?required=1');
-					return;
-				}
-
 				const requestedPath = new URLSearchParams(window.location.search).get('redirect') || '';
 				const destination = requestedPath.startsWith('/mahasiswa/')
 					&& !requestedPath.startsWith('/mahasiswa/login')

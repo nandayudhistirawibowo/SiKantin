@@ -39,13 +39,12 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    A[Admin mendaftarkan NIM, nama, dan nomor WhatsApp] --> B[Auth user dibuat dengan password sementara acak]
-    B --> C[Kirim NIM dan password sementara melalui WhatsApp]
-    C --> D[Mahasiswa login memakai NIM dan password sementara]
-    D --> E{Password sementara?}
-    E -- Ya --> F[Wajib ganti password melalui Profil]
+    A[Admin mendaftarkan NIM dan nama] --> B[Auth user dibuat dengan password sama dengan NIM]
+    B --> C[Mahasiswa login memakai NIM sebagai password awal]
+    C --> D{Password awal atau reset admin?}
+    D -- Ya --> F[Wajib ganti password melalui Profil]
     F --> G[Masuk ke dashboard mahasiswa]
-    E -- Tidak --> G
+    D -- Tidak --> G
     G --> H[Tampilkan sapaan, favorit, dan tiga order terbaru]
     H --> I[Pilih tenant dan menu]
     I --> J[Checkout dengan NIM dan nomor HP dari profil]
@@ -63,7 +62,7 @@ flowchart TD
     O -. Pengiriman tidak tersedia/gagal .-> P
 ```
 
-> Email `[NIM]@uym.ac.id` hanya dipakai sebagai identitas internal Supabase Auth. Password sementara dikirim melalui WhatsApp, bukan email.
+> Email `[NIM]@uym.ac.id` hanya dipakai sebagai identitas internal Supabase Auth. Registrasi tidak mengirim email atau WhatsApp.
 
 ## 3. Tenant Flow
 
@@ -107,17 +106,15 @@ flowchart TD
     A[Admin login] --> B[Dashboard memvalidasi sesi dan role admin]
     B --> C[Kelola tenant, pemilik, kontak, QRIS, dan jam operasi]
     B --> D[Kelola menu, harga, add-on, foto, dan ketersediaan]
-    B --> E[Daftarkan mahasiswa dengan NIM, nama, dan nomor WhatsApp]
-    E --> F[Buat Auth user dengan password sementara acak]
-    F --> G[Kirim NIM dan password sementara melalui WhatsApp]
-    G --> H[Mahasiswa login dan wajib mengganti password melalui Profil]
+    B --> E[Daftarkan mahasiswa dengan NIM dan nama]
+    E --> F[Buat Auth user dengan password sama dengan NIM]
+    F --> G[Mahasiswa login dan wajib mengganti password melalui Profil]
     B --> I[Pilih mahasiswa dan minta reset password darurat]
     I --> J[Edge Function memvalidasi JWT dan role admin]
     J --> K{Target terdaftar sebagai mahasiswa?}
     K -- Tidak --> L[Tolak permintaan]
-    K -- Ya --> M[Set password sementara dan tandai wajib ganti]
-    M --> N[Admin menyampaikan instruksi secara aman]
-    N --> O[Mahasiswa login dan membuat password baru]
+    K -- Ya --> M[Set password menjadi NIM dan tandai wajib ganti]
+    M --> N[Mahasiswa login dan membuat password baru melalui Profil]
     B -. Verifikasi pembayaran tidak tersedia di dashboard admin .-> O[Verifikasi dilakukan pemilik tenant]
 ```
 
