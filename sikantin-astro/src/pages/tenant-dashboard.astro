@@ -160,6 +160,29 @@ import '../styles/tenant-dashboard.css';
             return element;
         }
 
+        function normalizeOrderAddons(value) {
+            let addons = value;
+            if (typeof addons === 'string') {
+                try {
+                    addons = JSON.parse(addons);
+                } catch (error) {
+                    console.error('Format add-on pesanan tidak valid:', error);
+                    return [];
+                }
+            }
+            if (!Array.isArray(addons)) return [];
+
+            return addons.flatMap((addon) => {
+                if (!addon || typeof addon !== 'object' || Array.isArray(addon)) return [];
+                const name = typeof addon.name === 'string' ? addon.name.trim() : '';
+                if (!name) return [];
+                const price = addon.price === null || addon.price === undefined || addon.price === ''
+                    ? null
+                    : Number(addon.price);
+                return [{ name, price: price !== null && Number.isFinite(price) ? price : null }];
+            });
+        }
+
         function isTenantOpen(status) {
             return status === true
                 || status === 1
@@ -420,25 +443,24 @@ import '../styles/tenant-dashboard.css';
                             'font-semibold text-slate-700',
                             `${item.nama_menu} × ${item.jumlah}${item.catatan ? ` (${item.catatan})` : ''}`
                         );
-                        if (Array.isArray(item.add_ons) && item.add_ons.length) {
+                        const addons = normalizeOrderAddons(item.add_ons);
+                        if (addons.length) {
                             const addonList = document.createElement('ul');
-                            addonList.className = 'ml-4 mt-1 list-disc space-y-0.5 text-slate-500';
-                            item.add_ons.forEach((addon) => {
-                                if (typeof addon?.name === 'string' && addon.name.trim()) {
-                                    const addonPrice = typeof addon.price === 'number' && Number.isFinite(addon.price)
-                                        ? addon.price === 0
-                                            ? 'Gratis'
-                                            : `+ ${formatRupiah(addon.price)}`
-                                        : null;
-                                    addText(
-                                        addonList,
-                                        'li',
-                                        '',
-                                        addonPrice ? `${addon.name} (${addonPrice})` : addon.name
-                                    );
-                                }
+                            addonList.className = 'ml-4 mt-1 space-y-0.5 pl-2 text-slate-600';
+                            addons.forEach((addon) => {
+                                const addonPrice = addon.price === null
+                                    ? null
+                                    : addon.price === 0
+                                        ? 'Gratis'
+                                        : `+ ${formatRupiah(addon.price)}`;
+                                addText(
+                                    addonList,
+                                    'li',
+                                    '',
+                                    `- ${addon.name}${addonPrice ? ` (${addonPrice})` : ''}`
+                                );
                             });
-                            if (addonList.childElementCount) itemDetail.append(addonList);
+                            itemDetail.append(addonList);
                         }
                         itemDetails.append(itemDetail);
                     });
