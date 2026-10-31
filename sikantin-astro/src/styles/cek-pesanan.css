@@ -8,6 +8,40 @@
 		radial-gradient(ellipse at 50% 0, rgba(52, 211, 153, .22), transparent 68%),
 		linear-gradient(135deg, #ecfdf5, #d1fae5);
 }
+.order-status-illustration {
+	display: grid;
+	min-height: 7rem;
+	place-items: center;
+	color: #2563eb;
+}
+.order-progress[data-state="cooking"] .order-status-illustration { color: #ea580c; }
+.order-progress[data-state="ready"] .order-status-illustration { color: #0284c7; }
+.order-progress[data-state="done"] .order-status-illustration { color: #059669; }
+.status-illustration {
+	width: 6rem;
+	height: 6rem;
+	animation: status-illustration-enter .35s ease-out both;
+}
+.order-progress-track {
+	height: .65rem;
+	flex: 1;
+	overflow: hidden;
+	border-radius: 9999px;
+	background: #e2e8f0;
+}
+.order-progress-fill {
+	display: block;
+	width: 25%;
+	height: 100%;
+	border-radius: inherit;
+	background: linear-gradient(90deg, #34d399, #059669);
+	transition: width .65s cubic-bezier(.22, 1, .36, 1);
+}
+.cooking-flame {
+	transform-box: fill-box;
+	transform-origin: center bottom;
+	animation: cooking-flame-flicker .7s ease-in-out infinite alternate;
+}
 .order-step {
 	position: relative;
 	display: flex;
@@ -110,16 +144,27 @@
 @keyframes step-check-draw {
 	to { stroke-dashoffset: 0; }
 }
+@keyframes cooking-flame-flicker {
+	from { opacity: .7; transform: scale(.92) rotate(-3deg); }
+	to { opacity: 1; transform: scale(1.05) rotate(3deg); }
+}
+@keyframes status-illustration-enter {
+	from { opacity: 0; transform: translateY(.4rem) scale(.96); }
+	to { opacity: 1; transform: translateY(0) scale(1); }
+}
 
 @media (prefers-reduced-motion: reduce) {
 	.order-step:not(:last-child)::after,
 	.order-step-indicator,
-	.tenant-rating-star {
+	.tenant-rating-star,
+	.order-progress-fill {
 		transition: none;
 	}
 	.order-step.is-current .order-step-indicator,
 	.order-step.is-current .order-step-indicator::after,
-	.step-check path {
+	.step-check path,
+	.cooking-flame,
+	.status-illustration {
 		animation: none;
 	}
 	.step-check path { stroke-dashoffset: 0; }

@@ -57,6 +57,36 @@ import '../styles/cek-pesanan.css';
 				</div>
 				<span id="orderStatus" class="rounded-full bg-amber-50 px-3 py-1.5 text-sm font-extrabold text-amber-800"></span>
 			</div>
+			<section id="orderProgress" class="order-progress mt-6" aria-label="Ilustrasi dan progres pesanan">
+				<div class="order-status-illustration" aria-hidden="true">
+					<svg data-status-illustration="waiting" class="status-illustration hidden" viewBox="0 0 96 96" fill="none">
+						<circle cx="48" cy="48" r="34" stroke="currentColor" stroke-width="5"/>
+						<path d="M48 27v22l15 9" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+						<path d="M17 25h10M69 71h10" stroke="currentColor" stroke-width="5" stroke-linecap="round"/>
+					</svg>
+					<svg data-status-illustration="cooking" class="status-illustration hidden" viewBox="0 0 96 96" fill="none">
+						<path class="cooking-flame" d="M34 35c-7-10 5-15 2-25 13 8 15 18 9 27 9-5 11-13 9-20 15 13 14 29 2 37H38c-9-6-10-13-4-19Z" fill="currentColor"/>
+						<path d="M25 47h45l-5 30H30l-5-30ZM19 51h-7M76 51h8M37 78v5m21-5v5" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+						<path d="M34 58h27" stroke="currentColor" stroke-width="4" stroke-linecap="round" opacity=".55"/>
+					</svg>
+					<svg data-status-illustration="ready" class="status-illustration hidden" viewBox="0 0 96 96" fill="none">
+						<path d="M25 37h46l-4 43H29l-4-43Z" stroke="currentColor" stroke-width="5" stroke-linejoin="round"/>
+						<path d="M36 37c0-9 5-15 12-15s12 6 12 15M38 52v14m20-14v14" stroke="currentColor" stroke-width="5" stroke-linecap="round"/>
+						<path d="M72 18v12m-6-6h12" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+					</svg>
+					<svg data-status-illustration="done" class="status-illustration hidden" viewBox="0 0 96 96" fill="none">
+						<circle cx="48" cy="48" r="34" stroke="currentColor" stroke-width="5"/>
+						<path d="m30 49 12 12 25-27" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+					</svg>
+				</div>
+				<p id="orderProgressMessage" class="mt-3 text-center text-sm font-bold text-slate-700" aria-live="polite"></p>
+				<div class="mt-4 flex items-center gap-3">
+					<div id="orderProgressBar" class="order-progress-track" role="progressbar" aria-label="Progres pesanan" aria-valuemin="0" aria-valuemax="100" aria-valuenow="25">
+						<span id="orderProgressFill" class="order-progress-fill"></span>
+					</div>
+					<span id="orderProgressPercent" class="w-12 text-right text-sm font-extrabold text-emerald-700">25%</span>
+				</div>
+			</section>
 			<ol id="orderStepper" class="order-stepper my-6 grid grid-cols-4 gap-1 sm:gap-2" aria-label="Tahapan pesanan">
 				<li data-order-step class="order-step">
 					<span data-step-indicator class="order-step-indicator">1</span>
@@ -199,21 +229,33 @@ import '../styles/cek-pesanan.css';
 
 		function updateStepperUI(status) {
 			const normalizedStatus = typeof status === 'string' ? status.trim().toLocaleLowerCase('id-ID') : '';
-			const activeStep = normalizedStatus === 'selesai'
-				? 4
+			const statusState = normalizedStatus === 'selesai'
+				? { step: 4, illustration: 'done', percent: 100, message: 'Pesanan selesai. Selamat menikmati!' }
 				: normalizedStatus === 'siap diambil'
-					? 3
+					? { step: 3, illustration: 'ready', percent: 75, message: 'Pesanan siap diambil di tenant.' }
 					: ['dimasak', 'diproses'].includes(normalizedStatus)
-						? 2
-						: 1;
+						? { step: 2, illustration: 'cooking', percent: 50, message: 'Pesanan sedang dimasak.' }
+						: { step: 1, illustration: 'waiting', percent: 25, message: 'Pesanan diterima dan menunggu konfirmasi tenant.' };
 			const cancelled = normalizedStatus === 'dibatalkan';
 			const stepper = document.getElementById('orderStepper');
+			const progress = document.getElementById('orderProgress');
 			stepper.classList.toggle('hidden', cancelled);
+			progress.classList.toggle('hidden', cancelled);
 			document.getElementById('cancelledOrderMessage').classList.toggle('hidden', !cancelled);
+			if (!cancelled) {
+				progress.dataset.state = statusState.illustration;
+				progress.querySelectorAll('[data-status-illustration]').forEach((illustration) => {
+					illustration.classList.toggle('hidden', illustration.dataset.statusIllustration !== statusState.illustration);
+				});
+				document.getElementById('orderProgressMessage').textContent = statusState.message;
+				document.getElementById('orderProgressFill').style.width = `${statusState.percent}%`;
+				document.getElementById('orderProgressBar').setAttribute('aria-valuenow', String(statusState.percent));
+				document.getElementById('orderProgressPercent').textContent = `${statusState.percent}%`;
+			}
 			stepper.querySelectorAll('[data-order-step]').forEach((step, index) => {
 				const isComplete = !cancelled
-					&& (index < activeStep - 1 || (normalizedStatus === 'selesai' && index === activeStep - 1));
-				const isCurrent = !cancelled && normalizedStatus !== 'selesai' && index === activeStep - 1;
+					&& (index < statusState.step - 1 || (normalizedStatus === 'selesai' && index === statusState.step - 1));
+				const isCurrent = !cancelled && normalizedStatus !== 'selesai' && index === statusState.step - 1;
 				step.classList.toggle('is-complete', isComplete);
 				step.classList.toggle('is-current', isCurrent);
 				step.removeAttribute('aria-current');
