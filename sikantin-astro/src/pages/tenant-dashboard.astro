@@ -352,7 +352,24 @@ import '../styles/tenant-dashboard.css';
                 await loadOrders();
                 return;
             }
-            showMessage(`Status pesanan ${order.nomor_pesanan} diperbarui menjadi ${status}.`, false);
+            if (status === 'Dibatalkan') {
+                const { data: notification, error: notificationError } = await db.functions.invoke('notify-order-rejected', {
+                    body: { order_id: order.id }
+                });
+                if (notificationError) {
+                    console.error('WhatsApp penolakan pesanan gagal dikirim:', notificationError);
+                    showMessage(
+                        `Pesanan ${order.nomor_pesanan} ditolak, tetapi WhatsApp gagal dikirim: ${notificationError.message}`,
+                        true
+                    );
+                } else if (notification?.success !== true) {
+                    showMessage(`Pesanan ${order.nomor_pesanan} ditolak, tetapi WhatsApp gagal dikirim.`, true);
+                } else {
+                    showMessage(`Pesanan ${order.nomor_pesanan} ditolak dan WhatsApp berhasil dikirim.`, false);
+                }
+            } else {
+                showMessage(`Status pesanan ${order.nomor_pesanan} diperbarui menjadi ${status}.`, false);
+            }
             await loadOrders();
         }
 

@@ -15,3 +15,6 @@ verify_jwt = false
 
 [functions.lookup-guest-order]
 verify_jwt = false
+
+[functions.notify-order-rejected]
+verify_jwt = true
