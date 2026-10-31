@@ -66,14 +66,13 @@ SiKantin menyatukan katalog tenant dan menu dengan alur pemesanan web. Setelah c
 
 - Login memakai NIM dan password; alamat Auth dibentuk dengan pola `[NIM]@uym.ac.id`.
 - Akun mahasiswa baru dibuat admin menggunakan NIM dan nama; password Auth awal sama dengan NIM. Pendaftaran tidak meminta nomor WhatsApp dan tidak mengirim email maupun WhatsApp.
-- Setelah login dengan password awal, mahasiswa diarahkan untuk mengganti password melalui Profil. Password baru diperbarui melalui Supabase Auth.
+- Login mendeteksi metadata `is_temp_password` dan mengarahkan mahasiswa ke Profil untuk mengganti password melalui Supabase Auth `updateUser`.
 - Jika lupa password, mahasiswa menghubungi admin untuk reset manual; tautan reset email tidak digunakan.
 - Memperbarui profil, nomor HP, avatar, dan password.
 - Memilih tenant favorit dan melihatnya di dashboard.
 - Checkout dengan data NIM dan nomor HP dari profil terisi otomatis. Profil harus memenuhi validasi sebelum checkout.
 - Melihat maksimal tiga pesanan terbaru di dashboard serta daftar riwayat penuh.
 - Memberi rating tenant setelah pesanan selesai melalui token/order yang tersedia.
-- Jika akun ditandai perlu reset password, dashboard mengarahkan mahasiswa ke halaman ganti password sebelum penggunaan fitur mahasiswa.
 
 ### 6.3 Pemilik Tenant
 
@@ -93,6 +92,7 @@ SiKantin menyatukan katalog tenant dan menu dengan alur pemesanan web. Setelah c
 - Mengelola tenant, pemilik, kontak, QRIS, serta jam buka/tutup.
 - Mengelola menu, harga, ketersediaan, gambar, dan add-on.
 - Memicu reset password mahasiswa melalui Edge Function `admin-reset-password`; endpoint memverifikasi role admin dan hanya menerima target ber-role mahasiswa.
+- Reset admin menetapkan password menjadi NIM dan mengembalikan nilainya di respons; NIM mudah diketahui, sehingga kredensial ini berisiko dan mahasiswa harus segera menggantinya.
 - **Batasan verifikasi pembayaran:** implementasi yang tersedia menempatkan tindakan verifikasi bukti QRIS di dashboard tenant. Dashboard admin belum menyediakan tindakan verifikasi pembayaran. Jangan mempresentasikan verifikasi pembayaran sebagai fitur admin yang sudah tersedia.
 - Melihat ringkasan data yang tersedia pada dashboard.
 
@@ -137,6 +137,8 @@ Status disimpan sebagai teks pada baseline yang ada. Seluruh transisi perlu meng
 - Tenant memeriksa bukti sebelum menandai pembayaran terverifikasi/memproses pesanan.
 - Baileys digunakan oleh gateway WhatsApp terpisah. Ketersediaan bergantung pada koneksi gateway, konfigurasi environment, dan sesi WhatsApp.
 - Kegagalan pengiriman WA tidak boleh diperlakukan sebagai bukti order tidak tersimpan. Pembeli tetap dapat memakai token dan dashboard.
+- `create-guest-order` mencoba mengirim ringkasan order ke nomor pembeli dan notifikasi order baru ke nomor tenant. Penolakan order mencoba mengirim alasan ke nomor pembeli melalui `notify-order-rejected`.
+- Registrasi mahasiswa tidak mengirim WhatsApp. Semua notifikasi pesanan tetap bergantung pada gateway/Baileys dan konfigurasi secret yang benar.
 - Nomor antrean/status database menjadi sumber data; notifikasi hanya kanal penyampaian.
 
 ## 8. Alur Bisnis Utama
@@ -157,7 +159,7 @@ Status disimpan sebagai teks pada baseline yang ada. Seluruh transisi perlu meng
 - **Keamanan:** jangan mengekspos service-role key ke browser; role dan hak akses database ditegakkan server-side/RLS.
 - **Integritas transaksi:** server menghitung harga, subtotal, status tenant, dan kelayakan item sebelum menyimpan order.
 - **Ketersediaan:** halaman lacak order tetap bersumber dari database ketika WhatsApp tidak tersedia.
-- **SEO:** beranda dan katalog tenant memiliki title/description/metadata sosial; halaman private menggunakan `noindex`.
+- **SEO:** beranda dan katalog tenant memiliki metadata title/description/keywords, canonical per halaman, dan metadata sosial. Endpoint `/sitemap.xml` memuat tenant dari Supabase dengan akses anon; `robots.txt` menunjuk ke endpoint tersebut. Halaman private menggunakan `noindex`.
 - **Privasi:** gunakan akun, NIM, nomor, token, QRIS, dan bukti sintetis untuk demonstrasi. Jangan menampilkan data produksi.
 
 ## 10. Tech Stack dan Arsitektur
@@ -202,7 +204,9 @@ Status disimpan sebagai teks pada baseline yang ada. Seluruh transisi perlu meng
 ### Pembeli
 
 - Guest dapat menelusuri tenant/menu, mengisi identitas, mengunggah bukti, dan menerima token serta antrean bila checkout valid.
+- Detail order menampilkan add-on terpilih dan harga tambahannya di bawah nama menu.
 - Pesanan dapat dicari melalui token dan menunjukkan status yang tersimpan.
+- Penolakan order mencoba mengirim alasan ke nomor pembeli (`orders.phone`) dengan template penolakan yang ditentukan; gagalnya WA tidak membatalkan order.
 - Mahasiswa login dapat auto-fill profil, melihat favorit/riwayat, dan memberi rating setelah selesai.
 
 ### Tenant
@@ -210,6 +214,7 @@ Status disimpan sebagai teks pada baseline yang ada. Seluruh transisi perlu meng
 - Tenant hanya dapat mengakses pesanan/operasional tenant miliknya.
 - Bukti QRIS tersedia untuk pemeriksaan manual.
 - Tenant dapat mengubah status order sesuai alur dashboard dan melakukan override manual buka/tutup.
+- Setelah perubahan status berhasil, data order/menu dan angka statistik dimuat ulang. Dashboard di tab lain memperbarui order dari event Realtime `INSERT`, `UPDATE`, dan `DELETE` tenant terkait.
 - Status otomatis menghormati jadwal WIB dan override sampai jadwal berikutnya.
 
 ### Admin
@@ -217,6 +222,7 @@ Status disimpan sebagai teks pada baseline yang ada. Seluruh transisi perlu meng
 - Admin dapat membuat mahasiswa menggunakan NIM dan nama; password awal diatur sama dengan NIM tanpa pengiriman email/WhatsApp.
 - Setelah login, mahasiswa diarahkan untuk mengganti password awal melalui Profil.
 - Reset password hanya dapat dipanggil oleh admin dan targetnya hanya mahasiswa.
+- Reset menetapkan password menjadi NIM dan mengaktifkan metadata agar mahasiswa diarahkan menggantinya melalui Profil.
 - Panel admin menyediakan CRUD tenant/menu dan field jadwal; verifikasi pembayaran dicatat sebagai tindakan tenant saat ini.
 
 ### Teknis
@@ -224,4 +230,5 @@ Status disimpan sebagai teks pada baseline yang ada. Seluruh transisi perlu meng
 - Build Astro lulus.
 - Migration database terpasang dan cron job berjalan pada Supabase target.
 - Edge Function pendaftaran mahasiswa dan gateway WhatsApp diuji pada proyek Supabase yang memiliki secret dan konfigurasi runtime sesuai domain aplikasi.
+- `/sitemap.xml` dapat diakses publik dengan URL/key anon dan mencantumkan halaman publik tanpa login/dashboard; policy baca publik `tenants` tersedia.
 - Skenario QRIS/WA tidak berubah hanya karena perubahan dokumentasi atau UI.

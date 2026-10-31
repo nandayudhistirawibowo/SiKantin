@@ -23,7 +23,7 @@ Profil aplikasi dipasangkan dengan identitas Supabase Auth. User mahasiswa memak
 | `nama` | `text` | Nama mahasiswa/pemilik yang ditampilkan. |
 | `nim` | `text` | NIM mahasiswa; dicari dan divalidasi pada login/checkout. |
 | `peran` | `text` | Role aplikasi: `mahasiswa`, `pemilik_tenant`, atau `admin`. Trigger membatasi perubahan role. |
-| `no_telepon` | `text` | Nomor kontak/WhatsApp; ditambahkan melalui migration dashboard mahasiswa. |
+| `no_telepon` | `text` | Nomor kontak mahasiswa; dapat kosong saat admin mendaftarkan akun. Profil memerlukan nomor valid untuk checkout mahasiswa. |
 | `avatar_url` | `text` | URL avatar; ditambahkan melalui migration dashboard mahasiswa. |
 | `created_at`, `updated_at` | `timestamptz` | Timestamp bila tersedia pada baseline; definisi aktual perlu diverifikasi. |
 
@@ -210,7 +210,7 @@ ERD menunjukkan relasi logis aplikasi. Repository secara eksplisit membuat sebag
 | Tabel | Akses yang dinyatakan migration | Catatan implementasi |
 |---|---|---|
 | `profiles` | Authenticated hanya dapat membaca kolom profil yang diperlukan; user dapat update kolom profil yang diizinkan sendiri; admin dapat insert/update/delete melalui policy admin. | Trigger `prevent_profile_role_escalation` tetap mencegah perubahan role dan ID profil. |
-| `tenants` | Guest (`anon`) dan authenticated dapat membaca; pemilik dapat update tenant sendiri; admin dapat insert/update/delete. | RPC manual status memverifikasi `pemilik_id = auth.uid()`. |
+| `tenants` | Guest (`anon`) dan authenticated dapat membaca; pemilik dapat update tenant sendiri; admin dapat insert/update/delete. | Policy dan grant `anon` dibuat pada migration guest checkout. Katalog publik dan endpoint sitemap menggunakan akses ini; RPC manual status memverifikasi `pemilik_id = auth.uid()`. |
 | `menu_items` | Authenticated dapat membaca; guest hanya menu `tersedia` yang terhubung tenant. Pemilik dapat CRUD menu tenant miliknya; admin dapat CRUD. | Hak menu owner didasarkan pada relasi tenant ke pemilik. |
 | `orders` | Authenticated dapat membaca order sendiri, order tenant miliknya, atau semua order sebagai admin. Insert langsung dibatasi untuk mahasiswa login dan `mahasiswa_id = auth.uid()`. Update owner hanya untuk order tenant miliknya; privilege update dibatasi pada `status` dan `alasan_pembatalan`. | Guest checkout ditulis Edge Function memakai service role, bukan insert langsung dari `anon`. |
 | `order_items` | Read jika parent order dapat dibaca; insert langsung untuk order mahasiswa pemilik. | Penulisan guest dilakukan Edge Function/service role. |
@@ -248,12 +248,21 @@ RLS di atas adalah ringkasan migrasi repository, bukan audit konfigurasi Supabas
 
 ### 6.1 Edge Functions
 
-- `create-guest-order`: memvalidasi data checkout, profil/NIM, tenant, status buka, menu, harga, add-on, bukti QRIS, membuat antrean dan order, lalu mencoba notifikasi.
+- `create-guest-order`: memvalidasi data checkout, profil/NIM, tenant, status buka, menu, harga, add-on, bukti QRIS, membuat antrean dan order, lalu mencoba mengirim WhatsApp ke pembeli dan tenant. Helper WhatsApp ditanam langsung di file function; kegagalan pesan tidak membatalkan order.
 - `validate-nim`: validasi NIM mahasiswa untuk checkout.
 - `lookup-guest-order`: endpoint lookup terkait pelacakan guest (fungsi RPC juga tersedia pada migration).
-- `create-user`: hanya admin; membuat akun mahasiswa dengan password awal sama dengan NIM dan menandai akun agar password wajib diganti setelah login. Pendaftaran mahasiswa tidak meminta nomor WhatsApp atau mengirim pesan. Akun pemilik tenant tetap mengikuti payload email/password.
+- `create-user`: hanya admin; membuat akun mahasiswa dengan email internal `[NIM]@uym.ac.id`, password awal sama dengan NIM, dan metadata `is_temp_password = true`. Pendaftaran mahasiswa hanya meminta NIM dan nama; tidak meminta nomor WhatsApp atau mengirim email/pesan. Akun pemilik tenant tetap mengikuti payload email/password.
 - `manage-user`: tindakan administratif termasuk hapus user dengan validasi role.
-- `admin-reset-password`: hanya admin dan hanya target mahasiswa; mengatur password menjadi NIM dan menandai user agar diarahkan mengganti password melalui Profil setelah login.
+- `admin-reset-password`: hanya admin dan hanya target mahasiswa; mengatur password menjadi NIM dan menandai user agar login berikutnya mengarah untuk mengganti password melalui Profil.
+- `notify-order-rejected`: mengirim pesan penolakan ke `orders.phone` setelah tenant membatalkan order, dengan format `Mohon maaf, pesanan Anda [Nomor Pesanan] di [Nama Tenant] ditolak. Alasan: [Alasan]. Silakan pesan menu lain.` `verify_jwt = false` pada config hanya mematikan pemeriksaan gateway; function tetap memeriksa bearer JWT valid dan role pemilik tenant. Helper WA ditanam langsung di file function.
+
+### 6.2 Dashboard, Realtime, dan SEO
+
+- Dashboard tenant mengambil `order_items.add_ons` bersama order, lalu merender nama add-on dan harga tambahannya sebagai daftar di bawah nama menu.
+- Dashboard tenant subscribe ke `public.orders` untuk event `INSERT`, `UPDATE`, dan `DELETE`, difilter dengan `tenant_id`. Event memuat ulang daftar order; perubahan status lokal juga memuat ulang order/menu dan menghitung ulang statistik.
+- Beranda dan halaman katalog tenant memakai title, description, keywords, canonical per path, Open Graph, dan Twitter metadata dari `Layout.astro`.
+- Endpoint Astro `/sitemap.xml` mengambil `slug` dan `updated_at` tenant dengan Supabase public/anon client. Policy `SELECT` serta grant role `anon` pada `tenants` harus tersedia. Bila kolom `updated_at` tidak ada, endpoint mencoba query `slug` saja; error konfigurasi, query, atau akses dicatat dan dikembalikan secara eksplisit.
+- `public/robots.txt` menunjuk ke sitemap production. Sitemap saat ini mencantumkan beranda, cek pesanan, dan halaman katalog tenant.
 
 ## 7. Jadwal dan Override
 

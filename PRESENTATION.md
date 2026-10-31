@@ -15,7 +15,7 @@ Tunjukkan masalah pemesanan kantin, peragakan alur pembeli sampai tenant, lalu j
 ### Akun dan data
 
 - Akun demo peran mahasiswa, tenant, dan admin.
-- Mahasiswa memiliki NIM demo dan password yang sudah ditetapkan sendiri.
+- Mahasiswa memiliki NIM demo; password awalnya adalah NIM dan telah diganti pada akun yang dipakai untuk demo.
 - Satu tenant demo dengan jam operasional, menu tersedia, add-on opsional, harga, serta gambar QRIS demo.
 - Satu order demo yang statusnya dapat dilanjutkan dari `Menunggu Verifikasi` ke status berikutnya.
 - Token demo untuk halaman Cek Pesanan.
@@ -26,15 +26,16 @@ Tunjukkan masalah pemesanan kantin, peragakan alur pembeli sampai tenant, lalu j
 - Pastikan aplikasi web dan Supabase target dapat diakses.
 - Pastikan Realtime tersedia bila ingin memperlihatkan perubahan langsung.
 - Untuk demo pengiriman WA, gateway dan sesi uji harus sudah aktif. Jangan melakukan login ulang atau mengubah sesi Baileys di tengah presentasi.
-- Link reset password mahasiswa membutuhkan SMTP/email delivery dan Redirect URL Supabase yang mengizinkan `/mahasiswa/update-password`.
+- Akun mahasiswa demo memakai NIM sebagai password awal. Siapkan password baru untuk menggantinya melalui Profil; tidak ada email aktivasi atau reset password.
 - Fitur jadwal otomatis memerlukan migration sudah diterapkan dan job `pg_cron` berjalan.
-- Siapkan video/screenshot atau order cadangan bila koneksi, email, Realtime, atau WA lambat.
+- Untuk menampilkan sitemap, pastikan migration yang memberi akses baca publik ke `tenants` sudah diterapkan dan `PUBLIC_SUPABASE_URL` serta `PUBLIC_SUPABASE_ANON_KEY` tersedia di deployment.
+- Siapkan video/screenshot atau order cadangan bila koneksi, Realtime, atau WA lambat.
 
 ### Keamanan presentasi
 
 - Gunakan data sintetis, bukan NIM, telepon, token, bukti pembayaran, email, atau kredensial pengguna nyata.
 - Jangan menampilkan service-role key, secret `WA_API_KEY`, konfigurasi environment, isi sesi Baileys, QR login WhatsApp, atau URL publik bukti pembayaran.
-- Jangan menaruh password sementara reset admin pada layar proyektor. Endpoint saat ini mengembalikan password sementara kepada admin; gunakan akun uji dan tampilkan hasil secara terkendali.
+- Password awal dan password hasil reset admin sama dengan NIM dan mudah ditebak. Jangan menampilkan atau menggunakan NIM asli saat demo; gunakan akun uji dan segera ganti password setelah login.
 
 ## 3. Alur Demo Langkah demi Langkah
 
@@ -48,7 +49,7 @@ Tunjukkan masalah pemesanan kantin, peragakan alur pembeli sampai tenant, lalu j
 | 4:00–4:40 | Cek Pesanan | Masukkan token demo; perlihatkan status dan detail yang diperbarui. | “Pelacakan tetap mengandalkan database, bukan keberhasilan pesan WhatsApp.” |
 | 4:40–5:20 | WhatsApp | Jika gateway uji siap, tampilkan pesan demo/status delivery. Jika tidak, tunjukkan simulasi/screenshot yang sudah disiapkan. | “Baileys adalah gateway terpisah dan tidak resmi; notifikasi merupakan kanal tambahan dan dapat gagal.” |
 | 5:20–6:10 | Login mahasiswa | Tunjukkan profil, data checkout auto-fill, favorit, riwayat, atau rating order selesai. | “Login menambahkan kenyamanan; guest checkout tetap tersedia.” |
-| 6:10–7:00 | Admin dan reset | Tunjukkan pengelolaan tenant/menu/jadwal. Tunjukkan reset password hanya pada akun demo dan jangan tampilkan kredensial di proyektor. | “Admin mendaftarkan mahasiswa dengan NIM/nama; mahasiswa mengatur password sendiri. Reset darurat dibatasi role.” |
+| 6:10–7:00 | Admin dan reset | Tunjukkan pengelolaan tenant/menu/jadwal. Tunjukkan reset password hanya pada akun demo dan jangan tampilkan kredensial di proyektor. | “Admin mendaftarkan mahasiswa dengan NIM/nama dan password awal NIM; mahasiswa menggantinya melalui Profil. Reset darurat dibatasi role.” |
 | 7:00–7:40 | Jadwal dan penutup | Jelaskan override manual dan sinkronisasi per menit; tutup dengan nilai produk dan batasan. | “Sistem menyatukan katalog, order, antrean, status, dan komunikasi dengan batasan yang transparan.” |
 
 ### Jalur demo singkat (3–4 menit)
@@ -63,6 +64,7 @@ Beranda → satu katalog → order/token demo → dashboard tenant → Cek Pesan
 - Pembeli dapat memesan tanpa harus membuat akun.
 - Nomor antrean dan status mengurangi ketidakjelasan setelah checkout.
 - Tenant memperoleh dashboard untuk melihat order dan mengatur status.
+- Add-on dan harga tambahannya tampil di rincian item order; perubahan order disinkronkan melalui Supabase Realtime antartab.
 
 ### Integritas dan keamanan
 
@@ -70,7 +72,7 @@ Beranda → satu katalog → order/token demo → dashboard tenant → Cek Pesan
 - Total tidak dipercayakan pada nilai yang dikirim browser.
 - RLS memisahkan akses mahasiswa, pemilik tenant, admin, dan guest; operasi privileged menggunakan service role hanya di sisi server.
 - Token order memberi akses pelacakan dan harus disimpan/dibagikan dengan hati-hati.
-- Akun mahasiswa baru tidak menerima password dari admin; mahasiswa mengatur password melalui tautan email berbasis NIM.
+- Akun mahasiswa baru memakai NIM sebagai password awal. Admin mendaftarkan NIM dan nama saja; registrasi tidak mengirim email atau WhatsApp. Setelah login, mahasiswa mengganti password melalui Profil.
 
 ### Integrasi WhatsApp
 
@@ -85,8 +87,8 @@ Beranda → satu katalog → order/token demo → dashboard tenant → Cek Pesan
 - Dashboard admin belum memiliki aksi verifikasi pembayaran.
 - Jadwal buka/tutup berulang setiap hari tanpa kalender libur.
 - Job jadwal berjalan per menit dan membutuhkan konfigurasi `pg_cron`.
-- Email reset berbasis NIM memerlukan domain/email routing/SMTP yang dapat menerima email.
-- Password sementara admin reset saat ini tetap; hal ini adalah risiko operasional dan sebaiknya tidak dianggap mekanisme produksi ideal.
+- Password awal dan reset admin ditetapkan sama dengan NIM. Ini berisiko karena NIM bukan rahasia; ganti password setelah login dan gunakan hanya akun demo sintetis.
+- WhatsApp hanya untuk notifikasi pesanan, bukan pendaftaran mahasiswa. Pengiriman WA tetap bergantung pada gateway dan sesi Baileys.
 
 ## 5. Q&A yang Mungkin Ditanyakan
 
@@ -124,7 +126,7 @@ Admin menentukan jam buka/tutup WIB. `pg_cron` memperbarui status setiap menit. 
 
 ### 9. Bagaimana mahasiswa mengatur atau memulihkan password?
 
-Admin membuat akun dengan NIM dan nama, bukan menetapkan password. Supabase mengirim tautan ke alamat berbasis NIM (`[NIM]@uym.ac.id`) untuk mengatur password. Pemulihan memerlukan alamat tersebut dapat menerima email dan redirect URL aplikasi diizinkan. Admin juga memiliki reset darurat untuk akun mahasiswa; password sementara harus segera diganti dan disampaikan dengan aman.
+Admin membuat akun menggunakan NIM dan nama; password awalnya adalah NIM. Setelah login, mahasiswa mengganti password melalui Profil. Jika lupa password, mahasiswa meminta admin melakukan reset; password dikembalikan menjadi NIM dan harus segera diganti lagi. Alur ini tidak menggunakan SMTP atau email.
 
 ### 10. Apakah data guest dan akun terisolasi?
 
@@ -157,8 +159,10 @@ Belum. Implementasi saat ini menggunakan satu rentang jam yang berulang setiap h
 - [ ] Token order demo telah disiapkan dan tidak berasal dari pembeli nyata.
 - [ ] Bukti QRIS sintetis digunakan; tidak ada transaksi asli.
 - [ ] Akun mahasiswa dapat login dan profilnya cukup lengkap untuk auto-fill.
-- [ ] Email/redirect password diuji sebelumnya bila akan dipresentasikan.
+- [ ] Password awal mahasiswa demo sudah diganti melalui Profil; alur reset admin diuji hanya dengan akun sintetis.
+- [ ] Jika mendemokan Realtime, buka dashboard tenant di dua tab dan siapkan order uji untuk memperlihatkan sinkronisasi.
 - [ ] Gateway WA siap atau screenshot/video fallback sudah tersedia.
+- [ ] Sitemap dapat diakses jika SEO/deployment akan didemokan; akses anon ke data slug tenant telah diverifikasi.
 - [ ] Migration jadwal dan cron telah diverifikasi di Supabase bila fitur jadwal didemokan.
 - [ ] Kredensial, token, service key, nomor pribadi, dan QR sesi tidak terlihat di layar.
 - [ ] Tim mengetahui dengan jelas bahwa verifikasi pembayaran dilakukan tenant, bukan admin.
