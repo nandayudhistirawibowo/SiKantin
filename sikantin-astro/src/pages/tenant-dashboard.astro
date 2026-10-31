@@ -392,10 +392,33 @@ import '../styles/tenant-dashboard.css';
                 if (order.phone) {
                     addText(identity, 'p', 'mt-1 text-xs text-slate-500', order.phone);
                 }
-                const itemSummary = (order.order_items || [])
-                    .map((item) => `${item.nama_menu} × ${item.jumlah}${item.catatan ? ` (${item.catatan})` : ''}`)
-                    .join(', ');
-                addText(identity, 'p', 'mt-2 text-xs text-slate-600', itemSummary || 'Rincian menu tidak tersedia.');
+                const itemDetails = document.createElement('div');
+                itemDetails.className = 'mt-2 space-y-2 text-xs text-slate-600';
+                if (order.order_items?.length) {
+                    order.order_items.forEach((item) => {
+                        const itemDetail = document.createElement('div');
+                        addText(
+                            itemDetail,
+                            'p',
+                            'font-semibold text-slate-700',
+                            `${item.nama_menu} × ${item.jumlah}${item.catatan ? ` (${item.catatan})` : ''}`
+                        );
+                        if (Array.isArray(item.add_ons) && item.add_ons.length) {
+                            const addonList = document.createElement('ul');
+                            addonList.className = 'ml-4 mt-1 list-disc space-y-0.5 text-slate-500';
+                            item.add_ons.forEach((addon) => {
+                                if (typeof addon?.name === 'string' && addon.name.trim()) {
+                                    addText(addonList, 'li', '', addon.name);
+                                }
+                            });
+                            if (addonList.childElementCount) itemDetail.append(addonList);
+                        }
+                        itemDetails.append(itemDetail);
+                    });
+                } else {
+                    addText(itemDetails, 'p', '', 'Rincian menu tidak tersedia.');
+                }
+                identity.append(itemDetails);
                 addText(identity, 'p', 'mt-2 text-xs font-semibold text-slate-600', `Pembayaran: ${order.metode_pembayaran === 'tunai' ? 'Tunai (dibayar saat pengambilan)' : 'QRIS'}`);
                 if (order.status === 'Dibatalkan' && order.alasan_pembatalan) {
                     addText(identity, 'p', 'mt-2 rounded-md bg-rose-50 p-2 text-xs text-rose-700', `Alasan penolakan: ${order.alasan_pembatalan}`);
@@ -508,7 +531,7 @@ import '../styles/tenant-dashboard.css';
             if (typeof activeTenantId !== 'string' || !activeTenantId.trim()) return;
             const { data: orders, error } = await db
                 .from('orders')
-                .select('id, tenant_id, nomor_pesanan, nomor_antrean, mahasiswa_id, nama_mahasiswa, phone, status, total, metode_pembayaran, bukti_transfer, alasan_pembatalan, order_items(id, nama_menu, harga_satuan, jumlah, subtotal, catatan)')
+                .select('id, tenant_id, nomor_pesanan, nomor_antrean, mahasiswa_id, nama_mahasiswa, phone, status, total, metode_pembayaran, bukti_transfer, alasan_pembatalan, order_items(id, nama_menu, harga_satuan, jumlah, subtotal, catatan, add_ons)')
                 .eq('tenant_id', activeTenantId)
                 .order('id', { ascending: false });
             if (error) {
