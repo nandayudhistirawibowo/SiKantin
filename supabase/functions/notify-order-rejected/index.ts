@@ -17,6 +17,53 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+async function notifyByWhatsApp(
+  phone: string,
+  message: string,
+): Promise<{ sent: true } | { sent: false; status: "not_configured" | "failed"; error: string }> {
+  const gatewayUrl = Deno.env.get("WA_GATEWAY_URL");
+  const apiKey = Deno.env.get("WA_API_KEY");
+  if (!gatewayUrl || !apiKey) {
+    const error = "Secret WA_GATEWAY_URL atau WA_API_KEY belum dikonfigurasi.";
+    console.error(error);
+    return { sent: false, status: "not_configured", error };
+  }
+
+  let endpoint: URL;
+  try {
+    endpoint = new URL("/send", gatewayUrl);
+  } catch {
+    return { sent: false, status: "failed", error: "WA_GATEWAY_URL bukan URL yang valid." };
+  }
+  if (endpoint.protocol !== "https:" && endpoint.hostname !== "localhost" && endpoint.hostname !== "127.0.0.1") {
+    return { sent: false, status: "failed", error: "WA_GATEWAY_URL harus HTTPS, kecuali gateway localhost." };
+  }
+
+  try {
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+        "ngrok-skip-browser-warning": "1",
+      },
+      body: JSON.stringify({ nomor_wa: phone, pesan: message }),
+      signal: AbortSignal.timeout(6000),
+    });
+    const responseBody = await response.json().catch(() => null);
+    if (!response.ok || responseBody?.success !== true) {
+      const error = responseBody?.message
+        || `Gateway WhatsApp gagal mengirim pesan (HTTP ${response.status}).`;
+      console.error(error);
+      return { sent: false, status: "failed", error };
+    }
+    return { sent: true };
+  } catch (error) {
+    console.error("Notifikasi penolakan WhatsApp gagal dikirim:", error);
+    return { sent: false, status: "failed", error: "Gateway WhatsApp tidak dapat dihubungi." };
+  }
+}
+
 Deno.serve(async (request: Request): Promise<Response> => {
   if (request.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -109,50 +156,10 @@ Deno.serve(async (request: Request): Promise<Response> => {
     return jsonResponse({ error: "Alasan penolakan pesanan tidak tersedia." }, 422);
   }
 
-  const gatewayUrl = Deno.env.get("WA_GATEWAY_URL");
-  const apiKey = Deno.env.get("WA_API_KEY");
-  if (!gatewayUrl || !apiKey) {
-    return jsonResponse({ error: "Secret WA_GATEWAY_URL atau WA_API_KEY belum dikonfigurasi." }, 500);
-  }
-
-  let endpoint: URL;
-  try {
-    endpoint = new URL("/send", gatewayUrl);
-  } catch {
-    return jsonResponse({ error: "WA_GATEWAY_URL bukan URL yang valid." }, 500);
-  }
-  if (endpoint.protocol !== "https:" && endpoint.hostname !== "localhost" && endpoint.hostname !== "127.0.0.1") {
-    return jsonResponse({ error: "WA_GATEWAY_URL harus HTTPS, kecuali gateway localhost." }, 500);
-  }
-
   const message = `Mohon maaf, pesanan Anda ${order.nomor_pesanan} di ${tenant.nama_tenant} ditolak. Alasan: ${reason}. Silakan pesan menu lain.`;
-  let response: Response;
-  try {
-    response = await fetch(endpoint, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-        "ngrok-skip-browser-warning": "1",
-      },
-      body: JSON.stringify({ nomor_wa: phone, pesan: message }),
-      signal: AbortSignal.timeout(6000),
-    });
-  } catch (error) {
-    console.error("Notifikasi penolakan WhatsApp gagal dikirim:", error);
-    return jsonResponse({ error: "Gateway WhatsApp tidak dapat dihubungi." }, 502);
-  }
-
-  let responseBody: { success?: boolean; message?: string } | null = null;
-  try {
-    responseBody = await response.json();
-  } catch {
-    return jsonResponse({ error: `Gateway WhatsApp memberikan respons tidak valid (HTTP ${response.status}).` }, 502);
-  }
-  if (!response.ok || responseBody?.success !== true) {
-    return jsonResponse({
-      error: responseBody?.message || `Gateway WhatsApp gagal mengirim pesan (HTTP ${response.status}).`,
-    }, 502);
+  const result = await notifyByWhatsApp(phone, message);
+  if (!result.sent) {
+    return jsonResponse({ error: result.error }, result.status === "not_configured" ? 500 : 502);
   }
 
   return jsonResponse({ success: true });
