@@ -97,7 +97,7 @@ Deno.serve(async (request: Request): Promise<Response> => {
     return jsonResponse({ error: `Gagal memeriksa akun Auth: ${targetAuthError?.message || "User tidak ditemukan."}` }, 500);
   }
 
-  const { error: updateError } = await serviceClient.auth.admin.updateUserById(targetId, {
+  const { data: updatedAuth, error: updateError } = await serviceClient.auth.admin.updateUserById(targetId, {
     password: targetProfile.nim,
     user_metadata: {
       ...targetAuth.user.user_metadata,
@@ -107,6 +107,9 @@ Deno.serve(async (request: Request): Promise<Response> => {
   });
   if (updateError) {
     return jsonResponse({ error: `Password gagal direset: ${updateError.message}` }, 500);
+  }
+  if (updatedAuth.user?.user_metadata?.is_temp_password !== true) {
+    return jsonResponse({ error: "Password diperbarui, tetapi penanda wajib ganti password gagal disimpan." }, 500);
   }
 
   return jsonResponse({
