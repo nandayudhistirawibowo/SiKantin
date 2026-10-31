@@ -425,7 +425,17 @@ import '../styles/tenant-dashboard.css';
                             addonList.className = 'ml-4 mt-1 list-disc space-y-0.5 text-slate-500';
                             item.add_ons.forEach((addon) => {
                                 if (typeof addon?.name === 'string' && addon.name.trim()) {
-                                    addText(addonList, 'li', '', addon.name);
+                                    const addonPrice = typeof addon.price === 'number' && Number.isFinite(addon.price)
+                                        ? addon.price === 0
+                                            ? 'Gratis'
+                                            : `+ ${formatRupiah(addon.price)}`
+                                        : null;
+                                    addText(
+                                        addonList,
+                                        'li',
+                                        '',
+                                        addonPrice ? `${addon.name} (${addonPrice})` : addon.name
+                                    );
                                 }
                             });
                             if (addonList.childElementCount) itemDetail.append(addonList);
