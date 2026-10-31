@@ -370,7 +370,7 @@ import '../styles/tenant-dashboard.css';
             } else {
                 showMessage(`Status pesanan ${order.nomor_pesanan} diperbarui menjadi ${status}.`, false);
             }
-            await loadOrders();
+            await Promise.all([loadOrders(), loadTenantMenu()]);
         }
 
         function renderOrders(orders) {
@@ -697,7 +697,7 @@ import '../styles/tenant-dashboard.css';
             channel = db
                 .channel(`tenant-orders-${activeTenantId}`)
                 .on('postgres_changes', {
-                    event: 'INSERT',
+                    event: '*',
                     schema: 'public',
                     table: 'orders',
                     filter: `tenant_id=eq.${activeTenantId}`
@@ -705,6 +705,8 @@ import '../styles/tenant-dashboard.css';
                     if (payload.eventType === 'INSERT' && payload.new?.tenant_id === activeTenantId) {
                         window.playNotificationSound?.();
                     }
+                    const changedTenantId = payload.new?.tenant_id || payload.old?.tenant_id;
+                    if (changedTenantId && changedTenantId !== activeTenantId) return;
                     scheduleRefresh();
                 })
                 .subscribe((status, error) => {
