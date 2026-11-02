@@ -46,12 +46,20 @@ import logo from '../../assets/logo-uym.png';
 			</div>
 			<p id="studentPasswordMessage" role="status" aria-live="polite" class="mb-5 hidden rounded-xl p-3 text-sm"></p>
 			<form id="studentPasswordForm" class="space-y-4">
-				<label for="studentNewPassword" class="block text-sm font-bold text-slate-700">Password baru
-					<input id="studentNewPassword" type="password" minlength="8" maxlength="128" autocomplete="new-password" required class="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2.5 font-normal outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
-				</label>
-				<label for="studentConfirmPassword" class="block text-sm font-bold text-slate-700">Konfirmasi password baru
-					<input id="studentConfirmPassword" type="password" minlength="8" maxlength="128" autocomplete="new-password" required class="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2.5 font-normal outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
-				</label>
+				<div class="block text-sm font-bold text-slate-700">
+					<label for="studentNewPassword">Password baru</label>
+					<div class="relative mt-2">
+						<input id="studentNewPassword" type="password" minlength="8" maxlength="128" autocomplete="new-password" required class="w-full rounded-xl border border-slate-300 py-2.5 pl-3 pr-12 font-normal outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
+						<button type="button" data-password-toggle aria-label="Tampilkan password" aria-pressed="false" class="absolute right-2 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-md text-lg text-slate-500 hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">👁️</button>
+					</div>
+				</div>
+				<div class="block text-sm font-bold text-slate-700">
+					<label for="studentConfirmPassword">Konfirmasi password baru</label>
+					<div class="relative mt-2">
+						<input id="studentConfirmPassword" type="password" minlength="8" maxlength="128" autocomplete="new-password" required class="w-full rounded-xl border border-slate-300 py-2.5 pl-3 pr-12 font-normal outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
+						<button type="button" data-password-toggle aria-label="Tampilkan password" aria-pressed="false" class="absolute right-2 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-md text-lg text-slate-500 hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">👁️</button>
+					</div>
+				</div>
 				<button id="changeStudentPassword" type="submit" class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm font-extrabold text-slate-700 transition hover:bg-slate-50 disabled:cursor-wait disabled:opacity-60">Ganti Password</button>
 			</form>
 		</section>
@@ -59,6 +67,17 @@ import logo from '../../assets/logo-uym.png';
 
 	<script>
 		import { db } from '../../scripts/supabase.js';
+
+		document.querySelectorAll('[data-password-toggle]').forEach((toggle) => {
+			const input = toggle.parentElement.querySelector('input');
+			toggle.addEventListener('click', () => {
+				const isVisible = input.type === 'password';
+				input.type = isVisible ? 'text' : 'password';
+				toggle.textContent = isVisible ? '🙈' : '👁️';
+				toggle.setAttribute('aria-label', isVisible ? 'Sembunyikan password' : 'Tampilkan password');
+				toggle.setAttribute('aria-pressed', String(isVisible));
+			});
+		});
 
 		const profileForm = document.getElementById('studentProfileForm');
 		const passwordForm = document.getElementById('studentPasswordForm');

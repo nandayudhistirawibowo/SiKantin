@@ -29,10 +29,13 @@ import '../../styles/login.css';
 						Email akun admin
 						<input id="adminEmail" type="email" autocomplete="username" required class="login-input mt-2" placeholder="nama@kampus.ac.id" />
 					</label>
-					<label class="block text-sm font-semibold" for="adminPassword">
-						Password
-						<input id="adminPassword" type="password" autocomplete="current-password" required class="login-input mt-2" placeholder="Masukkan password" />
-					</label>
+					<div class="block text-sm font-semibold">
+						<label for="adminPassword">Password</label>
+						<div class="relative mt-2">
+							<input id="adminPassword" type="password" autocomplete="current-password" required class="login-input pr-12" placeholder="Masukkan password" />
+							<button type="button" data-password-toggle aria-label="Tampilkan password" aria-pressed="false" class="absolute right-2 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-md text-lg text-blue-200 hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300">👁️</button>
+						</div>
+					</div>
 					<button id="adminLoginButton" type="submit" class="w-full rounded-xl bg-blue-600 px-4 py-3.5 font-extrabold shadow-lg shadow-blue-950/30 transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-60">
 						Masuk ke Panel Admin <span aria-hidden="true">→</span>
 					</button>
@@ -80,6 +83,17 @@ import '../../styles/login.css';
 	</main>
 	<script>
 		import { db } from '../../scripts/supabase.js';
+
+		document.querySelectorAll('[data-password-toggle]').forEach((toggle) => {
+			const input = toggle.parentElement.querySelector('input');
+			toggle.addEventListener('click', () => {
+				const isVisible = input.type === 'password';
+				input.type = isVisible ? 'text' : 'password';
+				toggle.textContent = isVisible ? '🙈' : '👁️';
+				toggle.setAttribute('aria-label', isVisible ? 'Sembunyikan password' : 'Tampilkan password');
+				toggle.setAttribute('aria-pressed', String(isVisible));
+			});
+		});
 
 		document.getElementById('adminLoginForm').addEventListener('submit', async (event) => {
 			event.preventDefault();

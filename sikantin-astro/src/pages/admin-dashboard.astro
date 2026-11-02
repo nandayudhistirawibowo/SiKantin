@@ -108,9 +108,13 @@ import '../styles/admin-dashboard.css';
                 <input id="newUserPhone" name="no_telepon" type="tel" inputmode="numeric" autocomplete="tel" maxlength="16" pattern="628[0-9]{8,13}" placeholder="6281234567890" class="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal">
                 <span id="newUserPhoneHelp" class="mt-1 block text-xs font-normal text-slate-500">Opsional. Gunakan format 628 tanpa tanda + atau spasi.</span>
             </label>
-            <label id="newUserPasswordField" class="block text-sm font-bold" for="newUserPassword">Password
-                <input id="newUserPassword" name="password" type="password" required minlength="8" maxlength="128" autocomplete="new-password" class="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal">
-            </label>
+            <div id="newUserPasswordField" class="block text-sm font-bold">
+                <label for="newUserPassword">Password</label>
+                <div class="relative mt-1.5">
+                    <input id="newUserPassword" name="password" type="password" required minlength="8" maxlength="128" autocomplete="new-password" class="w-full rounded-lg border border-slate-300 py-2 pl-3 pr-12 font-normal">
+                    <button type="button" data-password-toggle aria-label="Tampilkan password" aria-pressed="false" class="absolute right-2 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-md text-lg text-slate-500 hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">👁️</button>
+                </div>
+            </div>
             <div class="flex justify-end gap-2 pt-2">
                 <button id="cancelUserButton" type="button" class="rounded-lg border border-slate-200 px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50">Batal</button>
                 <button id="createUserSubmit" type="submit" class="rounded-lg bg-blue-700 px-4 py-2 text-sm font-bold text-white hover:bg-blue-800 disabled:opacity-60">Buat User</button>
@@ -229,5 +233,17 @@ import '../styles/admin-dashboard.css';
             </div>
         </form>
     </div>
+    <script>
+        document.querySelectorAll('[data-password-toggle]').forEach((toggle) => {
+            const input = toggle.parentElement.querySelector('input');
+            toggle.addEventListener('click', () => {
+                const isVisible = input.type === 'password';
+                input.type = isVisible ? 'text' : 'password';
+                toggle.textContent = isVisible ? '🙈' : '👁️';
+                toggle.setAttribute('aria-label', isVisible ? 'Sembunyikan password' : 'Tampilkan password');
+                toggle.setAttribute('aria-pressed', String(isVisible));
+            });
+        });
+    </script>
     <script src="../scripts/admin-dashboard.js"></script>
 </Layout>

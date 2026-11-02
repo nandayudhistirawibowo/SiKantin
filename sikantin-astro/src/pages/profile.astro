@@ -55,20 +55,37 @@ import '../styles/profile.css';
             </div>
             <p id="passwordMessage" role="status" aria-live="polite" class="mb-5 hidden rounded-lg p-3 text-sm"></p>
             <form id="passwordForm" class="space-y-5">
-                <label class="block text-sm font-bold" for="newPassword">
-                    Password Baru
-                    <input id="newPassword" name="newPassword" type="password" minlength="6" autocomplete="new-password" required class="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
-                </label>
-                <label class="block text-sm font-bold" for="confirmNewPassword">
-                    Konfirmasi Password Baru
-                    <input id="confirmNewPassword" name="confirmNewPassword" type="password" minlength="6" autocomplete="new-password" required class="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
-                </label>
+                <div class="block text-sm font-bold">
+                    <label for="newPassword">Password Baru</label>
+                    <div class="relative mt-2">
+                        <input id="newPassword" name="newPassword" type="password" minlength="6" autocomplete="new-password" required class="w-full rounded-lg border border-slate-300 py-2.5 pl-3 pr-12 font-normal outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+                        <button type="button" data-password-toggle aria-label="Tampilkan password" aria-pressed="false" class="absolute right-2 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-md text-lg text-slate-500 hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">👁️</button>
+                    </div>
+                </div>
+                <div class="block text-sm font-bold">
+                    <label for="confirmNewPassword">Konfirmasi Password Baru</label>
+                    <div class="relative mt-2">
+                        <input id="confirmNewPassword" name="confirmNewPassword" type="password" minlength="6" autocomplete="new-password" required class="w-full rounded-lg border border-slate-300 py-2.5 pl-3 pr-12 font-normal outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+                        <button type="button" data-password-toggle aria-label="Tampilkan password" aria-pressed="false" class="absolute right-2 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-md text-lg text-slate-500 hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">👁️</button>
+                    </div>
+                </div>
                 <button id="changePasswordButton" type="submit" class="w-full rounded-lg bg-blue-700 px-4 py-3 text-sm font-extrabold text-white transition hover:bg-blue-800 disabled:cursor-wait disabled:opacity-60">Ganti Password</button>
             </form>
         </section>
     </main>
     <script>
 	import { db } from '../scripts/supabase.js';
+        document.querySelectorAll('[data-password-toggle]').forEach((toggle) => {
+            const input = toggle.parentElement.querySelector('input');
+            toggle.addEventListener('click', () => {
+                const isVisible = input.type === 'password';
+                input.type = isVisible ? 'text' : 'password';
+                toggle.textContent = isVisible ? '🙈' : '👁️';
+                toggle.setAttribute('aria-label', isVisible ? 'Sembunyikan password' : 'Tampilkan password');
+                toggle.setAttribute('aria-pressed', String(isVisible));
+            });
+        });
+
         const profileForm = document.getElementById('profileForm');
         const passwordForm = document.getElementById('passwordForm');
         const message = document.getElementById('message');
