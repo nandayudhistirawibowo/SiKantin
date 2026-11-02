@@ -1,3 +1,137 @@
 body { font-family: 'Plus Jakarta Sans', sans-serif; }
-        .admin-nav-link.is-active { background: #eff6ff; color: #1d4ed8; font-weight: 800; }
-        .form-label { display: block; }
+body.admin-dashboard {
+    background:
+        radial-gradient(ellipse at 95% 0, rgb(219 234 254 / 55%), transparent 32rem),
+        #f4f7fc;
+    color: #1e293b;
+}
+.admin-dashboard #adminSidebar {
+    border-color: #dbe5f1;
+    background: rgb(255 255 255 / 94%);
+    box-shadow: 8px 0 28px rgb(15 23 42 / 4%);
+}
+.admin-dashboard .admin-nav-link {
+    border: 1px solid transparent;
+    border-radius: .75rem;
+    font-weight: 700;
+    transition: background-color .18s ease, color .18s ease, border-color .18s ease;
+}
+.admin-dashboard .admin-nav-link:hover {
+    background: #eff6ff;
+    color: #1e40af;
+}
+.admin-dashboard .admin-nav-link.is-active {
+    border-color: #dbeafe;
+    background: #eaf2ff;
+    color: #1e40af;
+    font-weight: 800;
+}
+.admin-dashboard main > section:not([aria-label]) {
+    border-radius: 1rem;
+    box-shadow: 0 5px 18px rgb(30 58 138 / 5%);
+}
+.admin-dashboard table thead {
+    background: #f1f5fb;
+}
+.admin-dashboard input,
+.admin-dashboard select,
+.admin-dashboard textarea {
+    color: #1e293b;
+    background-color: #fff;
+}
+.admin-dashboard input:focus,
+.admin-dashboard select:focus,
+.admin-dashboard textarea:focus {
+    border-color: #60a5fa;
+    outline: 2px solid rgb(59 130 246 / 18%);
+    outline-offset: 1px;
+}
+.admin-dashboard .form-label { display: block; }
+
+html.dark body.admin-dashboard {
+    background:
+        radial-gradient(ellipse at 95% 0, rgb(30 64 175 / 17%), transparent 34rem),
+        #0b1220;
+    color: #e2e8f0;
+}
+html.dark .admin-dashboard #adminSidebar,
+html.dark .admin-dashboard header.site-header {
+    border-color: #25344a !important;
+    background: #111c2e !important;
+    color: #e2e8f0;
+    box-shadow: 8px 0 28px rgb(2 8 23 / 18%);
+}
+html.dark .admin-dashboard .admin-nav-link {
+    color: #cbd5e1 !important;
+}
+html.dark .admin-dashboard .admin-nav-link:hover,
+html.dark .admin-dashboard .admin-nav-link.is-active {
+    border-color: #294b78;
+    background: #1a2e49 !important;
+    color: #bfdbfe !important;
+}
+html.dark .admin-dashboard main > section,
+html.dark .admin-dashboard main > section article {
+    border-color: #283951 !important;
+    background-color: #152238 !important;
+    color: #e2e8f0;
+    box-shadow: 0 8px 24px rgb(2 8 23 / 18%);
+}
+html.dark .admin-dashboard main > section > div[class*="border-b"] {
+    border-color: #283951 !important;
+}
+html.dark .admin-dashboard table thead {
+    background: #1b2b42 !important;
+    color: #cbd5e1;
+}
+html.dark .admin-dashboard table tbody tr {
+    color: #dbe5f1;
+}
+html.dark .admin-dashboard table tbody tr:hover {
+    background: #1b2b42;
+}
+html.dark .admin-dashboard table tbody td {
+    border-color: #283951;
+}
+html.dark .admin-dashboard input,
+html.dark .admin-dashboard select,
+html.dark .admin-dashboard textarea {
+    border-color: #3a4b64 !important;
+    background-color: #101b2c !important;
+    color: #f1f5f9 !important;
+}
+html.dark .admin-dashboard input::placeholder,
+html.dark .admin-dashboard textarea::placeholder {
+    color: #94a3b8 !important;
+}
+html.dark .admin-dashboard input:focus,
+html.dark .admin-dashboard select:focus,
+html.dark .admin-dashboard textarea:focus {
+    border-color: #60a5fa !important;
+    outline-color: rgb(96 165 250 / 28%);
+}
+html.dark .admin-dashboard [role="dialog"] form {
+    border: 1px solid #33465f;
+    background: #152238 !important;
+    color: #e2e8f0;
+    box-shadow: 0 24px 70px rgb(2 8 23 / 55%);
+}
+html.dark .admin-dashboard [role="dialog"] form button[data-close-modal],
+html.dark .admin-dashboard [role="dialog"] form #closeUserModalButton {
+    color: #cbd5e1 !important;
+}
+html.dark .admin-dashboard [role="dialog"] form button[data-close-modal]:hover,
+html.dark .admin-dashboard [role="dialog"] form #closeUserModalButton:hover {
+    background: #26364d !important;
+}
+html.dark .admin-dashboard [class~="text-blue-700"] { color: #93c5fd !important; }
+html.dark .admin-dashboard [class~="text-emerald-700"] { color: #86efac !important; }
+html.dark .admin-dashboard [class~="text-amber-600"],
+html.dark .admin-dashboard [class~="text-amber-700"] { color: #fde68a !important; }
+html.dark .admin-dashboard [class~="text-rose-600"],
+html.dark .admin-dashboard [class~="text-rose-700"] { color: #fda4af !important; }
+html.dark .admin-dashboard [class~="text-slate-500"],
+html.dark .admin-dashboard [class~="text-slate-600"] { color: #aebed2 !important; }
+html.dark .admin-dashboard [class~="bg-emerald-50"] { background-color: #153b32 !important; }
+html.dark .admin-dashboard [class~="bg-rose-50"] { background-color: #40212c !important; }
+html.dark .admin-dashboard [class~="bg-blue-50"] { background-color: #1a2e49 !important; }

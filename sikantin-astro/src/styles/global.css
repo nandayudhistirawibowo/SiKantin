@@ -421,6 +421,164 @@ html:not(.dark) body.student-portal .student-dashboard-hero a.bg-white {
 	color: #1e40af;
 }
 
+html:not(.dark) body.student-portal {
+	background:
+		radial-gradient(ellipse at 92% 0, rgb(219 234 254 / 38%), transparent 34rem),
+		#f4f7fc;
+	color: #1e293b;
+}
+
+html:not(.dark) body.student-portal #studentSidebar,
+html:not(.dark) body.student-portal .site-header {
+	border-color: #dbe5f1 !important;
+	background: rgb(255 255 255 / 96%) !important;
+	box-shadow: 0 5px 20px rgb(30 58 138 / 4%);
+}
+
+html:not(.dark) body.student-portal [data-student-nav][aria-current="page"] {
+	border: 1px solid #dbeafe;
+	background: #eaf2ff;
+	color: #1e40af;
+}
+
+html:not(.dark) body.student-portal .student-summary-card,
+html:not(.dark) body.student-portal main > section.ui-hover-card {
+	box-shadow: 0 6px 20px rgb(30 58 138 / 5%);
+}
+
+html.dark body.student-portal {
+	background:
+		radial-gradient(ellipse at 92% 0, rgb(30 64 175 / 17%), transparent 36rem),
+		#0b1220;
+	color: #e2e8f0;
+}
+
+html.dark body.student-portal #studentSidebar,
+html.dark body.student-portal .site-header {
+	border-color: #25344a !important;
+	background: #111c2e !important;
+	color: #e2e8f0;
+	box-shadow: 0 8px 26px rgb(2 8 23 / 24%);
+}
+
+html.dark body.student-portal #studentSidebar a,
+html.dark body.student-portal #studentSidebar p {
+	color: #cbd5e1;
+}
+
+html.dark body.student-portal #studentSidebar [aria-current="page"] {
+	border: 1px solid #294b78;
+	background: #1a2e49 !important;
+	color: #bfdbfe !important;
+}
+
+html.dark body.student-portal #studentSidebar a:hover,
+html.dark body.student-portal #studentProfileButton,
+html.dark body.student-portal #studentMenuButton {
+	border-color: #33465f !important;
+	background-color: #1b2b42 !important;
+	color: #e2e8f0 !important;
+}
+
+html.dark body.student-portal #studentProfileMenu {
+	border-color: #33465f !important;
+	background: #152238 !important;
+}
+
+html.dark body.student-portal #studentProfileMenu a,
+html.dark body.student-portal #studentProfileMenu button {
+	color: #dbe5f1 !important;
+}
+
+html.dark body.student-portal #studentProfileMenu a:hover,
+html.dark body.student-portal #studentProfileMenu button:hover {
+	background: #24364f !important;
+}
+
+html.dark body.student-portal .student-dashboard-hero {
+	border: 1px solid #31527c;
+	background:
+		radial-gradient(ellipse at 90% 15%, rgb(56 189 248 / 19%), transparent 38%),
+		linear-gradient(125deg, #142d50, #163d70 58%, #263b78);
+	color: #f8fafc;
+	box-shadow: 0 14px 36px rgb(2 8 23 / 32%);
+}
+
+html.dark body.student-portal .student-dashboard-hero [class~="text-blue-200"] {
+	color: #bfdbfe;
+}
+
+html.dark body.student-portal .student-dashboard-hero [class~="text-blue-100/80"] {
+	color: #dbeafe;
+}
+
+html.dark body.student-portal .student-dashboard-hero a.bg-white {
+	border-color: #93c5fd;
+	background: #dbeafe !important;
+	color: #1e3a8a !important;
+}
+
+html.dark body.student-portal .student-summary-card,
+html.dark body.student-portal main > section.ui-hover-card,
+html.dark body.student-portal #dashboardTenantGrid > article,
+html.dark body.student-portal #dashboardTenantGrid > p {
+	border-color: #283951 !important;
+	background: #152238 !important;
+	background-image: none !important;
+	color: #e2e8f0;
+	box-shadow: 0 8px 24px rgb(2 8 23 / 18%);
+}
+
+html.dark body.student-portal .student-summary-card-points {
+	border-top: 3px solid #d6a64a !important;
+}
+
+html.dark body.student-portal .student-summary-card-favorites,
+html.dark body.student-portal #dashboardTenantGrid > article {
+	border-top: 3px solid #3b82f6 !important;
+}
+
+html.dark body.student-portal main [class~="text-amber-700"] {
+	color: #fcd34d !important;
+}
+
+html.dark body.student-portal main [class~="text-blue-700"],
+html.dark body.student-portal main [class~="text-blue-800"] {
+	color: #93c5fd !important;
+}
+
+html.dark body.student-portal main [class~="text-emerald-700"] {
+	color: #86efac !important;
+}
+
+html.dark body.student-portal main [class~="text-rose-600"],
+html.dark body.student-portal main [class~="text-rose-700"] {
+	color: #fda4af !important;
+}
+
+html.dark body.student-portal main [class~="bg-blue-50"] {
+	background-color: #1a2e49 !important;
+}
+
+html.dark body.student-portal main [class~="bg-rose-50"] {
+	background-color: #40212c !important;
+}
+
+html.dark body.student-portal main [class~="bg-slate-50"] {
+	background-color: #101b2c !important;
+}
+
+html.dark body.student-portal main [class~="border-blue-100"],
+html.dark body.student-portal main [class~="border-amber-100"] {
+	border-color: #33465f !important;
+}
+
+html.dark body.student-portal #studentShellMessage {
+	border-color: #7f1d1d;
+	background: #3b1d27;
+	color: #fecaca;
+}
+
 html:not(.dark) .skeleton-card {
 	border-color: #e2e8f0;
 	background: #fff;

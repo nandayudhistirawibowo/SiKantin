@@ -1,6 +1,6 @@
 body { font-family: 'Plus Jakarta Sans', sans-serif; }
-        .tenant-dashboard { background: #f8fafc; color: #1e293b; }
-        .tenant-dashboard-header { border-bottom: 1px solid #e7ebf2; background: white; }
+        .tenant-dashboard { background: #f4f7fc; color: #1e293b; }
+        .tenant-dashboard-header { border-bottom: 1px solid #dbe5f1; background: rgb(255 255 255 / 94%); box-shadow: 0 4px 18px rgba(15, 23, 42, .04); }
         .tenant-dashboard-menu-button { display: none; }
         .tenant-logout-button, .tenant-sound-button {
             display: inline-flex; align-items: center; justify-content: center; gap: .5rem;
@@ -23,8 +23,8 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
         .status-dot { width: .55rem; height: .55rem; border-radius: 999px; background: #22c55e; }
         .tenant-status-button.is-closed .status-dot { background: #ef4444; }
         .tenant-stat-card, .tenant-panel {
-            border: 1px solid #e7ebf2; border-radius: 1.15rem; background: white;
-            box-shadow: 0 4px 16px rgba(15, 23, 42, .035);
+            border: 1px solid #dfe7f1; border-radius: 1.15rem; background: white;
+            box-shadow: 0 6px 20px rgba(30, 58, 138, .045);
         }
         .tenant-stat-card, .tenant-panel, .tenant-order-row, .tenant-menu-item {
             transition: translate 300ms ease-in-out, transform 300ms ease-in-out, border-color 300ms ease-in-out, background-color 300ms ease-in-out, box-shadow 300ms ease-in-out;
@@ -73,6 +73,7 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
         .tenant-menu-item img { width: 3.5rem; height: 3.5rem; flex: 0 0 auto; border-radius: .7rem; object-fit: cover; }
         .tenant-order-row > * { min-width: 0; max-width: 100%; }
         .tenant-order-row .tenant-order-action { max-width: 100%; white-space: normal; }
+        .tenant-dashboard-menu-button { border-color: #dbe5f1; color: #334155; }
 
         @media (max-width: 1023px) {
             .tenant-dashboard-menu-button { display: inline-flex; }
@@ -97,6 +98,72 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
             .tenant-status-button, .tenant-order-action, .tenant-logout-button, .tenant-sound-button {
                 transition-duration: 0.01ms;
             }
+
+            html.dark body.tenant-dashboard {
+                background:
+                    radial-gradient(ellipse at 92% 0, rgba(30, 64, 175, .16), transparent 34rem),
+                    #0b1220;
+                color: #e2e8f0;
+            }
+            html.dark .tenant-dashboard-header,
+            html.dark .tenant-stat-card,
+            html.dark .tenant-panel,
+            html.dark .tenant-menu-item {
+                border-color: #283951;
+                background: #152238;
+                color: #e2e8f0;
+                box-shadow: 0 8px 24px rgba(2, 8, 23, .2);
+            }
+            html.dark .tenant-dashboard-header { background: rgba(17, 28, 46, .96); }
+            html.dark .tenant-dashboard-menu-button,
+            html.dark .tenant-logout-button,
+            html.dark .tenant-sound-button {
+                border-color: #3a4b64;
+                background: #1b2b42;
+                color: #e2e8f0;
+            }
+            html.dark .tenant-dashboard-menu-button:hover,
+            html.dark .tenant-logout-button:hover,
+            html.dark .tenant-sound-button:hover { background: #263953; }
+            html.dark .tenant-status-button {
+                border-color: #166534;
+                background: #123523;
+                color: #bbf7d0;
+            }
+            html.dark .tenant-status-button.is-closed {
+                border-color: #7f1d1d;
+                background: #3b1d27;
+                color: #fecaca;
+            }
+            html.dark .tenant-tab { color: #cbd5e1; }
+            html.dark .tenant-tab.is-active {
+                border-color: #294b78;
+                background: #1a2e49;
+                color: #bfdbfe;
+            }
+            html.dark .tenant-panel-heading { border-color: #283951; }
+            html.dark .tenant-order-row:hover { background: #1b2b42; }
+            html.dark .tenant-menu-item img { background: #0f1a2a; }
+            html.dark .tenant-order-action:disabled { background: #334155; color: #cbd5e1; }
+            html.dark .tenant-stat-icon.bg-blue-50 { background: #1e3a5f; color: #bfdbfe; }
+            html.dark .tenant-stat-icon.bg-amber-50 { background: #49351b; color: #fde68a; }
+            html.dark .tenant-stat-icon.bg-orange-50 { background: #4a2d20; color: #fed7aa; }
+            html.dark .tenant-stat-icon.bg-emerald-50 { background: #153b32; color: #a7f3d0; }
+            html.dark body.tenant-dashboard [class~="text-blue-700"] { color: #93c5fd !important; }
+            html.dark body.tenant-dashboard [class~="text-emerald-700"] { color: #86efac !important; }
+            html.dark body.tenant-dashboard [class~="text-amber-700"],
+            html.dark body.tenant-dashboard [class~="text-amber-800"] { color: #fde68a !important; }
+            html.dark body.tenant-dashboard [class~="text-orange-700"] { color: #fdba74 !important; }
+            html.dark body.tenant-dashboard [class~="text-rose-600"],
+            html.dark body.tenant-dashboard [class~="text-rose-700"] { color: #fda4af !important; }
+            html.dark body.tenant-dashboard [class~="bg-emerald-50"] { background-color: #153b32 !important; }
+            html.dark body.tenant-dashboard [class~="bg-amber-50"],
+            html.dark body.tenant-dashboard [class~="bg-amber-100"] { background-color: #49351b !important; }
+            html.dark body.tenant-dashboard [class~="bg-rose-50"] { background-color: #40212c !important; }
+            html.dark body.tenant-dashboard [class~="bg-red-50"] { background-color: #40212c !important; }
+            html.dark body.tenant-dashboard [class~="text-red-700"] { color: #fda4af !important; }
+            html.dark body.tenant-dashboard [class~="bg-green-50"] { background-color: #153b32 !important; }
+            html.dark body.tenant-dashboard [class~="text-green-700"] { color: #86efac !important; }
             .tenant-stat-card:hover, .tenant-menu-item:hover, .tenant-order-row:hover,
             .tenant-panel:hover,
             .tenant-status-button:not(:disabled):hover, .tenant-order-action:not(:disabled):hover,
