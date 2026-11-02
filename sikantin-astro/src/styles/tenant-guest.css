@@ -8,7 +8,7 @@
 		radial-gradient(ellipse at 88% 18%, rgba(56, 189, 248, .16), transparent 36%),
 		linear-gradient(120deg, rgba(30, 64, 101, .85), rgba(15, 30, 50, .9));
 }
-.tenant-menu-hero, .menu-tools, .tenant-menu-hero + .grid { animation: fade-in-up 600ms cubic-bezier(.2, .7, .2, 1) both; }
+.tenant-menu-hero, .menu-tools { animation: fade-in-up 600ms cubic-bezier(.2, .7, .2, 1) both; }
 .menu-tools { backdrop-filter: blur(12px); }
 .category-filter {
 	border: 1px solid rgba(255, 255, 255, .12);
@@ -55,10 +55,8 @@ html.dark body.tenant-guest .menu-category-badge {
 .menu-grid-single .menu-photo-frame { align-self: start; width: 100%; }
 .menu-grid-single .menu-card > div:not(.menu-photo-frame) { display: flex; flex-direction: column; justify-content: center; padding: 2rem; }
 .menu-grid-single .menu-card h3 { font-size: 1.5rem; }
-.menu-card { animation: fade-in-up 550ms cubic-bezier(.2, .7, .2, 1) both; transition: translate 300ms ease-in-out, box-shadow 300ms ease-in-out, border-color 300ms ease-in-out; }
+.menu-card { transition: translate 300ms ease-in-out, box-shadow 300ms ease-in-out, border-color 300ms ease-in-out; }
 .menu-card:hover { translate: 0 -4px; box-shadow: 0 16px 32px rgba(15, 23, 42, .16); }
-.menu-card:nth-child(2n) { animation-delay: 80ms; }
-.menu-card:nth-child(3n) { animation-delay: 140ms; }
 .menu-quantity-button.is-bouncing { animation: button-bounce 360ms ease-in-out; }
 .menu-empty {
 	background:

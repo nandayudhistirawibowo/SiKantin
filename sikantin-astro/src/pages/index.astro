@@ -10,10 +10,21 @@ function isTenantOpen(value: unknown): boolean {
 	return ['true', '1'].includes(value.trim().toLowerCase());
 }
 
-const { data: tenantRows, error } = await supabaseServer
-	.from('tenants')
-	.select('id, nama_tenant, slug, lokasi, status_buka')
-	.order('nama_tenant');
+const [
+	{ data: tenantRows, error },
+	{ data: tenantMenuPrices, error: menuPriceError },
+	{ data: tenantRatings, error: ratingsError },
+] = await Promise.all([
+	supabaseServer
+		.from('tenants')
+		.select('id, nama_tenant, slug, lokasi, status_buka')
+		.order('nama_tenant'),
+	supabaseServer
+		.from('menu_items')
+		.select('tenant_id, harga, foto_url')
+		.eq('tersedia', true),
+	supabaseServer.rpc('get_public_tenant_ratings', { p_tenant_id: null }),
+]);
 if (error) {
 	console.error('Gagal memuat daftar tenant untuk katalog:', error.message);
 }
@@ -22,17 +33,9 @@ const tenants = (tenantRows ?? []).map((tenant) => ({
 	status_buka: isTenantOpen(tenant.status_buka),
 }));
 
-const { data: tenantMenuPrices, error: menuPriceError } = await supabaseServer
-	.from('menu_items')
-	.select('tenant_id, harga, foto_url')
-	.eq('tersedia', true);
-
 if (menuPriceError) {
 	console.error('Gagal memuat harga menu untuk katalog tenant:', menuPriceError.message);
 }
-
-const { data: tenantRatings, error: ratingsError } = await supabaseServer
-	.rpc('get_public_tenant_ratings', { p_tenant_id: null });
 
 if (ratingsError) {
 	console.error('Gagal memuat rating menu tenant:', ratingsError.message);
@@ -291,7 +294,28 @@ tenantRatings?.forEach((rating) => {
 		}
 
 		const tenantIds = [...tenantCards].map((card) => card.dataset.tenantId).filter(Boolean);
-		if (tenantIds.length) {
+		async function refreshTenantStatuses() {
+			if (!tenantIds.length) return;
+			const revisionsAtRequest = new Map(tenantStatusRevisions);
+			const { data, error: snapshotError } = await db
+				.from('tenants')
+				.select('id, status_buka')
+				.in('id', tenantIds);
+			if (snapshotError) {
+				tenantRealtimeStatus.textContent = `Gagal menyegarkan status kantin: ${snapshotError.message}`;
+				console.error('Gagal menyegarkan status tenant:', snapshotError);
+				return;
+			}
+			data?.forEach((tenant) => {
+				if ((revisionsAtRequest.get(tenant.id) || 0) === (tenantStatusRevisions.get(tenant.id) || 0)) {
+					applyTenantStatus(tenant.id, tenant.status_buka);
+				}
+			});
+		}
+
+		function subscribeToTenantStatus() {
+			if (!tenantIds.length) return;
+			if (tenantStatusChannel) db.removeChannel(tenantStatusChannel);
 			tenantStatusChannel = db
 				.channel('tenant-directory-status')
 				.on('postgres_changes', {
@@ -311,31 +335,25 @@ tenantRatings?.forEach((rating) => {
 							? `Realtime status kantin gagal: ${error.message}`
 							: `Realtime status kantin: ${status}`;
 					if (status !== 'SUBSCRIBED') console.error('Realtime status tenant:', status, error);
-					if (status === 'SUBSCRIBED') {
-						const revisionsAtRequest = new Map(tenantStatusRevisions);
-						db.from('tenants')
-							.select('id, status_buka')
-							.in('id', tenantIds)
-							.then(({ data, error: snapshotError }) => {
-								if (snapshotError) {
-									tenantRealtimeStatus.textContent = `Gagal menyegarkan status kantin: ${snapshotError.message}`;
-									console.error('Gagal menyegarkan status tenant:', snapshotError);
-									return;
-								}
-								data?.forEach((tenant) => {
-									if ((revisionsAtRequest.get(tenant.id) || 0) === (tenantStatusRevisions.get(tenant.id) || 0)) {
-										applyTenantStatus(tenant.id, tenant.status_buka);
-									}
-								});
-							});
-					}
+					if (status === 'SUBSCRIBED') refreshTenantStatuses();
 				});
+		}
+
+		if (tenantIds.length) {
+			subscribeToTenantStatus();
+			window.addEventListener('pageshow', (event) => {
+				if (event.persisted) subscribeToTenantStatus();
+			});
+			document.addEventListener('visibilitychange', () => {
+				if (document.visibilityState === 'visible') refreshTenantStatuses();
+			});
 		} else if (tenantRealtimeStatus) {
 			tenantRealtimeStatus.textContent = 'Belum ada tenant untuk dipantau.';
 		}
 
 		window.addEventListener('pagehide', () => {
 			if (tenantStatusChannel) db.removeChannel(tenantStatusChannel);
-		}, { once: true });
+			tenantStatusChannel = undefined;
+		});
 	</script>
 </Layout>

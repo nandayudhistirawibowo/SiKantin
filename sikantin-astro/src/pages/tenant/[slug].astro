@@ -29,18 +29,20 @@ if (!tenant) {
   Astro.response.status = tenantError ? 500 : 404;
 }
 
-const { data: menuItems, error: menuError } = tenant
-  ? await supabaseServer
-      .from('menu_items')
-      .select('id, nama_menu, kategori, harga, foto_url, waktu_persiapan, add_ons')
-      .eq('tenant_id', tenant.id)
-      .eq('tersedia', true)
-      .order('nama_menu')
-  : { data: [], error: null };
-
-const { data: tenantRatings, error: ratingsError } = tenant
-  ? await supabaseServer.rpc('get_public_tenant_ratings', { p_tenant_id: tenant.id })
-  : { data: [], error: null };
+const [
+  { data: menuItems, error: menuError },
+  { data: tenantRatings, error: ratingsError },
+] = tenant
+  ? await Promise.all([
+      supabaseServer
+        .from('menu_items')
+        .select('id, nama_menu, kategori, harga, foto_url, waktu_persiapan, add_ons')
+        .eq('tenant_id', tenant.id)
+        .eq('tersedia', true)
+        .order('nama_menu'),
+      supabaseServer.rpc('get_public_tenant_ratings', { p_tenant_id: tenant.id }),
+    ])
+  : [{ data: [], error: null }, { data: [], error: null }];
 
 if (ratingsError) {
   console.error('Gagal memuat rating menu tenant:', ratingsError.message);
@@ -329,9 +331,29 @@ const menuCategories = [...new Set((menuItems ?? []).map((item) => item.kategori
       menuCards.forEach(updateCardQuantity);
     }
 
+    async function refreshTenantStatus() {
+      const tenantId = checkoutContext.dataset.tenantId;
+      if (!tenantId) return;
+
+      const revisionAtRequest = tenantStatusRevision;
+      const { data, error: snapshotError } = await db
+        .from('tenants')
+        .select('status_buka')
+        .eq('id', tenantId)
+        .single();
+      if (snapshotError) {
+        const statusMessage = document.getElementById('tenantStatusRealtime');
+        statusMessage.textContent = `Gagal menyegarkan status kantin: ${snapshotError.message}`;
+        console.error('Gagal menyegarkan status tenant:', snapshotError);
+        return;
+      }
+      if (revisionAtRequest === tenantStatusRevision) applyTenantOpenStatus(data.status_buka);
+    }
+
     function subscribeToTenantStatus() {
       const tenantId = checkoutContext.dataset.tenantId;
       if (!tenantId) return;
+      if (tenantStatusChannel) db.removeChannel(tenantStatusChannel);
 
       tenantStatusChannel = db
         .channel(`guest-tenant-status-${tenantId}`)
@@ -353,21 +375,7 @@ const menuCategories = [...new Set((menuItems ?? []).map((item) => item.kategori
               ? `Realtime status kantin gagal: ${error.message}`
               : `Realtime status kantin: ${status}`;
           if (status !== 'SUBSCRIBED') console.error('Realtime status tenant:', status, error);
-          if (status === 'SUBSCRIBED') {
-            const revisionAtRequest = tenantStatusRevision;
-            db.from('tenants')
-              .select('status_buka')
-              .eq('id', tenantId)
-              .single()
-              .then(({ data, error: snapshotError }) => {
-                if (snapshotError) {
-                  statusMessage.textContent = `Gagal menyegarkan status kantin: ${snapshotError.message}`;
-                  console.error('Gagal menyegarkan status tenant:', snapshotError);
-                  return;
-                }
-                if (revisionAtRequest === tenantStatusRevision) applyTenantOpenStatus(data.status_buka);
-              });
-          }
+          if (status === 'SUBSCRIBED') refreshTenantStatus();
         });
     }
 
@@ -616,8 +624,14 @@ const menuCategories = [...new Set((menuItems ?? []).map((item) => item.kategori
     subscribeToTenantStatus();
     window.addEventListener('pagehide', () => {
       if (tenantStatusChannel) db.removeChannel(tenantStatusChannel);
-      mobileCartMedia.removeEventListener('change', positionCheckoutCart);
-    }, { once: true });
+      tenantStatusChannel = undefined;
+    });
+    window.addEventListener('pageshow', (event) => {
+      if (event.persisted) subscribeToTenantStatus();
+    });
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') refreshTenantStatus();
+    });
     }
   </script>
 </Layout>

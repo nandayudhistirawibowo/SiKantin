@@ -91,14 +91,13 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
         }
         .empty-tenant { background: radial-gradient(ellipse at 50% 0, rgba(56, 189, 248, .12), transparent 60%), rgba(255, 255, 255, .035); }
         .featured-tenant[hidden] { display: none; }
-        .catalog-hero, .catalog-promo, #tenant-directory, #daftar-tenant { animation: fade-in-up 600ms cubic-bezier(.2, .7, .2, 1) both; }
+        .catalog-hero, .catalog-promo, #tenant-directory { animation: fade-in-up 600ms cubic-bezier(.2, .7, .2, 1) both; }
         .catalog-promo { animation-delay: 100ms; }
         #tenant-directory { animation-delay: 160ms; }
-        #daftar-tenant { animation-delay: 220ms; }
-        .tenant-card { transition: translate 300ms ease-in-out, box-shadow 300ms ease-in-out, border-color 300ms ease-in-out; }
+        #daftar-tenant { scroll-margin-top: 6rem; }
+        #daftar-tenant:focus { outline: none; }
+        .tenant-card { animation: none; transition: translate 300ms ease-in-out, box-shadow 300ms ease-in-out, border-color 300ms ease-in-out; }
         .tenant-card:hover { translate: 0 -4px; box-shadow: 0 16px 32px rgba(15, 23, 42, .16); }
-        .tenant-card:nth-child(2n) { animation-delay: 80ms; }
-        .tenant-card:nth-child(3n) { animation-delay: 140ms; }
         html.dark .catalog-footer { color: #cbd5e1; }
         html.dark .catalog-footer a { color: #93c5fd; }
         html.dark .catalog-footer a:hover { color: #dbeafe; }
