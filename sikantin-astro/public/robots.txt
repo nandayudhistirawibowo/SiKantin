@@ -3,8 +3,11 @@ Allow: /
 Disallow: /login
 Disallow: /dashboard
 Disallow: /admin
+Disallow: /admin/
 Disallow: /admin-dashboard
 Disallow: /mahasiswa/
+Disallow: /mahasiswa/login
+Disallow: /mahasiswa/update-password
 Disallow: /tenant/login
 Disallow: /tenant-login
 Disallow: /tenant/*/dashboard

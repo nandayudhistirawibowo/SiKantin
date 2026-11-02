@@ -496,11 +496,20 @@ html.dark body.student-portal #studentSidebar [aria-current="page"] {
 }
 
 html.dark body.student-portal #studentSidebar a:hover,
-html.dark body.student-portal #studentProfileButton,
 html.dark body.student-portal #studentMenuButton {
 	border-color: #33465f !important;
 	background-color: #1b2b42 !important;
 	color: #e2e8f0 !important;
+}
+
+html.dark body.student-portal #studentSidebarProfileControl #studentProfileButton {
+	border-color: rgb(59 130 246 / 30%) !important;
+	background-color: rgb(30 41 59 / 80%) !important;
+	color: #fff !important;
+}
+
+html.dark body.student-portal #studentSidebarProfileControl #studentProfileButton:hover {
+	background-color: rgb(51 65 85 / 80%) !important;
 }
 
 html.dark body.student-portal #studentProfileMenu {

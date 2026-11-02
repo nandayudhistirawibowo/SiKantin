@@ -7,7 +7,7 @@ import logo from '../../assets/logo-uym.png';
 	<main class="w-full max-w-md rounded-3xl border border-white/10 bg-slate-900 p-6 shadow-2xl sm:p-9">
 		<a href="/" class="arrow-action arrow-left text-sm font-bold text-blue-200 hover:text-white"><span class="arrow-icon" aria-hidden="true">←</span>Kembali ke katalog</a>
 		<div class="mb-7 mt-8 text-center">
-			<img src={logo.src} alt="" class="mx-auto h-16 w-16 rounded-full bg-white p-1" />
+			<img src={logo.src} alt="" class="mx-auto h-16 w-16 rounded-full border border-slate-200 bg-white object-cover dark:border-slate-700" />
 			<p class="uym-brand-text mt-4 text-xs font-extrabold uppercase tracking-[0.2em]">SiKantin UYM</p>
 			<h1 class="mt-2 text-3xl font-black">Login Mahasiswa</h1>
 			<p class="mt-2 text-sm text-blue-100/65">Masuk menggunakan NIM dan password.</p>
@@ -76,7 +76,7 @@ import logo from '../../assets/logo-uym.png';
 				if (profileError) throw new Error(`Profil gagal dimuat: ${profileError.message}`);
 				if (profile.peran !== 'mahasiswa') throw new Error('Akun ini bukan akun mahasiswa.');
 				if (data.user.user_metadata?.is_temp_password === true) {
-					window.location.assign('/mahasiswa/profil?change_password=1');
+					window.location.assign('/profile?change_password=1');
 					return;
 				}
 				window.location.assign('/mahasiswa/dashboard');

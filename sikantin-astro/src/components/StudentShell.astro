@@ -4,18 +4,22 @@ import logo from '../assets/logo-uym.png';
 
 interface Props {
 	title: string;
+	profileInSidebar?: boolean;
 }
 
-const { title } = Astro.props;
+const { title, profileInSidebar = false } = Astro.props;
 ---
 
 <Layout title={`${title} | SiKantin Mahasiswa`} themeColor="#172b40" bodyClass="student-portal min-h-screen bg-slate-50 text-slate-800" noIndex>
+	<div id="studentFlashMessage" role="status" aria-live="polite" class="fixed left-1/2 top-4 z-[100] hidden w-[min(90vw,32rem)] -translate-x-1/2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-center text-sm font-semibold text-emerald-800 shadow-lg"></div>
 	<div class="min-h-screen md:flex">
 		<button id="studentSidebarBackdrop" type="button" aria-label="Tutup menu" class="fixed inset-0 z-40 hidden bg-slate-950/60 backdrop-blur-sm md:hidden"></button>
 		<aside id="studentSidebar" class="fixed inset-y-0 left-0 z-50 hidden w-72 student-sidebar-closed flex-col border-r border-slate-200 bg-white p-5 shadow-xl md:sticky md:top-0 md:flex md:h-screen md:shadow-none">
 			<div class="flex items-center justify-between gap-3">
 				<a href="/mahasiswa/dashboard" class="flex items-center gap-3">
-					<img src={logo.src} alt="" class="h-11 w-11 rounded-full border border-slate-200 bg-white p-1 dark:border-slate-700" />
+					<span class="block h-11 w-11 shrink-0 rounded-full border border-slate-200 bg-white dark:border-slate-700">
+						<img src={logo.src} alt="" class="h-full w-full rounded-full object-cover" />
+					</span>
 					<span>
 						<span class="block text-sm font-black tracking-wide text-slate-900">SIKANTIN</span>
 						<span class="block text-[11px] text-slate-500">Portal Mahasiswa</span>
@@ -23,19 +27,38 @@ const { title } = Astro.props;
 				</a>
 			</div>
 
+			{profileInSidebar && (
+				<div id="studentSidebarProfileControl" class="relative mb-6 mt-6">
+					<button id="studentProfileButton" type="button" aria-controls="studentProfileMenu" aria-expanded="false" class="flex w-full min-w-0 items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3 text-left shadow-sm transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-blue-500/30 dark:bg-slate-800/80 dark:hover:bg-slate-700/80">
+						<span class="block h-12 w-12 shrink-0 overflow-hidden rounded-full">
+							<img id="studentAvatar" src={logo.src} data-avatar-fallback={logo.src} alt="" class="h-full w-full rounded-full border-2 border-white/20 object-cover" />
+						</span>
+						<span class="block min-w-0 flex-1">
+							<span id="studentName" class="block max-w-40 truncate text-sm font-extrabold text-slate-800">Mahasiswa</span>
+							<span class="block text-[11px] text-slate-500">Mahasiswa</span>
+						</span>
+						<svg aria-hidden="true" viewBox="0 0 20 20" fill="currentColor" class="ml-auto h-4 w-4 shrink-0 text-slate-500"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.168l3.71-3.938a.75.75 0 1 1 1.09 1.03l-4.25 4.5a.75.75 0 0 1-1.09 0l-4.25-4.5a.75.75 0 0 1 .02-1.05Z" clip-rule="evenodd" /></svg>
+					</button>
+					<div id="studentProfileMenu" class="absolute left-0 right-0 top-full z-50 mt-2 hidden rounded-xl border border-slate-200 bg-white p-2 shadow-xl transition-colors duration-200 dark:border-slate-700 dark:bg-slate-800">
+						<a href="/profile" class="block rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-700">Profil</a>
+						<button id="studentLogoutButton" type="button" class="w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-rose-700 hover:bg-rose-50">Logout</button>
+					</div>
+				</div>
+			)}
+
 			<p class="mb-2 mt-9 px-3 text-[11px] font-extrabold uppercase tracking-[0.18em] text-slate-400">Menu utama</p>
 			<nav class="space-y-1" aria-label="Navigasi mahasiswa">
 				<a data-student-nav href="/mahasiswa/dashboard" class="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-bold text-slate-600 transition hover:bg-blue-50 hover:text-blue-800">
 					<span aria-hidden="true">⌂</span> Beranda
 				</a>
+				<a data-student-nav href="/mahasiswa/dashboard#dashboardTenantHeading" class="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-bold text-slate-600 transition hover:bg-blue-50 hover:text-blue-800">
+					<span aria-hidden="true">⌕</span> Katalog
+				</a>
 				<a data-student-nav href="/mahasiswa/riwayat" class="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-bold text-slate-600 transition hover:bg-blue-50 hover:text-blue-800">
-					<span aria-hidden="true">◷</span> Riwayat Pesanan
+					<span aria-hidden="true">◷</span> Status Pesanan
 				</a>
 				<a data-student-nav href="/mahasiswa/favorit" class="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-bold text-slate-600 transition hover:bg-blue-50 hover:text-blue-800">
-					<span aria-hidden="true">♡</span> Favorit Saya
-				</a>
-				<a data-student-nav href="/mahasiswa/profil" class="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-bold text-slate-600 transition hover:bg-blue-50 hover:text-blue-800">
-					<span aria-hidden="true">◎</span> Profil
+					<span aria-hidden="true">♡</span> Favorit
 				</a>
 				<a data-student-nav href="/mahasiswa/bantuan" class="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-bold text-slate-600 transition hover:bg-blue-50 hover:text-blue-800">
 					<span aria-hidden="true">?</span> Bantuan
@@ -59,18 +82,20 @@ const { title } = Astro.props;
 					</div>
 					<div class="relative flex items-center gap-2">
 						<span data-theme-toggle-slot class="contents"></span>
-						<button id="studentProfileButton" type="button" aria-controls="studentProfileMenu" aria-expanded="false" class="flex items-center gap-2 rounded-full border border-slate-200 bg-white py-1.5 pl-1.5 pr-3 text-left transition hover:bg-slate-50">
-							<img id="studentAvatar" src={logo.src} data-avatar-fallback={logo.src} alt="" class="h-9 w-9 rounded-full bg-slate-100 object-cover" />
-							<span class="hidden min-w-0 sm:block">
-								<span id="studentName" class="block max-w-36 truncate text-xs font-extrabold text-slate-800">Mahasiswa</span>
+						{!profileInSidebar && <button id="studentProfileButton" type="button" aria-controls="studentProfileMenu" aria-expanded="false" class="flex min-w-0 items-center gap-3 rounded-2xl border border-slate-200 bg-white p-2 text-left shadow-sm transition hover:border-blue-200 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-blue-500/40 dark:hover:bg-slate-700/80">
+							<span class="block h-10 w-10 shrink-0 overflow-hidden rounded-full border border-blue-100 ring-2 ring-blue-50 dark:border-slate-600 dark:ring-slate-700">
+								<img id="studentAvatar" src={logo.src} data-avatar-fallback={logo.src} alt="" class="h-full w-full rounded-full object-cover" />
+							</span>
+							<span class="hidden min-w-0 flex-1 sm:block">
+								<span id="studentName" class="block max-w-40 truncate text-sm font-extrabold text-slate-800">Mahasiswa</span>
 								<span class="block text-[11px] text-slate-500">Mahasiswa</span>
 							</span>
-							<span aria-hidden="true" class="text-xs text-slate-400">⌄</span>
-						</button>
-						<div id="studentProfileMenu" class="absolute right-0 top-full z-50 mt-2 hidden w-48 rounded-xl border border-slate-200 bg-white p-2 shadow-xl">
-							<a href="/mahasiswa/profil" class="block rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">Profil Saya</a>
+							<svg aria-hidden="true" viewBox="0 0 20 20" fill="currentColor" class="ml-auto h-4 w-4 shrink-0 text-slate-500"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.168l3.71-3.938a.75.75 0 1 1 1.09 1.03l-4.25 4.5a.75.75 0 0 1-1.09 0l-4.25-4.5a.75.75 0 0 1 .02-1.05Z" clip-rule="evenodd" /></svg>
+						</button>}
+						{!profileInSidebar && <div id="studentProfileMenu" class="absolute right-0 top-full z-50 mt-2 hidden w-48 rounded-xl border border-slate-200 bg-white p-2 shadow-xl transition-colors duration-200 dark:border-slate-700 dark:bg-slate-800">
+							<a href="/profile" class="block rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-700">Profil</a>
 							<button id="studentLogoutButton" type="button" class="w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-rose-700 hover:bg-rose-50">Logout</button>
-						</div>
+						</div>}
 					</div>
 				</div>
 			</header>
@@ -90,7 +115,35 @@ const { title } = Astro.props;
 		const profileButton = document.getElementById('studentProfileButton');
 		const profileMenu = document.getElementById('studentProfileMenu');
 		const shellMessage = document.getElementById('studentShellMessage');
+		const flashMessage = document.getElementById('studentFlashMessage');
 		const desktopSidebar = window.matchMedia('(min-width: 768px)');
+
+		function displayFlashMessage() {
+			try {
+				const message = sessionStorage.getItem('flash_message');
+				if (!message) return;
+				sessionStorage.removeItem('flash_message');
+				flashMessage.textContent = message;
+				flashMessage.classList.remove('hidden', 'student-flash-leaving');
+				flashMessage.classList.add('student-flash-entering');
+				window.setTimeout(() => {
+					flashMessage.classList.remove('student-flash-entering');
+					flashMessage.classList.add('student-flash-leaving');
+					window.setTimeout(() => {
+						flashMessage.classList.add('hidden');
+						flashMessage.classList.remove('student-flash-leaving');
+					}, 220);
+				}, 4500);
+			} catch (error) {
+				console.error('Notifikasi sesi gagal ditampilkan:', error);
+			}
+		}
+
+		if (document.readyState === 'loading') {
+			document.addEventListener('DOMContentLoaded', displayFlashMessage, { once: true });
+		} else {
+			displayFlashMessage();
+		}
 
 		function setSidebarPosition(isOpen) {
 			if (desktopSidebar.matches) {
@@ -187,7 +240,12 @@ const { title } = Astro.props;
 		});
 
 		document.querySelectorAll('[data-student-nav]').forEach((link) => {
-			if (link.getAttribute('href') === window.location.pathname) {
+			const linkUrl = new URL(link.href, window.location.origin);
+			const samePath = linkUrl.pathname === window.location.pathname;
+			const sameSection = linkUrl.hash
+				? linkUrl.hash === window.location.hash
+				: !window.location.hash;
+			if (samePath && sameSection) {
 				link.classList.add('bg-blue-50', 'text-blue-800');
 				link.setAttribute('aria-current', 'page');
 			}
@@ -229,7 +287,9 @@ const { title } = Astro.props;
 				return;
 			}
 
-			document.getElementById('studentName').textContent = profile.nama || session.user.email || 'Mahasiswa';
+			const studentName = document.getElementById('studentName');
+			studentName.textContent = profile.nama || session.user.email || 'Mahasiswa';
+			studentName.title = studentName.textContent;
 			const avatar = document.getElementById('studentAvatar');
 			avatar.src = profile.avatar_url || avatar.dataset.avatarFallback;
 			avatar.onerror = () => { avatar.src = avatar.dataset.avatarFallback; };
@@ -239,6 +299,24 @@ const { title } = Astro.props;
 	</script>
 
 	<style>
+		@keyframes student-flash-enter {
+			from { opacity: 0; translate: 0 -0.5rem; }
+			to { opacity: 1; translate: 0 0; }
+		}
+
+		@keyframes student-flash-leave {
+			from { opacity: 1; }
+			to { opacity: 0; }
+		}
+
+		.student-flash-entering { animation: student-flash-enter 240ms ease-out both; }
+		.student-flash-leaving { animation: student-flash-leave 220ms ease-in both; }
+
+		@media (prefers-reduced-motion: reduce) {
+			.student-flash-entering,
+			.student-flash-leaving { animation: none; }
+		}
+
 		@media (max-width: 767px) {
 			header {
 				z-index: 60 !important;

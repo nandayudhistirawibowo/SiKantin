@@ -54,7 +54,9 @@ The free ngrok URL can change when its tunnel restarts; update the `WA_GATEWAY_U
 
 ## SEO and sitemap
 
-`/robots.txt` points crawlers to the dynamic `/sitemap.xml` endpoint. The sitemap lists the homepage and public tenant catalog pages only; it excludes order tracking, checkout, login, and dashboard routes. The endpoint queries public tenant slugs and uses `updated_at` for `lastmod` when available. It requires `PUBLIC_SUPABASE_URL`, `PUBLIC_SUPABASE_ANON_KEY`, and anonymous read access to the relevant tenant data. The endpoint falls back to querying only `slug` if `updated_at` is unavailable; verify the live grants/policies before deployment.
+`Layout.astro` generates page-specific title, description, keywords, canonical, Open Graph, and Twitter Card metadata. Private pages use `noIndex` to emit `noindex, nofollow`; the student shell also applies it to student pages.
+
+`/robots.txt` allows public routes, disallows private login/dashboard/profile/checkout/order-tracking paths, and points crawlers to the production `/sitemap.xml`. The dynamic sitemap contains only the homepage and public `/tenant/<slug>` catalog pages; it excludes checkout, order tracking, login, and dashboards. The endpoint queries public tenant slugs and uses `updated_at` for `lastmod` when available. It requires `PUBLIC_SUPABASE_URL`, `PUBLIC_SUPABASE_ANON_KEY`, and anonymous read access to the relevant tenant data. The endpoint falls back to querying only `slug` if `updated_at` is unavailable; verify the live grants/policies before deployment.
 
 WhatsApp session files stay in the existing `auth_info_baileys` directory outside this project. Set `WA_AUTH_DIR` to use a different session location. Do not copy or commit session credentials.
 
@@ -64,6 +66,9 @@ WhatsApp session files stay in the existing `auth_info_baileys` directory outsid
 
 - `/` — guest tenant directory
 - `/tenant/<slug>` — guest tenant menu/catalog
+- `/mahasiswa/katalog/<slug>` — student tenant menu/catalog inside the student shell
+- `/bantuan` — public help center
+- `/mahasiswa/bantuan` — student help center inside the student shell
 - `/checkout?tenant=<slug>` — separate checkout for the selected tenant
 - `/cek-pesanan` — token-based order tracking
 - `/sitemap.xml` — generated public sitemap

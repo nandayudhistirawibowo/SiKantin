@@ -1,0 +1,46 @@
+---
+import Layout from '../layouts/Layout.astro';
+import StudentShell from './StudentShell.astro';
+import logo from '../assets/logo-uym.png';
+
+interface Props {
+  student: boolean;
+  title: string;
+  description: string;
+  keywords: string;
+  ogImage?: string;
+  themeColor: string;
+  bodyClass: string;
+}
+
+const { student, title, description, keywords, ogImage, themeColor, bodyClass } = Astro.props;
+---
+
+{student ? (
+  <StudentShell title={title.replace(' | SiKantin', '')}>
+    <slot />
+  </StudentShell>
+) : (
+  <Layout
+    title={title}
+    description={description}
+    keywords={keywords}
+    ogImage={ogImage}
+    themeColor={themeColor}
+    bodyClass={bodyClass}
+  >
+    <header class="site-header border-b border-white/10 bg-slate-950/30">
+      <div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
+        <a href="/" class="flex items-center gap-3 text-white">
+          <img src={logo.src} alt="" class="h-10 w-10 rounded-full border border-slate-200 bg-white object-cover dark:border-slate-700" />
+          <span class="uym-brand-text font-extrabold">SiKantin UYM</span>
+        </a>
+        <div class="flex items-center gap-2">
+          <span data-theme-toggle-slot class="contents"></span>
+          <a href="/cek-pesanan" class="rounded-full border border-white/15 px-4 py-2 text-sm font-bold text-white hover:bg-white/10">Cek Pesanan</a>
+        </div>
+      </div>
+    </header>
+    <slot />
+  </Layout>
+)}

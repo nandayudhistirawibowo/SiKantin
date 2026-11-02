@@ -43,7 +43,7 @@ const tenantIsOpen = isTenantOpen(tenant?.status_buka);
   <header class="site-header border-b border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-900">
     <div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
       <a href="/" class="flex items-center gap-3 text-slate-800 dark:text-white">
-        <img src={logo.src} alt="" class="h-10 w-10 rounded-full border border-slate-200 bg-white p-1 dark:border-slate-700" />
+        <img src={logo.src} alt="" class="h-10 w-10 rounded-full border border-slate-200 bg-white object-cover dark:border-slate-700" />
         <span class="uym-brand-text font-extrabold">SiKantin UYM</span>
       </a>
       <div class="flex items-center gap-2">
@@ -124,12 +124,12 @@ const tenantIsOpen = isTenantOpen(tenant?.status_buka);
             <p class="text-xs font-extrabold uppercase tracking-[0.16em] text-blue-800 dark:text-blue-300">Identitas</p>
             <h2 id="checkoutIdentityHeading" class="mt-1 text-xl font-extrabold text-slate-800 dark:text-white">Data pemesan</h2>
             <div class="mt-4 space-y-4">
-              <label id="guestNimField" class="block text-sm font-bold text-slate-800 dark:text-slate-200" for="guestNim">
+              <label id="guestNimField" class="hidden text-sm font-bold text-slate-800 dark:text-slate-200" for="guestNim">
                 NIM mahasiswa
                 <input id="guestNim" name="nim" inputmode="numeric" pattern="[0-9]{6,20}" minlength="6" maxlength="20" required class="mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 font-normal text-slate-800 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100" />
                 <span id="nimValidationMessage" class="mt-1 block text-xs font-normal text-slate-500 dark:text-slate-400">NIM akan diverifikasi sebelum pesanan dibuat.</span>
               </label>
-              <label id="guestPhoneField" class="block text-sm font-bold text-slate-800 dark:text-slate-200" for="guestPhone">
+              <label id="guestPhoneField" class="hidden text-sm font-bold text-slate-800 dark:text-slate-200" for="guestPhone">
                 Nomor HP / WhatsApp
                 <input id="guestPhone" name="phone" type="tel" inputmode="numeric" autocomplete="tel" placeholder="6281234567890" pattern="628[0-9]{8,13}" required class="mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 font-normal text-slate-800 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100" />
                 <span class="mt-1 block text-xs font-normal text-slate-500 dark:text-slate-400">Gunakan format 628... agar notifikasi WhatsApp dapat dikirim.</span>
@@ -354,6 +354,10 @@ const tenantIsOpen = isTenantOpen(tenant?.status_buka);
       }
 
       function showGuestCheckoutPrompt() {
+        document.getElementById('guestNimField').classList.remove('hidden');
+        document.getElementById('guestNimField').classList.add('block');
+        document.getElementById('guestPhoneField').classList.remove('hidden');
+        document.getElementById('guestPhoneField').classList.add('block');
         studentCheckoutInfo.innerHTML = 'Login untuk checkout lebih cepat. <a href="/mahasiswa/login" class="font-extrabold underline">Login Mahasiswa</a>';
         studentCheckoutInfo.classList.remove('hidden');
       }
@@ -384,7 +388,7 @@ const tenantIsOpen = isTenantOpen(tenant?.status_buka);
           document.getElementById('guestNimField').classList.add('hidden');
           document.getElementById('guestPhoneField').classList.add('hidden');
           studentCheckoutProfileCard.classList.remove('hidden');
-          document.getElementById('checkoutStudentName').textContent = profile.nama || 'Mahasiswa';
+          document.getElementById('checkoutStudentName').textContent = `Pesanan atas nama: ${profile.nama || 'Mahasiswa'} (NIM: ${profile.nim || 'belum tersedia'})`;
           document.getElementById('checkoutStudentPhone').textContent = profile.no_telepon || 'Nomor HP belum diisi';
           const avatar = document.getElementById('checkoutStudentAvatar');
           avatar.src = profile.avatar_url || document.body.dataset.logoUrl;
@@ -392,7 +396,7 @@ const tenantIsOpen = isTenantOpen(tenant?.status_buka);
           studentProfileRequiresCompletion = !/^\d{6,20}$/.test(profile.nim || '')
             || !/^628\d{8,13}$/.test(profile.no_telepon || '');
           if (studentProfileRequiresCompletion) {
-            studentCheckoutInfo.innerHTML = 'Silakan isi NIM dan No HP di <a href="/mahasiswa/profil" class="font-extrabold underline">Profil</a> dulu.';
+            studentCheckoutInfo.innerHTML = 'Silakan isi NIM dan No HP di <a href="/profile" class="font-extrabold underline">Profil</a> dulu.';
             studentCheckoutInfo.classList.remove('hidden');
           }
         } catch (error) {

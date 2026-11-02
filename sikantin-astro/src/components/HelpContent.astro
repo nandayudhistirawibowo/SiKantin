@@ -1,0 +1,39 @@
+---
+interface Props {
+	student?: boolean;
+}
+
+const { student = false } = Astro.props;
+const returnHref = student ? '/mahasiswa/dashboard' : '/';
+const returnLabel = student ? 'Kembali ke Dashboard' : 'Kembali ke beranda';
+---
+
+<section class="mb-7">
+	<p class="text-xs font-extrabold uppercase tracking-[0.16em] text-blue-700">Pusat bantuan</p>
+	<h1 class="mt-1 text-3xl font-black text-slate-900">Ada yang bisa dibantu?</h1>
+	<p class="mt-2 text-sm text-slate-600">Panduan singkat untuk aktivitas pemesanan di SiKantin, tersedia untuk guest dan mahasiswa.</p>
+</section>
+<div class="grid gap-4 md:grid-cols-2">
+	<article class="ui-hover-card rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+		<h2 class="font-extrabold text-slate-900">Bagaimana cara memesan?</h2>
+		<p class="mt-2 text-sm leading-6 text-slate-600">Pilih kantin dari Beranda, tentukan menu dan jumlah, lalu lanjutkan ke checkout. Guest dapat memesan tanpa login; pembayaran QRIS dan pemeriksaan bukti dilakukan secara manual.</p>
+		<a href={returnHref} class="mt-4 inline-flex text-sm font-bold text-blue-700 hover:underline">{returnLabel} →</a>
+	</article>
+	<article class="ui-hover-card rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+		<h2 class="font-extrabold text-slate-900">Mengapa checkout meminta nomor telepon?</h2>
+		<p class="mt-2 text-sm leading-6 text-slate-600">Guest mengisi NIM dan nomor telepon saat checkout. Mahasiswa yang login menggunakan data profilnya untuk mengisi checkout secara otomatis.</p>
+		<a href="/profile" class="mt-4 inline-flex text-sm font-bold text-blue-700 hover:underline">Lihat profil →</a>
+	</article>
+	<article class="ui-hover-card rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+		<h2 class="font-extrabold text-slate-900">Bagaimana cara memantau pesanan?</h2>
+		<p class="mt-2 text-sm leading-6 text-slate-600">Gunakan token pesanan di halaman Cek Pesanan. Pesanan yang dibuat saat login juga tersedia di Riwayat Pesanan mahasiswa.</p>
+		<div class="mt-4 flex flex-wrap gap-4">
+			<a href="/mahasiswa/riwayat" class="text-sm font-bold text-blue-700 hover:underline">Riwayat pesanan →</a>
+			<a href="/cek-pesanan" class="text-sm font-bold text-blue-700 hover:underline">Cek pesanan →</a>
+		</div>
+	</article>
+	<article class="ui-hover-card rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+		<h2 class="font-extrabold text-slate-900">Belum bisa login?</h2>
+		<p class="mt-2 text-sm leading-6 text-slate-600">Akun mahasiswa disediakan oleh pengelola SiKantin. Hubungi admin kampus untuk bantuan akses atau pengaturan akun.</p>
+	</article>
+</div>
