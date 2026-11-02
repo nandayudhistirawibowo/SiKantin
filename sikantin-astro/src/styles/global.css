@@ -1,11 +1,482 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
 	--font-sans: 'Plus Jakarta Sans', sans-serif;
 }
 
+html {
+	color-scheme: light;
+}
+
+html.dark {
+	color-scheme: dark;
+}
+
 body {
 	font-family: var(--font-sans);
+}
+
+.theme-toggle {
+	position: fixed;
+	top: 1rem;
+	right: 1rem;
+	z-index: 60;
+	display: inline-flex;
+	min-width: 2.75rem;
+	min-height: 2.75rem;
+	align-items: center;
+	justify-content: center;
+	border: 1px solid rgb(148 163 184 / 45%);
+	border-radius: 9999px;
+	background: rgb(255 255 255 / 92%);
+	padding: .65rem;
+	color: #334155;
+	box-shadow: 0 4px 14px rgb(15 23 42 / 14%);
+	backdrop-filter: blur(12px);
+}
+
+html.dark .theme-toggle {
+	border-color: rgb(148 163 184 / 35%);
+	background: rgb(15 23 42 / 92%);
+	color: #f8fafc;
+}
+
+[data-theme-toggle-slot] .theme-toggle {
+	position: static;
+	z-index: auto;
+	flex: 0 0 auto;
+	border-color: rgb(255 255 255 / 20%);
+	background: rgb(255 255 255 / 8%);
+	color: white;
+	box-shadow: none;
+	backdrop-filter: none;
+}
+
+html:not(.dark) [data-theme-toggle-slot] .theme-toggle {
+	border-color: #cbd5e1;
+	background: #fff;
+	color: #334155;
+}
+
+html:not(.dark) body.role-screen {
+	background: #f8fafc;
+	color: #0f172a;
+}
+
+html:not(.dark) body.role-screen .glass,
+html:not(.dark) body.role-screen .featured-tenant,
+html:not(.dark) body.role-screen .tenant-sidebar,
+html:not(.dark) body.role-screen .empty-tenant,
+html:not(.dark) body.role-screen .tenant-card {
+	border-color: #e2e8f0;
+	background: #fff;
+	color: #0f172a;
+	box-shadow: 0 2px 8px rgb(15 23 42 / 6%);
+}
+
+html:not(.dark) body.role-screen .glass {
+	background: rgb(255 255 255 / 92%);
+}
+
+html:not(.dark) body.role-screen .catalog-hero {
+	border-color: #dbeafe;
+	background:
+		radial-gradient(ellipse at 86% 28%, rgb(191 219 254 / 55%), transparent 36%),
+		linear-gradient(125deg, #eff6ff, #f8fafc 68%, #ecfeff);
+	color: #0f172a;
+	box-shadow: 0 12px 32px rgb(30 64 175 / 8%);
+}
+
+html:not(.dark) body.role-screen .catalog-promo {
+	border-color: #dbeafe;
+	background:
+		radial-gradient(ellipse at 90% 15%, rgb(254 243 199 / 70%), transparent 38%),
+		linear-gradient(120deg, #eff6ff, #f8fafc 75%);
+	color: #1e293b;
+	box-shadow: 0 4px 16px rgb(15 23 42 / 5%);
+}
+
+html:not(.dark) body.role-screen .tenant-sidebar {
+	background: #fff;
+}
+
+html:not(.dark) body.role-screen .tenant-sidebar > div.rounded-2xl {
+	border-color: #bae6fd;
+	background: #f0f9ff;
+}
+
+html:not(.dark) body.role-screen .text-white,
+html:not(.dark) body.role-screen [class~="text-blue-100/75"],
+html:not(.dark) body.role-screen [class~="text-blue-100/70"],
+html:not(.dark) body.role-screen [class~="text-blue-100/65"],
+html:not(.dark) body.role-screen [class~="text-blue-100/55"],
+html:not(.dark) body.role-screen [class~="text-blue-100/80"],
+html:not(.dark) body.role-screen [class~="text-blue-100/60"],
+html:not(.dark) body.role-screen [class~="text-blue-50/80"],
+html:not(.dark) body.role-screen [class~="text-blue-200"],
+html:not(.dark) body.role-screen [class~="text-blue-200/75"] {
+	color: #475569;
+}
+
+html:not(.dark) body.role-screen [class~="text-sky-300"],
+html:not(.dark) body.role-screen [class~="text-sky-100"] {
+	color: #0369a1;
+}
+
+html:not(.dark) body.role-screen [class~="text-amber-300"],
+html:not(.dark) body.role-screen [class~="text-amber-200"] {
+	color: #92400e;
+}
+
+html:not(.dark) body.role-screen [class~="text-emerald-300"] {
+	color: #047857;
+}
+
+html:not(.dark) body.role-screen [class~="bg-white/5"],
+html:not(.dark) body.role-screen [class~="bg-white/10"] {
+	background: #f1f5f9;
+	color: #334155;
+}
+
+html:not(.dark) body.role-screen [class~="bg-blue-500"].text-white,
+html:not(.dark) body.role-screen [class~="bg-blue-600"].text-white {
+	color: #fff;
+}
+
+html:not(.dark) body.role-screen .tenant-card [class~="text-emerald-300"] {
+	color: #047857;
+}
+
+html:not(.dark) body.role-screen .tenant-card [class~="border-white/15"] {
+	border-color: #e2e8f0;
+}
+
+html:not(.dark) body.role-screen .tenant-card [class~="bg-white/5"] {
+	background: #f1f5f9;
+	color: #475569;
+}
+
+html:not(.dark) body.role-screen .tenant-card a.bg-emerald-400 {
+	color: #064e3b;
+}
+
+html:not(.dark) body.role-screen .tenant-filter {
+	color: #475569;
+}
+
+html:not(.dark) body.role-screen .tenant-filter:hover,
+html:not(.dark) body.role-screen .tenant-filter.is-active {
+	background: #eff6ff;
+	color: #1d4ed8;
+}
+
+html:not(.dark) body.role-screen [class~="border-white/10"],
+html:not(.dark) body.role-screen [class~="border-white/15"],
+html:not(.dark) body.role-screen [class~="border-white/20"] {
+	border-color: #e2e8f0;
+}
+
+html:not(.dark) body.login-screen {
+	background: #f8fafc;
+	color: #0f172a;
+}
+
+html:not(.dark) body.login-screen [class~="bg-slate-900"],
+html:not(.dark) body.login-screen [class~="bg-slate-950/30"],
+html:not(.dark) body.login-screen [class~="bg-slate-950/60"] {
+	background: #fff;
+	color: #0f172a;
+}
+
+html:not(.dark) body.login-screen .text-white,
+html:not(.dark) body.login-screen [class~="text-blue-100/75"],
+html:not(.dark) body.login-screen [class~="text-blue-100/70"],
+html:not(.dark) body.login-screen [class~="text-blue-100/65"],
+html:not(.dark) body.login-screen [class~="text-blue-100/55"] {
+	color: #475569;
+}
+
+html:not(.dark) body.login-screen [class~="text-sky-300"],
+html:not(.dark) body.login-screen [class~="text-sky-100"] {
+	color: #0369a1;
+}
+
+html:not(.dark) body.login-screen [class~="border-white/10"],
+html:not(.dark) body.login-screen [class~="border-white/15"] {
+	border-color: #e2e8f0;
+}
+
+html:not(.dark) body.login-screen [class~="bg-white/10"] {
+	background: #f1f5f9;
+}
+
+html:not(.dark) body.login-screen .login-input {
+	border-color: #cbd5e1;
+	background: #fff;
+	color: #0f172a;
+}
+
+html:not(.dark) body.login-screen .login-input::placeholder {
+	color: #94a3b8;
+}
+
+html:not(.dark) body.login-screen .login-showcase {
+	border-color: #e2e8f0;
+	background:
+		radial-gradient(ellipse at 72% 18%, rgb(147 197 253 / 38%), transparent 38%),
+		linear-gradient(150deg, #eff6ff, #e2e8f0);
+	color: #1e293b;
+}
+
+html:not(.dark) body.login-screen button.bg-blue-600,
+html:not(.dark) body[class~="bg-slate-950"] button.bg-blue-500 {
+	color: #fff;
+}
+
+html:not(.dark) body[class~="bg-slate-950"] {
+	background: #f8fafc;
+	color: #0f172a;
+}
+
+html:not(.dark) body[class~="bg-slate-950"] [class~="bg-slate-900"],
+html:not(.dark) body[class~="bg-slate-950"] [class~="bg-slate-950/60"] {
+	background: #fff;
+	color: #0f172a;
+}
+
+html:not(.dark) body[class~="bg-slate-950"] [class~="text-white"] {
+	color: #0f172a;
+}
+
+html:not(.dark) body[class~="bg-slate-950"] [class~="text-blue-100/65"],
+html:not(.dark) body[class~="bg-slate-950"] [class~="text-blue-100/70"],
+html:not(.dark) body[class~="bg-slate-950"] [class~="text-blue-200"] {
+	color: #475569;
+}
+
+html:not(.dark) body[class~="bg-slate-950"] [class~="border-white/10"],
+html:not(.dark) body[class~="bg-slate-950"] [class~="border-white/15"] {
+	border-color: #e2e8f0;
+}
+
+html:not(.dark) body[class~="bg-slate-950"] [class~="bg-white/10"] {
+	background: #f1f5f9;
+}
+
+html:not(.dark) body[class~="bg-slate-950"] [class~="bg-blue-500"].text-white {
+	color: #fff;
+}
+
+html:not(.dark) body.tenant-guest {
+	background: #f8fafc;
+	color: #0f172a;
+}
+
+html:not(.dark) body.tenant-guest .tenant-menu-hero,
+html:not(.dark) body.tenant-guest .menu-card,
+html:not(.dark) body.tenant-guest .menu-empty {
+	border-color: #e2e8f0;
+	background: #fff;
+	color: #0f172a;
+}
+
+html:not(.dark) body.tenant-guest [class~="text-white"],
+html:not(.dark) body.tenant-guest [class~="text-blue-100/75"],
+html:not(.dark) body.tenant-guest [class~="text-blue-100/70"],
+html:not(.dark) body.tenant-guest [class~="text-blue-100/65"],
+html:not(.dark) body.tenant-guest [class~="text-blue-100/55"] {
+	color: #475569;
+}
+
+html:not(.dark) body.tenant-guest [class~="border-white/10"],
+html:not(.dark) body.tenant-guest [class~="border-white/15"] {
+	border-color: #e2e8f0;
+}
+
+html:not(.dark) body.tenant-guest [class~="bg-slate-950/30"] {
+	background: #fff;
+}
+
+html:not(.dark) body.tenant-guest [class~="bg-white/5"],
+html:not(.dark) body.tenant-guest [class~="bg-white/10"] {
+	background: #f1f5f9;
+	color: #334155;
+}
+
+html:not(.dark) body.tenant-guest .tenant-menu-hero {
+	background:
+		radial-gradient(ellipse at 86% 18%, rgb(191 219 254 / 48%), transparent 38%),
+		linear-gradient(120deg, #eff6ff, #f8fafc);
+}
+
+html:not(.dark) body.tenant-guest .menu-tools {
+	border-color: #e2e8f0;
+	background: #fff;
+	box-shadow: 0 2px 8px rgb(15 23 42 / 5%);
+}
+
+html:not(.dark) body.tenant-guest .category-filter {
+	border-color: #cbd5e1;
+	background: #f8fafc;
+	color: #334155;
+}
+
+html:not(.dark) body.tenant-guest .category-filter:hover {
+	border-color: #93c5fd;
+	background: #eff6ff;
+	color: #1d4ed8;
+}
+
+html:not(.dark) body.tenant-guest .category-filter.is-active {
+	border-color: #93c5fd;
+	background: #dbeafe;
+	color: #1e40af;
+}
+
+html:not(.dark) body.tenant-guest [class~="text-blue-200"] {
+	color: #1d4ed8;
+}
+
+html:not(.dark) body.tenant-guest a.bg-blue-600 {
+	color: #fff;
+}
+
+html:not(.dark) body.tenant-guest .menu-card {
+	box-shadow: 0 2px 8px rgb(15 23 42 / 6%);
+}
+
+html:not(.dark) body.student-portal {
+	background: #f8fafc;
+	color: #1e293b;
+}
+
+html:not(.dark) body.student-portal .student-dashboard-hero {
+	border: 1px solid #dbeafe;
+	background: linear-gradient(125deg, #eff6ff, #e0f2fe);
+	color: #0f172a;
+	box-shadow: 0 8px 24px rgb(30 64 175 / 8%);
+}
+
+html:not(.dark) body.student-portal .student-dashboard-hero [class~="text-blue-200"] {
+	color: #1d4ed8;
+}
+
+html:not(.dark) body.student-portal .student-dashboard-hero [class~="text-blue-100/80"] {
+	color: #475569;
+}
+
+html:not(.dark) body.student-portal .student-dashboard-hero a.bg-white {
+	border: 1px solid #bfdbfe;
+	background: #fff;
+	color: #1e40af;
+}
+
+html.dark [class~="bg-white"],
+html.dark [class~="bg-slate-50"],
+html.dark [class~="bg-slate-100"],
+html.dark [class~="bg-gray-50"] {
+	background-color: #111827 !important;
+}
+
+html.dark [class~="bg-slate-200"],
+html.dark [class~="bg-gray-100"] {
+	background-color: #1f2937 !important;
+}
+
+html.dark [class~="border-slate-50"],
+html.dark [class~="border-slate-100"],
+html.dark [class~="border-slate-200"],
+html.dark [class~="border-slate-300"],
+html.dark [class~="border-gray-100"],
+html.dark [class~="border-gray-200"] {
+	border-color: #374151 !important;
+}
+
+html.dark [class~="divide-slate-100"] > :not([hidden]) ~ :not([hidden]) {
+	border-color: #374151 !important;
+}
+
+html.dark [class~="text-slate-900"],
+html.dark [class~="text-slate-800"],
+html.dark [class~="text-slate-700"],
+html.dark [class~="text-gray-900"],
+html.dark [class~="text-gray-800"],
+html.dark [class~="text-gray-700"] {
+	color: #f1f5f9 !important;
+}
+
+html.dark [class~="text-slate-600"],
+html.dark [class~="text-slate-500"],
+html.dark [class~="text-slate-400"],
+html.dark [class~="text-gray-600"],
+html.dark [class~="text-gray-500"] {
+	color: #cbd5e1 !important;
+}
+
+html.dark body.tenant-dashboard {
+	background: #0f172a;
+	color: #e2e8f0;
+}
+
+html.dark .tenant-dashboard-header,
+html.dark .tenant-stat-card,
+html.dark .tenant-panel,
+html.dark .tenant-menu-item {
+	border-color: #374151;
+	background: #111827;
+	color: #e2e8f0;
+}
+
+html.dark .tenant-logout-button,
+html.dark .tenant-sound-button {
+	border-color: #475569;
+	background: #1f2937;
+	color: #e2e8f0;
+}
+
+html.dark .tenant-logout-button:hover,
+html.dark .tenant-sound-button:hover,
+html.dark .tenant-order-row:hover {
+	background: #1f2937;
+}
+
+html.dark .tenant-panel-heading {
+	border-color: #374151;
+}
+
+html.dark .tenant-tab.is-active {
+	border-color: #1e3a8a;
+	background: #172554;
+	color: #bfdbfe;
+}
+
+html.dark .tenant-order-action:disabled {
+	background: #374151;
+	color: #cbd5e1;
+}
+
+html.dark .queue-number-hero {
+	border-color: #065f46;
+	background: linear-gradient(135deg, #064e3b, #065f46);
+}
+
+html.dark .queue-number-hero [class~="text-emerald-800"],
+html.dark .queue-number-hero [class~="text-emerald-900"],
+html.dark .queue-number-hero [class~="text-emerald-950"] {
+	color: #d1fae5 !important;
+}
+
+html.dark .order-progress-track,
+html.dark .order-step:not(:last-child)::after {
+	background: #374151;
+}
+
+html.dark .order-step-indicator {
+	border-color: #475569;
+	background: #1f2937;
+	color: #e2e8f0;
 }
 
 html {

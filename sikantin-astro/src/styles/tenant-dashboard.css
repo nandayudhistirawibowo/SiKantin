@@ -1,5 +1,5 @@
 body { font-family: 'Plus Jakarta Sans', sans-serif; }
-        .tenant-dashboard { background: #f5f7fb; color: #1e293b; }
+        .tenant-dashboard { background: #f8fafc; color: #1e293b; }
         .tenant-dashboard-header { border-bottom: 1px solid #e7ebf2; background: white; }
         .tenant-logout-button, .tenant-sound-button {
             display: inline-flex; align-items: center; justify-content: center; gap: .5rem;

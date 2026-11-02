@@ -68,7 +68,10 @@ const menuCategories = [...new Set((menuItems ?? []).map((item) => item.kategori
         <img src={logo.src} alt="" class="h-10 w-10 rounded-full bg-white p-1" />
         <span class="font-extrabold">SiKantin UYM</span>
       </a>
-      <a href="/cek-pesanan" class="rounded-full border border-white/15 px-4 py-2 text-sm font-bold text-white hover:bg-white/10">Cek Pesanan</a>
+      <div class="flex items-center gap-2">
+        <span data-theme-toggle-slot class="contents"></span>
+        <a href="/cek-pesanan" class="rounded-full border border-white/15 px-4 py-2 text-sm font-bold text-white hover:bg-white/10">Cek Pesanan</a>
+      </div>
     </div>
   </header>
 
