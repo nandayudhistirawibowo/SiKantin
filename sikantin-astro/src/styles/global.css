@@ -200,15 +200,38 @@ html:not(.dark) body.role-screen .tenant-card a.bg-emerald-400 {
 }
 
 html:not(.dark) .tenant-status-open {
-	border: 1px solid #15803d;
-	background: #15803d;
+	border: 1px solid #047857;
+	background: #059669;
 	color: #fff;
+	animation: tenant-status-glow 2.4s ease-in-out infinite;
 }
 
 html.dark .tenant-status-open {
-	border: 1px solid #166534;
-	background: #14532d;
-	color: #bbf7d0;
+	border: 1px solid #047857;
+	background: #059669;
+	color: #fff;
+	animation: tenant-status-glow 2.4s ease-in-out infinite;
+}
+
+html:not(.dark) .tenant-status-closed {
+	border: 1px solid #fecaca;
+	background: #fee2e2;
+	color: #991b1b;
+}
+
+html.dark .tenant-status-closed {
+	border: 1px solid #7f1d1d !important;
+	background: #3f1d24 !important;
+	color: #fecaca !important;
+}
+
+.tenant-status-open [data-tenant-status-dot] {
+	background-color: #fff !important;
+}
+
+html:not(.dark) [class~="text-slate-300"],
+html:not(.dark) [class~="text-slate-400"] {
+	color: #475569;
 }
 
 html:not(.dark) body.role-screen [class~="border-white/10"],
@@ -900,6 +923,15 @@ html {
 @keyframes sound-pulse {
 	0%, 100% { transform: scale(1); }
 	50% { transform: scale(1.22); }
+}
+
+@keyframes tenant-status-glow {
+	0%, 100% {
+		box-shadow: 0 0 0 0 rgb(5 150 105 / 18%);
+	}
+	50% {
+		box-shadow: 0 0 0 4px rgb(5 150 105 / 24%);
+	}
 }
 
 @media (prefers-reduced-motion: reduce) {
