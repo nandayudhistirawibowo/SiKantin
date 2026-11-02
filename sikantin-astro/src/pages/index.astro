@@ -14,7 +14,10 @@ const { data: tenantRows, error } = await supabaseServer
 	.from('tenants')
 	.select('id, nama_tenant, slug, lokasi, status_buka')
 	.order('nama_tenant');
-const tenants = tenantRows?.map((tenant) => ({
+if (error) {
+	console.error('Gagal memuat daftar tenant untuk katalog:', error.message);
+}
+const tenants = (tenantRows ?? []).map((tenant) => ({
 	...tenant,
 	status_buka: isTenantOpen(tenant.status_buka),
 }));
@@ -70,7 +73,7 @@ tenantRatings?.forEach((rating) => {
 	<main class="mx-auto max-w-6xl">
 		<header class="glass flex items-center justify-between rounded-3xl px-4 py-3 sm:px-6">
 			<a href="/" class="flex items-center gap-3" aria-label="SiKantin Universitas Yatsi Madani">
-				<img src={logo.src} alt="" class="h-11 w-11 rounded-full bg-white p-1" />
+				<img src={logo.src} alt="" class="h-11 w-11 rounded-full border-2 border-white bg-white p-1" />
 				<span>
 					<span class="block text-lg font-extrabold tracking-wide">SIKANTIN</span>
 					<span class="block text-xs text-blue-100/75">Universitas Yatsi Madani</span>
@@ -90,7 +93,7 @@ tenantRatings?.forEach((rating) => {
 
 		<section class="catalog-hero relative mt-7 overflow-hidden rounded-[2rem] border border-white/10 px-6 py-10 shadow-2xl sm:px-10 sm:py-14">
 			<div class="relative z-10 max-w-2xl">
-				<p class="mb-3 text-xs font-extrabold uppercase tracking-[0.28em] text-amber-300">Universitas Yatsi Madani</p>
+				<p class="mb-3 text-xs font-extrabold uppercase tracking-[0.28em] text-blue-800">Universitas Yatsi Madani</p>
 				<h1 class="text-4xl font-black tracking-tight sm:text-6xl">Lapar? <span class="text-sky-300">Ayo ke kantin favoritmu!</span></h1>
 				<p class="mt-4 max-w-xl text-base leading-7 text-blue-100/75 sm:text-lg">Pesan makanan kampus tanpa perlu login. Pantau status dengan token, lalu ambil pesanan saat siap.</p>
 				<div class="mt-7 flex flex-wrap gap-3">
@@ -104,7 +107,7 @@ tenantRatings?.forEach((rating) => {
 		<section class="catalog-promo mt-6 overflow-hidden rounded-3xl border border-white/10 px-5 py-6 shadow-xl sm:px-9 sm:py-9" aria-labelledby="catalog-promo-heading">
 			<div class="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
 				<div class="max-w-2xl">
-					<p class="text-xs font-extrabold uppercase tracking-[0.2em] text-amber-200">Bebas Antre, Pesan Sekarang</p>
+					<p class="text-xs font-extrabold uppercase tracking-[0.2em] text-blue-800">Bebas Antre, Pesan Sekarang</p>
 					<h2 id="catalog-promo-heading" class="mt-2 text-2xl font-black sm:text-3xl">Pesan dulu, nikmati waktu istirahatmu.</h2>
 					<p class="mt-2 text-sm leading-6 text-blue-100/70">Pesan makanan favoritmu tanpa perlu ngantre. Cukup tunjukkan nomor antrean, pesanan siap diambil.</p>
 				</div>
@@ -181,7 +184,7 @@ tenantRatings?.forEach((rating) => {
 								>
 									<a href={`/tenant/${encodeURIComponent(tenant.slug)}`} class="tenant-card-cover group relative block h-44 overflow-hidden" aria-label={`Lihat menu ${tenant.nama_tenant}`}>
 										{coverImageByTenant.get(tenant.id) ? (
-											<img src={coverImageByTenant.get(tenant.id)} alt="" loading="lazy" class="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105" />
+											<img src={coverImageByTenant.get(tenant.id)} alt="" loading="lazy" data-fallback-on-error class="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105" />
 										) : (
 											<>
 												<span class="tenant-card-cover-art" aria-hidden="true"></span>

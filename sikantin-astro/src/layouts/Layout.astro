@@ -107,6 +107,13 @@ const socialImage = new URL(ogImage || logo.src, siteUrl).href;
 				}
 				syncThemeToggle();
 			});
+
+			document.addEventListener('error', (event) => {
+				const image = event.target;
+				if (!(image instanceof HTMLImageElement) || !image.hasAttribute('data-fallback-on-error')) return;
+				image.removeAttribute('data-fallback-on-error');
+				image.src = document.body.dataset.logoUrl;
+			}, true);
 		</script>
 	</body>
 </html>

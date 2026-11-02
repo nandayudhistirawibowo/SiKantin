@@ -65,7 +65,7 @@ const menuCategories = [...new Set((menuItems ?? []).map((item) => item.kategori
   <header class="border-b border-white/10 bg-slate-950/30">
     <div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
       <a href="/" class="flex items-center gap-3 text-white">
-        <img src={logo.src} alt="" class="h-10 w-10 rounded-full bg-white p-1" />
+        <img src={logo.src} alt="" class="h-10 w-10 rounded-full border-2 border-white bg-white p-1" />
         <span class="font-extrabold">SiKantin UYM</span>
       </a>
       <div class="flex items-center gap-2">
@@ -156,6 +156,7 @@ const menuCategories = [...new Set((menuItems ?? []).map((item) => item.kategori
                         src={item.foto_url || logo.src}
                         alt={item.nama_menu}
                         loading="lazy"
+                        data-fallback-on-error={item.foto_url ? true : undefined}
                         class:list={['menu-photo w-full bg-slate-100 object-cover transition duration-500 group-hover:scale-105', menuItems.length === 1 ? 'h-64' : 'h-48']}
                       />
                       <span class="absolute left-3 top-3 rounded-full border border-white/70 bg-white/90 px-3 py-1 text-[11px] font-extrabold text-slate-700 shadow-sm backdrop-blur">
