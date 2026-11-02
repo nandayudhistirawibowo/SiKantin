@@ -32,8 +32,8 @@ import '../styles/tenant-dashboard.css';
             </div>
             <div class="flex flex-wrap items-center gap-3">
                 <div class="flex flex-col items-end gap-1">
-                    <span id="connectionStatus" class="text-xs font-semibold text-slate-500">Menghubungkan realtime pesanan...</span>
-                    <span id="tenantStatusRealtime" class="text-xs font-semibold text-slate-500">Menghubungkan realtime status kantin...</span>
+                    <span id="connectionStatus" class="sr-only" aria-live="polite">Menghubungkan realtime pesanan...</span>
+                    <span id="tenantStatusRealtime" class="sr-only" aria-live="polite">Menghubungkan realtime status kantin...</span>
                     <span id="tenantScheduleInfo" class="text-right text-xs text-slate-500"><span class="skeleton-line inline-block w-36 align-middle" role="status" aria-label="Memuat jadwal operasional"></span></span>
                 </div>
                 <button id="enableNotificationSound" type="button" class="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-bold text-blue-800 transition hover:bg-blue-100">
@@ -47,12 +47,26 @@ import '../styles/tenant-dashboard.css';
         <p id="message" role="status" aria-live="polite" class="mb-5 hidden rounded-lg p-4 text-sm"></p>
         <p id="soundStatus" class="sr-only" aria-live="polite"></p>
 
+        <div class="mb-4 flex flex-wrap items-end justify-between gap-3">
+            <div>
+                <h2 class="text-lg font-extrabold text-slate-900">Ringkasan penjualan</h2>
+                <p id="tenantStatsPeriodDescription" class="mt-1 text-sm text-slate-500">Angka berdasarkan pesanan hari ini.</p>
+            </div>
+            <label for="tenantStatsPeriod" class="flex items-center gap-2 text-sm font-semibold text-slate-700">
+                Periode
+                <select id="tenantStatsPeriod" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200">
+                    <option value="today" selected>Hari Ini</option>
+                    <option value="last7">7 Hari Terakhir</option>
+                    <option value="month">Bulan Ini</option>
+                </select>
+            </label>
+        </div>
         <section class="mb-7 grid gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="Ringkasan penjualan">
             <article class="tenant-stat-card ui-enter">
                 <span class="tenant-stat-icon bg-blue-50 text-blue-700" aria-hidden="true">◉</span>
-                <p class="mt-4 text-sm text-slate-500">Penjualan pesanan tampil</p>
+                <p class="mt-4 text-sm text-slate-500">Pendapatan</p>
                 <p id="tenantSalesTotal" class="mt-1 text-2xl font-black text-slate-900">Rp 0</p>
-                <p class="mt-2 text-xs text-slate-500">Total dari database</p>
+                <p class="mt-2 text-xs text-slate-500">Tidak termasuk pesanan dibatalkan</p>
             </article>
             <article class="tenant-stat-card ui-enter">
                 <span class="tenant-stat-icon bg-amber-50 text-amber-700" aria-hidden="true">▤</span>
@@ -88,8 +102,7 @@ import '../styles/tenant-dashboard.css';
 
         <section id="tenantOrdersPanel" class="tenant-panel">
             <div class="tenant-panel-heading">
-                <div><h2 class="text-lg font-extrabold text-slate-900">Pesanan terbaru</h2><p class="mt-1 text-sm text-slate-500">Notifikasi realtime aktif; pembaruan otomatis.</p></div>
-                <span class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">Database</span>
+                <div><h2 class="text-lg font-extrabold text-slate-900">Pesanan terbaru</h2></div>
             </div>
             <div id="ordersList" class="divide-y divide-slate-100" role="status" aria-label="Memuat pesanan">
                 <div class="skeleton-card m-4"><span class="skeleton-line w-1/3"></span><span class="skeleton-line w-2/3"></span><span class="skeleton-line w-1/2"></span></div>
@@ -133,7 +146,6 @@ import '../styles/tenant-dashboard.css';
                 </table>
             </div>
         </section>
-        <p class="mt-5 text-center text-xs text-slate-400">Perubahan status pesanan disimpan ke database dan ditampilkan realtime.</p>
     </main>
     </div>
     <script>
@@ -212,6 +224,69 @@ import '../styles/tenant-dashboard.css';
                 currency: 'IDR',
                 maximumFractionDigits: 0
             }).format(value);
+        }
+
+        function getJakartaDateKey(value) {
+            const date = new Date(value);
+            if (Number.isNaN(date.getTime())) return null;
+            const parts = new Intl.DateTimeFormat('en-CA', {
+                timeZone: 'Asia/Jakarta',
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+            }).formatToParts(date);
+            const part = (type) => parts.find((item) => item.type === type)?.value;
+            return `${part('year')}-${part('month')}-${part('day')}`;
+        }
+
+        function getStatsDateRange(period) {
+            const today = getJakartaDateKey(new Date());
+            if (!today) return null;
+            const todayUtc = new Date(`${today}T00:00:00Z`);
+            let start = today;
+            if (period === 'last7') {
+                todayUtc.setUTCDate(todayUtc.getUTCDate() - 6);
+                start = todayUtc.toISOString().slice(0, 10);
+            } else if (period === 'month') {
+                start = `${today.slice(0, 7)}-01`;
+            }
+            return { start, end: today };
+        }
+
+        function renderTenantStats() {
+            const period = document.getElementById('tenantStatsPeriod').value;
+            const range = getStatsDateRange(period);
+            if (!range) return;
+            const filteredOrders = tenantOrders.filter((order) => {
+                const orderDate = getJakartaDateKey(order.created_at);
+                return orderDate && orderDate >= range.start && orderDate <= range.end;
+            });
+            const pendingOrders = filteredOrders.filter((order) =>
+                order.status === 'Menunggu' || order.status === 'Menunggu Verifikasi'
+            );
+            const readyOrders = filteredOrders.filter((order) => order.status === 'Siap diambil');
+            document.getElementById('tenantOrderCount').textContent = String(filteredOrders.length);
+            document.getElementById('tenantPendingCount').textContent = String(pendingOrders.length);
+            document.getElementById('tenantReadyCount').textContent = String(readyOrders.length);
+            document.getElementById('tenantSalesTotal').textContent = formatRupiah(
+                filteredOrders
+                    .filter((order) => order.status !== 'Dibatalkan')
+                    .reduce((total, order) => total + Number(order.total || 0), 0)
+            );
+            const label = period === 'last7'
+                ? '7 hari terakhir'
+                : period === 'month'
+                    ? 'bulan ini'
+                    : 'hari ini';
+            document.getElementById('tenantStatsPeriodDescription').textContent =
+                `Angka berdasarkan pesanan ${label} (waktu WIB).`;
+
+            const allPendingOrders = tenantOrders.filter((order) =>
+                order.status === 'Menunggu' || order.status === 'Menunggu Verifikasi'
+            );
+            const badge = document.getElementById('tenantOrdersBadge');
+            badge.textContent = String(allPendingOrders.length);
+            badge.classList.toggle('hidden', allPendingOrders.length === 0);
         }
 
         function addText(parent, tag, className, text) {
@@ -462,17 +537,7 @@ import '../styles/tenant-dashboard.css';
 
         function renderOrders(orders) {
             tenantOrders = orders;
-            const pendingOrders = orders.filter((order) => order.status === 'Menunggu' || order.status === 'Menunggu Verifikasi');
-            const readyOrders = orders.filter((order) => order.status === 'Siap diambil');
-            document.getElementById('tenantOrderCount').textContent = String(orders.length);
-            document.getElementById('tenantPendingCount').textContent = String(pendingOrders.length);
-            document.getElementById('tenantReadyCount').textContent = String(readyOrders.length);
-            document.getElementById('tenantSalesTotal').textContent = formatRupiah(
-                orders.filter((order) => order.status !== 'Dibatalkan').reduce((total, order) => total + Number(order.total || 0), 0)
-            );
-            const badge = document.getElementById('tenantOrdersBadge');
-            badge.textContent = String(pendingOrders.length);
-            badge.classList.toggle('hidden', pendingOrders.length === 0);
+            renderTenantStats();
 
             ordersList.replaceChildren();
             if (!orders.length) {
@@ -644,7 +709,7 @@ import '../styles/tenant-dashboard.css';
             if (typeof activeTenantId !== 'string' || !activeTenantId.trim()) return;
             const { data: orders, error } = await db
                 .from('orders')
-                .select('id, tenant_id, nomor_pesanan, nomor_antrean, mahasiswa_id, nama_mahasiswa, phone, status, total, metode_pembayaran, bukti_transfer, alasan_pembatalan, order_items(id, nama_menu, harga_satuan, jumlah, subtotal, catatan, add_ons)')
+                .select('id, tenant_id, nomor_pesanan, nomor_antrean, mahasiswa_id, nama_mahasiswa, phone, status, total, created_at, metode_pembayaran, bukti_transfer, alasan_pembatalan, order_items(id, nama_menu, harga_satuan, jumlah, subtotal, catatan, add_ons)')
                 .eq('tenant_id', activeTenantId)
                 .order('id', { ascending: false });
             if (error) {
@@ -876,6 +941,7 @@ import '../styles/tenant-dashboard.css';
             document.getElementById('tenantDashboardMenuButton').setAttribute('aria-expanded', String(isOpen));
         });
         document.getElementById('tenantOpenStatus').addEventListener('click', toggleTenantOpenStatus);
+        document.getElementById('tenantStatsPeriod').addEventListener('change', renderTenantStats);
         document.querySelectorAll('[data-tenant-panel]').forEach((tab) => {
             tab.addEventListener('click', () => showTenantPanel(tab.dataset.tenantPanel));
         });
