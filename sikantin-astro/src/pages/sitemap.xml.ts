@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 const siteUrl = 'https://sikantin.ndhistira.my.id';
 const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL?.trim();
 const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY?.trim();
+const tenantPageSize = 1000;
 
 function escapeXml(value: string): string {
 	return value
@@ -52,30 +53,41 @@ export const GET: APIRoute = async () => {
 		);
 	}
 
-	let tenants: Array<{ slug: string | null; updated_at?: string | null }> | null = null;
+	const tenants: Array<{ slug: string | null; updated_at?: string | null }> = [];
 	try {
 		const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 			auth: { autoRefreshToken: false, persistSession: false },
 		});
-		const result = await supabase
-			.from('tenants')
-			.select('slug, updated_at')
-			.not('slug', 'is', null)
-			.order('slug');
+		let from = 0;
+		let includeUpdatedAt = true;
+		while (true) {
+			const result = includeUpdatedAt
+				? await supabase
+					.from('tenants')
+					.select('slug, updated_at')
+					.not('slug', 'is', null)
+					.order('slug')
+					.range(from, from + tenantPageSize - 1)
+				: await supabase
+					.from('tenants')
+					.select('slug')
+					.not('slug', 'is', null)
+					.order('slug')
+					.range(from, from + tenantPageSize - 1);
 
-		if (result.error && isMissingUpdatedAtColumn(result.error)) {
-			console.warn('Kolom tenants.updated_at tidak tersedia; sitemap dibuat tanpa lastmod.');
-			const fallbackResult = await supabase
-				.from('tenants')
-				.select('slug')
-				.not('slug', 'is', null)
-				.order('slug');
-			if (fallbackResult.error) throw fallbackResult.error;
-			tenants = fallbackResult.data;
-		} else if (result.error) {
-			throw result.error;
-		} else {
-			tenants = result.data;
+			if (result.error && includeUpdatedAt && isMissingUpdatedAtColumn(result.error)) {
+				includeUpdatedAt = false;
+				console.warn('Kolom tenants.updated_at tidak tersedia; sitemap dibuat tanpa lastmod.');
+				from = 0;
+				tenants.length = 0;
+				continue;
+			}
+			if (result.error) throw result.error;
+
+			const page = result.data ?? [];
+			tenants.push(...page);
+			if (page.length < tenantPageSize) break;
+			from += tenantPageSize;
 		}
 	} catch (error) {
 		const detail = queryErrorMessage(error);
@@ -88,14 +100,15 @@ export const GET: APIRoute = async () => {
 
 	const urls = [
 		{ loc: `${siteUrl}/` },
-		(tenants ?? [])
+		{ loc: `${siteUrl}/bantuan` },
+		...tenants
 			.filter((tenant) => typeof tenant.slug === 'string' && tenant.slug.trim())
 			.map((tenant) => ({
 				loc: `${siteUrl}/tenant/${encodeURIComponent(tenant.slug)}`,
 				lastmod: formatLastModified(tenant.updated_at),
 			})),
 	];
-	const entries = urls.flat().map(({ loc, lastmod }) =>
+	const entries = urls.map(({ loc, lastmod }) =>
 		[
 			'  <url>',
 			`    <loc>${escapeXml(loc)}</loc>`,
