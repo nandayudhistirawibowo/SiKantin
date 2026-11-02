@@ -60,6 +60,20 @@ html:not(.dark) [data-theme-toggle-slot] .theme-toggle {
 	color: #334155;
 }
 
+html:not(.dark) .uym-brand-text {
+	color: #0b3d91;
+}
+
+html.dark .uym-brand-text {
+	color: #93c5fd;
+}
+
+html:not(.dark) body .site-header {
+	border: 1px solid #e2e8f0 !important;
+	background: rgb(248 250 252 / 88%) !important;
+	backdrop-filter: blur(12px);
+}
+
 html:not(.dark) body.role-screen {
 	background:
 		radial-gradient(ellipse at 92% 8%, rgb(219 234 254 / 48%), transparent 34rem),
@@ -152,7 +166,6 @@ html:not(.dark) body.role-screen .catalog-header {
 }
 
 html:not(.dark) body.role-screen .tenant-card {
-	border-left: 4px solid #2563eb;
 	border-radius: 1.5rem;
 }
 
@@ -460,9 +473,8 @@ html.dark [class~="text-gray-500"] {
 	color: #cbd5e1 !important;
 }
 
-html.dark body.role-screen .tenant-card {
-	border-left-width: 1px;
-	border-left-color: #374151;
+html.dark body[class~="bg-slate-950"] .student-login-hint {
+	color: #94a3b8 !important;
 }
 
 html.dark body.student-portal .student-summary-card {
