@@ -790,12 +790,36 @@ html {
 	animation-name: arrow-nudge-left;
 }
 
+.arrow-action.arrow-down:hover .arrow-icon {
+	animation-name: arrow-nudge-down;
+}
+
 @keyframes arrow-nudge-right {
 	to { transform: translateX(.3rem); }
 }
 
 @keyframes arrow-nudge-left {
 	to { transform: translateX(-.3rem); }
+}
+
+@keyframes arrow-nudge-down {
+	to { transform: translateY(.3rem); }
+}
+
+@media (hover: none) and (pointer: coarse) {
+	.arrow-action:not(:disabled) .arrow-icon,
+	.arrow-action:not(:disabled).arrow-after::after {
+		animation: arrow-nudge-right 850ms ease-in-out infinite alternate;
+	}
+
+	.arrow-action.arrow-left:not(:disabled) .arrow-icon,
+	.arrow-action.arrow-left:not(:disabled)::before {
+		animation: arrow-nudge-left 850ms ease-in-out infinite alternate;
+	}
+
+	.arrow-action.arrow-down:not(:disabled) .arrow-icon {
+		animation: arrow-nudge-down 850ms ease-in-out infinite alternate;
+	}
 }
 
 .ui-enter {
