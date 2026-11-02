@@ -71,7 +71,10 @@ import '../styles/tenant-dashboard.css';
             </article>
         </section>
 
-        <nav class="tenant-dashboard-tabs mb-5" aria-label="Menu dashboard">
+        <button id="tenantDashboardMenuButton" type="button" aria-controls="tenantDashboardTabs" aria-expanded="false" class="tenant-dashboard-menu-button mb-3 inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 shadow-sm lg:hidden">
+            <span aria-hidden="true">☰</span> Navigasi dashboard
+        </button>
+        <nav id="tenantDashboardTabs" class="tenant-dashboard-tabs mb-5" aria-label="Menu dashboard">
             <button type="button" class="tenant-tab is-active" data-tenant-panel="orders">
                 <span aria-hidden="true">☷</span> Pesanan
                 <span id="tenantOrdersBadge" class="tenant-orders-badge hidden" aria-label="Pesanan belum diproses">0</span>
@@ -333,6 +336,8 @@ import '../styles/tenant-dashboard.css';
             document.querySelectorAll('[data-tenant-panel]').forEach((tab) => {
                 tab.classList.toggle('is-active', tab.dataset.tenantPanel === panel);
             });
+            document.getElementById('tenantDashboardTabs').classList.remove('is-open');
+            document.getElementById('tenantDashboardMenuButton').setAttribute('aria-expanded', 'false');
         }
 
         function formatOrderDate(value) {
@@ -781,6 +786,10 @@ import '../styles/tenant-dashboard.css';
             window.location.href = '/';
         });
 
+        document.getElementById('tenantDashboardMenuButton').addEventListener('click', () => {
+            const isOpen = document.getElementById('tenantDashboardTabs').classList.toggle('is-open');
+            document.getElementById('tenantDashboardMenuButton').setAttribute('aria-expanded', String(isOpen));
+        });
         document.getElementById('tenantOpenStatus').addEventListener('click', toggleTenantOpenStatus);
         document.querySelectorAll('[data-tenant-panel]').forEach((tab) => {
             tab.addEventListener('click', () => showTenantPanel(tab.dataset.tenantPanel));

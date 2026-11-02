@@ -1,6 +1,7 @@
 body { font-family: 'Plus Jakarta Sans', sans-serif; }
         .tenant-dashboard { background: #f8fafc; color: #1e293b; }
         .tenant-dashboard-header { border-bottom: 1px solid #e7ebf2; background: white; }
+        .tenant-dashboard-menu-button { display: none; }
         .tenant-logout-button, .tenant-sound-button {
             display: inline-flex; align-items: center; justify-content: center; gap: .5rem;
             border: 1px solid #e2e8f0; border-radius: 999px; background: white;
@@ -70,6 +71,26 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
         .tenant-order-action:disabled { cursor: default; background: #e2e8f0; color: #64748b; }
         .tenant-menu-item { display: flex; align-items: center; gap: .85rem; border: 1px solid #e7ebf2; border-radius: .9rem; padding: .85rem; }
         .tenant-menu-item img { width: 3.5rem; height: 3.5rem; flex: 0 0 auto; border-radius: .7rem; object-fit: cover; }
+        .tenant-order-row > * { min-width: 0; max-width: 100%; }
+        .tenant-order-row .tenant-order-action { max-width: 100%; white-space: normal; }
+
+        @media (max-width: 1023px) {
+            .tenant-dashboard-menu-button { display: inline-flex; }
+            .tenant-dashboard-tabs { display: none; flex-direction: column; align-items: stretch; overflow: visible; }
+            .tenant-dashboard-tabs.is-open { display: flex; }
+            .tenant-dashboard-tabs .tenant-tab { justify-content: flex-start; }
+            .tenant-order-row { align-items: flex-start; padding: 1rem; }
+            .tenant-order-row > .min-w-\[12rem\] { min-width: 0; flex-basis: 100%; }
+            .tenant-order-row > .min-w-24 { min-width: auto; }
+            .tenant-order-row > .flex { width: 100%; }
+        }
+
+        @media (max-width: 640px) {
+            .tenant-dashboard > div > main { padding-top: 1.25rem; }
+            .tenant-panel-heading { align-items: flex-start; padding: 1rem; }
+            .tenant-menu-item { flex-wrap: wrap; }
+            .tenant-menu-item > div { min-width: 0; }
+        }
 
         @media (prefers-reduced-motion: reduce) {
             .tenant-stat-card, .tenant-panel, .tenant-order-row, .tenant-menu-item,

@@ -79,14 +79,17 @@ tenantRatings?.forEach((rating) => {
 					<span class="uym-brand-text block text-xs">Universitas Yatsi Madani</span>
 				</span>
 			</a>
-			<nav class="flex flex-wrap items-center justify-end gap-2 text-sm font-bold">
-				<button id="tenantMenuButton" type="button" aria-controls="tenantSidebar" aria-expanded="false" aria-label="Buka menu kantin" class="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-2 transition hover:bg-white/10 lg:hidden">
-					<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5"><path stroke-linecap="round" d="M4 6h16M4 12h16M4 18h16" /></svg>
-					<span>Menu kantin</span>
+			<nav class="catalog-nav flex flex-wrap items-center justify-end gap-2 text-sm font-bold">
+				<button id="catalogMenuButton" type="button" aria-controls="catalogLinks" aria-expanded="false" aria-label="Buka navigasi" class="catalog-menu-button inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-2 transition hover:bg-white/10">
+					<svg data-catalog-menu-icon="open" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5"><path stroke-linecap="round" d="M4 6h16M4 12h16M4 18h16" /></svg>
+					<svg data-catalog-menu-icon="close" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="hidden h-5 w-5"><path stroke-linecap="round" d="m6 6 12 12M18 6 6 18" /></svg>
+					<span>Menu</span>
 				</button>
-				<a href="/mahasiswa/login" class="rounded-full bg-emerald-400 px-4 py-2 text-emerald-950 transition hover:bg-emerald-300">Login Mahasiswa</a>
-				<a href="/cek-pesanan" class="rounded-full border border-white/15 bg-white/5 px-4 py-2 hover:bg-white/10">Cek Pesanan</a>
-				<a href="/tenant/login" class="rounded-full border border-white/15 bg-white/5 px-4 py-2 hover:bg-white/10">Login Tenant</a>
+				<div id="catalogLinks" class="catalog-links">
+					<a href="/mahasiswa/login" class="rounded-full bg-emerald-400 px-4 py-2 text-emerald-950 transition hover:bg-emerald-300">Login Mahasiswa</a>
+					<a href="/cek-pesanan" class="rounded-full border border-white/15 bg-white/5 px-4 py-2 hover:bg-white/10">Cek Pesanan</a>
+					<a href="/tenant/login" class="rounded-full border border-white/15 bg-white/5 px-4 py-2 hover:bg-white/10">Login Tenant</a>
+				</div>
 				<span data-theme-toggle-slot class="contents"></span>
 			</nav>
 		</header>
@@ -117,47 +120,28 @@ tenantRatings?.forEach((rating) => {
 			</div>
 		</section>
 
-		<div class="mt-10 grid items-start gap-6 lg:grid-cols-[250px_minmax(0,1fr)]">
-			<button id="tenantSidebarBackdrop" type="button" aria-label="Tutup menu kantin" class="fixed inset-0 z-40 hidden bg-slate-950/70 backdrop-blur-sm lg:hidden"></button>
-			<aside id="tenantSidebar" class="tenant-sidebar glass fixed inset-y-4 left-4 z-50 hidden w-[min(20rem,calc(100vw-2rem))] -translate-x-full overflow-y-auto rounded-3xl p-5 transition-transform duration-300 ease-out lg:sticky lg:top-5 lg:block lg:w-auto lg:translate-x-0 lg:overflow-visible" aria-label="Navigasi kantin">
-				<div class="flex items-start justify-between gap-3">
-					<div>
-						<p class="text-xs font-extrabold uppercase tracking-[0.2em] text-blue-200">Jelajahi</p>
-						<h2 class="mt-1 text-xl font-black">Cari kantin</h2>
-					</div>
-					<button id="tenantSidebarClose" type="button" aria-label="Tutup menu kantin" class="rounded-lg border border-white/15 p-2 text-blue-100 transition hover:bg-white/10 lg:hidden">
-						<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5"><path stroke-linecap="round" d="m6 6 12 12M18 6 6 18" /></svg>
-					</button>
-				</div>
-				<nav class="mt-5 grid grid-cols-2 gap-2 lg:grid-cols-1" aria-label="Filter tenant">
-					<button type="button" data-tenant-filter="all" aria-pressed="true" class="tenant-filter is-active rounded-xl px-3 py-2.5 text-left text-sm font-bold transition">Semua kantin <span class="float-right text-xs opacity-70">{tenants?.length ?? 0}</span></button>
-					<button type="button" data-tenant-filter="open" aria-pressed="false" class="tenant-filter rounded-xl px-3 py-2.5 text-left text-sm font-bold transition">Sedang buka <span id="openTenantCount" class="float-right text-xs opacity-70">{tenants?.filter((tenant) => tenant.status_buka).length ?? 0}</span></button>
-					<button type="button" data-tenant-filter="cheapest" aria-pressed="false" class="tenant-filter rounded-xl px-3 py-2.5 text-left text-sm font-bold transition">Termurah <span class="float-right text-xs opacity-70">↓</span></button>
-				</nav>
-				<div class="mt-6 border-t border-white/10 pt-5">
-					<p class="text-xs font-extrabold uppercase tracking-[0.18em] text-blue-200/75">Daftar tenant</p>
-					{tenants?.length ? (
-						<ul class="mt-3 space-y-1">
-							{tenants.map((tenant) => (
-								<li>
-									<a href={`/tenant/${encodeURIComponent(tenant.slug)}`} class="flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm text-blue-50/80 transition hover:bg-white/10 hover:text-white">
-										<span class="truncate">{tenant.nama_tenant}</span>
-										<span data-tenant-status-indicator={tenant.id} class:list={['h-2 w-2 shrink-0 rounded-full', tenant.status_buka ? 'bg-emerald-300' : 'bg-slate-400']} aria-label={tenant.status_buka ? 'Buka' : 'Tutup'}></span>
-									</a>
-								</li>
-							))}
-						</ul>
-					) : (
-						<p class="mt-3 text-sm text-blue-100/55">Tenant akan tampil di sini.</p>
-					)}
-				</div>
-				<div class="mt-6 rounded-2xl border border-sky-200/10 bg-sky-300/5 p-4">
-					<p class="text-sm font-extrabold text-sky-100">Pesan praktis</p>
-					<p class="mt-1 text-xs leading-5 text-blue-100/60">Pilih kantin, tambahkan menu ke pesanan, dan ambil saat siap.</p>
-				</div>
-			</aside>
+		<section id="tenant-directory" class="tenant-directory glass mt-10 rounded-3xl p-5 sm:p-6" aria-labelledby="tenant-directory-heading">
+			<div class="mb-4">
+				<p class="text-xs font-extrabold uppercase tracking-[0.2em] text-blue-200">Pilihan kantin kampus</p>
+				<h2 id="tenant-directory-heading" class="mt-1 text-2xl font-extrabold">Daftar Kantin</h2>
+			</div>
+			{tenants?.length ? (
+				<ul class="tenant-directory-list grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+					{tenants.map((tenant) => (
+						<li>
+							<a href={`/tenant/${encodeURIComponent(tenant.slug)}`} class="tenant-directory-link flex min-h-14 items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3 transition hover:bg-white/10">
+								<span class="min-w-0 truncate text-sm font-bold">{tenant.nama_tenant}</span>
+								<span data-tenant-status-indicator={tenant.id} class:list={['tenant-directory-status shrink-0 rounded-full px-2.5 py-1 text-xs font-bold', tenant.status_buka ? 'bg-emerald-500 text-white' : 'bg-slate-600 text-slate-100']}>{tenant.status_buka ? 'Buka' : 'Tutup'}</span>
+							</a>
+						</li>
+					))}
+				</ul>
+			) : (
+				<p class="text-sm text-blue-100/65">Daftar kantin belum tersedia.</p>
+			)}
+		</section>
 
-			<section id="daftar-tenant" aria-labelledby="tenant-list-heading" tabindex="-1">
+			<section id="daftar-tenant" class="mt-8" aria-labelledby="tenant-list-heading" tabindex="-1">
 				<div class="mb-5 flex flex-wrap items-end justify-between gap-3">
 					<div>
 						<p class="text-xs font-bold uppercase tracking-[0.2em] text-blue-200">Menu kampus</p>
@@ -178,8 +162,6 @@ tenantRatings?.forEach((rating) => {
 									data-tenant-card
 									data-tenant-id={tenant.id}
 									data-tenant-open={tenant.status_buka ? 'true' : 'false'}
-									data-cheapest-price={cheapestPriceByTenant.has(tenant.id) ? String(cheapestPriceByTenant.get(tenant.id)) : ''}
-									data-original-order={index}
 									class="tenant-card glass ui-enter flex min-h-80 flex-col overflow-hidden rounded-3xl shadow-xl hover:border-sky-200/30"
 								>
 									<a href={`/tenant/${encodeURIComponent(tenant.slug)}`} class="tenant-card-cover group relative block h-44 overflow-hidden" aria-label={`Lihat menu ${tenant.nama_tenant}`}>
@@ -191,7 +173,7 @@ tenantRatings?.forEach((rating) => {
 												<span class="tenant-card-cover-emoji" aria-hidden="true">{index % 3 === 0 ? '🍱' : index % 3 === 1 ? '🥤' : '🍜'}</span>
 											</>
 										)}
-										<span data-tenant-status-badge={tenant.id} class:list={['absolute right-3 top-3 rounded-full px-3 py-1.5 text-xs font-extrabold shadow-sm', tenant.status_buka ? 'bg-emerald-300 text-emerald-950' : 'bg-white/90 text-slate-700']}>
+										<span data-tenant-status-badge={tenant.id} class:list={['absolute right-3 top-3 rounded-full px-3 py-1.5 text-xs font-extrabold shadow-sm', tenant.status_buka ? 'tenant-status-open' : 'tenant-status-closed bg-white/90 text-slate-700']}>
 											<span data-tenant-status-dot class:list={['mr-1 inline-block h-1.5 w-1.5 rounded-full align-middle', tenant.status_buka ? 'bg-emerald-700' : 'bg-slate-400']}></span>
 											<span data-tenant-status-label>{tenant.status_buka ? 'Buka sekarang' : 'Sedang tutup'}</span>
 										</span>
@@ -227,7 +209,6 @@ tenantRatings?.forEach((rating) => {
 								</article>
 							))}
 						</div>
-						<p id="tenantEmptyFilter" class="mt-4 hidden rounded-xl border border-white/10 bg-white/5 p-5 text-sm text-blue-100/75">Tidak ada tenant yang sedang buka saat ini.</p>
 					</>
 				) : (
 					<div class="empty-tenant rounded-3xl border border-white/10 p-8 text-center">
@@ -237,73 +218,38 @@ tenantRatings?.forEach((rating) => {
 					</div>
 				)}
 			</section>
-		</div>
 
-		<footer class="py-8 text-center text-xs text-blue-100/50">
+		<footer class="catalog-footer py-8 text-center text-sm">
 			<p>SiKantin UYM · Pesan dulu, ambil tanpa antre.</p>
-			<p class="mt-2">Created by <a href="https://ndhistira.my.id/" target="_blank" rel="noopener noreferrer" class="font-bold text-blue-100/75 hover:text-white">Nanda Yudhistira</a> · <a href="https://ndhistira.my.id/#projects" target="_blank" rel="noopener noreferrer" class="font-bold text-blue-100/75 hover:text-white">Lihat Portofolio</a></p>
+			<p class="mt-2">Created by <a href="https://ndhistira.my.id/" target="_blank" rel="noopener noreferrer" class="font-bold underline decoration-current/40 underline-offset-2 transition hover:decoration-current">Nanda Yudhistira</a> · <a href="https://ndhistira.my.id/#projects" target="_blank" rel="noopener noreferrer" class="font-bold underline decoration-current/40 underline-offset-2 transition hover:decoration-current">Lihat Portofolio</a></p>
 		</footer>
 	</main>
 	<script>
 		import { db } from '../scripts/supabase.js';
 
-		const tenantFilterButtons = document.querySelectorAll('[data-tenant-filter]');
+		const catalogMenuButton = document.getElementById('catalogMenuButton');
+		const catalogLinks = document.getElementById('catalogLinks');
+		const catalogMenuIcons = catalogMenuButton.querySelectorAll('[data-catalog-menu-icon]');
+		function setCatalogMenuOpen(isOpen) {
+			catalogLinks.classList.toggle('is-open', isOpen);
+			catalogMenuButton.setAttribute('aria-expanded', String(isOpen));
+			catalogMenuButton.setAttribute('aria-label', isOpen ? 'Tutup navigasi' : 'Buka navigasi');
+			catalogMenuIcons.forEach((icon) => icon.classList.toggle('hidden', icon.dataset.catalogMenuIcon !== (isOpen ? 'close' : 'open')));
+		}
+		catalogMenuButton.addEventListener('click', () => {
+			setCatalogMenuOpen(catalogMenuButton.getAttribute('aria-expanded') !== 'true');
+		});
+		catalogLinks.addEventListener('click', (event) => {
+			if (event.target.closest('a')) setCatalogMenuOpen(false);
+		});
+		document.addEventListener('keydown', (event) => {
+			if (event.key === 'Escape') setCatalogMenuOpen(false);
+		});
+
 		const tenantCards = document.querySelectorAll('[data-tenant-card]');
-		const tenantCardGrid = document.getElementById('tenantCardGrid');
-		const tenantCount = document.getElementById('tenantCount');
-		const openTenantCount = document.getElementById('openTenantCount');
-		const tenantMenuButton = document.getElementById('tenantMenuButton');
-		const tenantSidebar = document.getElementById('tenantSidebar');
-		const tenantSidebarBackdrop = document.getElementById('tenantSidebarBackdrop');
-		const tenantSidebarClose = document.getElementById('tenantSidebarClose');
-		const tenantEmptyFilter = document.getElementById('tenantEmptyFilter');
 		const tenantRealtimeStatus = document.getElementById('tenantRealtimeStatus');
-		let activeTenantFilter = 'all';
 		let tenantStatusChannel;
 		const tenantStatusRevisions = new Map();
-
-		function closeTenantDrawer(restoreFocus = false) {
-			const wasOpen = tenantMenuButton.getAttribute('aria-expanded') === 'true';
-			tenantMenuButton.setAttribute('aria-expanded', 'false');
-			tenantSidebarBackdrop.classList.add('hidden');
-			document.body.classList.remove('overflow-hidden');
-			if (wasOpen && window.matchMedia('(max-width: 1023px)').matches) {
-				tenantSidebar.classList.add('-translate-x-full');
-			} else {
-				tenantSidebar.classList.add('hidden', '-translate-x-full');
-			}
-			if (restoreFocus && wasOpen) tenantMenuButton.focus();
-		}
-
-		tenantSidebar.addEventListener('transitionend', (event) => {
-			if (
-				event.target === tenantSidebar
-				&& event.propertyName === 'transform'
-				&& tenantMenuButton.getAttribute('aria-expanded') === 'false'
-			) {
-				tenantSidebar.classList.add('hidden');
-			}
-		});
-		tenantMenuButton.addEventListener('click', () => {
-			tenantSidebar.classList.remove('hidden');
-			tenantSidebarBackdrop.classList.remove('hidden');
-			tenantMenuButton.setAttribute('aria-expanded', 'true');
-			document.body.classList.add('overflow-hidden');
-			requestAnimationFrame(() => {
-				if (tenantMenuButton.getAttribute('aria-expanded') === 'true') {
-					tenantSidebar.classList.remove('-translate-x-full');
-				}
-			});
-			tenantSidebarClose.focus();
-		});
-		tenantSidebarClose.addEventListener('click', () => closeTenantDrawer(true));
-		tenantSidebarBackdrop.addEventListener('click', () => closeTenantDrawer(true));
-		document.addEventListener('keydown', (event) => {
-			if (event.key === 'Escape') closeTenantDrawer(true);
-		});
-		window.matchMedia('(min-width: 1024px)').addEventListener('change', (event) => {
-			if (event.matches) closeTenantDrawer();
-		});
 
 		function parseTenantOpenStatus(value) {
 			if (value === true || value === 1) return true;
@@ -316,33 +262,6 @@ tenantRatings?.forEach((rating) => {
 			return null;
 		}
 
-		function refreshTenantCards() {
-			if (tenantCardGrid) {
-				const sortedCards = [...tenantCards].sort((a, b) => {
-					if (activeTenantFilter !== 'cheapest') {
-						return Number(a.dataset.originalOrder) - Number(b.dataset.originalOrder);
-					}
-					const priceA = a.dataset.cheapestPrice === '' ? Number.POSITIVE_INFINITY : Number(a.dataset.cheapestPrice);
-					const priceB = b.dataset.cheapestPrice === '' ? Number.POSITIVE_INFINITY : Number(b.dataset.cheapestPrice);
-					return priceA - priceB;
-				});
-				sortedCards.forEach((card) => tenantCardGrid.append(card));
-			}
-
-			let visibleCount = 0;
-			let openCount = 0;
-			tenantCards.forEach((card) => {
-				const isOpen = card.dataset.tenantOpen === 'true';
-				const visible = activeTenantFilter !== 'open' || isOpen;
-				card.classList.toggle('hidden', !visible);
-				if (visible) visibleCount += 1;
-				if (isOpen) openCount += 1;
-			});
-			if (tenantCount) tenantCount.textContent = String(visibleCount);
-			if (openTenantCount) openTenantCount.textContent = String(openCount);
-			if (tenantEmptyFilter) tenantEmptyFilter.classList.toggle('hidden', visibleCount > 0);
-		}
-
 		function applyTenantStatus(tenantId, statusValue) {
 			const isOpen = parseTenantOpenStatus(statusValue);
 			if (isOpen === null) return;
@@ -353,8 +272,8 @@ tenantRatings?.forEach((rating) => {
 				const badge = card.querySelector('[data-tenant-status-badge]');
 				const dot = badge?.querySelector('[data-tenant-status-dot]');
 				const label = badge?.querySelector('[data-tenant-status-label]');
-				badge?.classList.toggle('bg-emerald-300', isOpen);
-				badge?.classList.toggle('text-emerald-950', isOpen);
+				badge?.classList.toggle('tenant-status-open', isOpen);
+				badge?.classList.toggle('tenant-status-closed', !isOpen);
 				badge?.classList.toggle('bg-white/90', !isOpen);
 				badge?.classList.toggle('text-slate-700', !isOpen);
 				dot?.classList.toggle('bg-emerald-700', isOpen);
@@ -363,24 +282,12 @@ tenantRatings?.forEach((rating) => {
 			}
 
 			const indicator = document.querySelector(`[data-tenant-status-indicator="${CSS.escape(tenantId)}"]`);
-			indicator?.classList.toggle('bg-emerald-300', isOpen);
-			indicator?.classList.toggle('bg-slate-400', !isOpen);
-			indicator?.setAttribute('aria-label', isOpen ? 'Buka' : 'Tutup');
-			refreshTenantCards();
+			indicator?.classList.toggle('bg-emerald-500', isOpen);
+			indicator?.classList.toggle('text-white', isOpen);
+			indicator?.classList.toggle('bg-slate-600', !isOpen);
+			indicator?.classList.toggle('text-slate-100', !isOpen);
+			if (indicator) indicator.textContent = isOpen ? 'Buka' : 'Tutup';
 		}
-
-		tenantFilterButtons.forEach((button) => {
-			button.addEventListener('click', () => {
-				activeTenantFilter = button.dataset.tenantFilter;
-				refreshTenantCards();
-				tenantFilterButtons.forEach((filterButton) => {
-					const active = filterButton === button;
-					filterButton.classList.toggle('is-active', active);
-					filterButton.setAttribute('aria-pressed', String(active));
-				});
-				closeTenantDrawer(true);
-			});
-		});
 
 		const tenantIds = [...tenantCards].map((card) => card.dataset.tenantId).filter(Boolean);
 		if (tenantIds.length) {

@@ -58,7 +58,7 @@ function setEmptyRow(table, colspan, text) {
 
 function addMenuAddonRow(addon = {}) {
     const row = document.createElement('div');
-    row.className = 'grid grid-cols-[minmax(0,1fr)_120px_auto] items-center gap-2';
+    row.className = 'grid grid-cols-[minmax(0,1fr)_minmax(5rem,7.5rem)_auto] items-center gap-2';
 
     const id = document.createElement('input');
     id.type = 'hidden';

@@ -7,6 +7,9 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
         }
         .glass { border: 1px solid rgba(177, 198, 222, .2); background: rgba(25, 43, 64, .68); backdrop-filter: blur(14px); }
         .catalog-header { border: 0; box-shadow: 0 6px 20px rgba(15, 23, 42, .06); }
+        .catalog-nav { min-width: 0; }
+        .catalog-menu-button { display: none; }
+        .catalog-links { display: contents; }
         .catalog-promo {
             background:
                 radial-gradient(ellipse at 86% 20%, rgba(245, 158, 11, .16), transparent 34%),
@@ -43,10 +46,10 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
         }
         .hero-decoration span:nth-child(2) { transform: translateY(-2rem); }
         .hero-decoration span:nth-child(3) { transform: translateY(1.5rem); }
-        .tenant-sidebar { background: rgba(25, 43, 64, .72); }
-        .tenant-filter { color: rgba(219, 234, 254, .72); }
-        .tenant-filter:hover { background: rgba(255, 255, 255, .08); color: white; }
-        .tenant-filter.is-active { background: rgba(59, 130, 246, .22); color: white; box-shadow: inset 0 0 0 1px rgba(147, 197, 253, .2); }
+        .tenant-directory-link:hover { border-color: rgba(147, 197, 253, .45); }
+        .catalog-footer { color: #475569; }
+        .catalog-footer a { color: #1d4ed8; }
+        .catalog-footer a:hover { color: #1e3a8a; }
         .tenant-card-cover { background: linear-gradient(120deg, #f59e0b, #ef6c43 48%, #9f3f53); }
         .tenant-card-cover-art {
             position: absolute;
@@ -74,15 +77,47 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
                 linear-gradient(110deg, rgba(30, 64, 101, .95), rgba(25, 43, 64, .9));
         }
         .empty-tenant { background: radial-gradient(ellipse at 50% 0, rgba(56, 189, 248, .12), transparent 60%), rgba(255, 255, 255, .035); }
-        .tenant-card[hidden], .featured-tenant[hidden] { display: none; }
-        .catalog-hero, .catalog-promo, #daftar-tenant { animation: fade-in-up 600ms cubic-bezier(.2, .7, .2, 1) both; }
+        .featured-tenant[hidden] { display: none; }
+        .catalog-hero, .catalog-promo, #tenant-directory, #daftar-tenant { animation: fade-in-up 600ms cubic-bezier(.2, .7, .2, 1) both; }
         .catalog-promo { animation-delay: 100ms; }
-        #daftar-tenant { animation-delay: 180ms; }
+        #tenant-directory { animation-delay: 160ms; }
+        #daftar-tenant { animation-delay: 220ms; }
         .tenant-card { transition: translate 300ms ease-in-out, box-shadow 300ms ease-in-out, border-color 300ms ease-in-out; }
         .tenant-card:hover { translate: 0 -4px; box-shadow: 0 10px 20px rgba(0, 0, 0, .1); }
         .tenant-card:nth-child(2n) { animation-delay: 80ms; }
         .tenant-card:nth-child(3n) { animation-delay: 140ms; }
-        @media (max-width: 640px) {
+        html.dark .catalog-footer { color: #cbd5e1; }
+        html.dark .catalog-footer a { color: #93c5fd; }
+        html.dark .catalog-footer a:hover { color: #dbeafe; }
+        @media (max-width: 767px) {
+            .catalog-header { align-items: center; flex-direction: row; gap: .5rem; }
+            .catalog-nav {
+                position: relative;
+                flex: 0 0 auto;
+                justify-content: flex-end;
+                flex-wrap: nowrap;
+            }
+            .catalog-menu-button { display: inline-flex; }
+            .catalog-menu-button > span { display: none; }
+            .catalog-links {
+                position: absolute;
+                top: calc(100% + .65rem);
+                right: 0;
+                z-index: 40;
+                display: none;
+                width: min(19rem, calc(100vw - 3rem));
+                flex-direction: column;
+                align-items: stretch;
+                gap: .55rem;
+                border: 1px solid rgba(148, 163, 184, .3);
+                border-radius: 1rem;
+                background: rgba(17, 39, 62, .98);
+                padding: .75rem;
+                box-shadow: 0 18px 40px rgba(2, 8, 23, .28);
+            }
+            .catalog-links.is-open { display: flex; }
+            .catalog-links > * { flex: 0 0 auto; justify-content: flex-start; }
+            .catalog-links > a { width: 100%; }
             .hero-decoration { right: -5rem; opacity: .28; }
             .hero-decoration span:nth-child(2) { transform: translateY(-1rem); }
         }

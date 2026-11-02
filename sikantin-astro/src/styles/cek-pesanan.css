@@ -75,6 +75,13 @@
 	font-weight: 800;
 	transition: border-color .25s ease, background-color .25s ease, color .25s ease;
 }
+@media (max-width: 480px) {
+	.order-stepper {
+		grid-template-columns: repeat(4, minmax(4.5rem, 1fr));
+		overflow-x: auto;
+		padding-bottom: .5rem;
+	}
+}
 .order-step.is-current,
 .order-step.is-complete { color: #047857; }
 .order-step.is-current .order-step-indicator,

@@ -83,7 +83,6 @@ html:not(.dark) body.role-screen {
 
 html:not(.dark) body.role-screen .glass,
 html:not(.dark) body.role-screen .featured-tenant,
-html:not(.dark) body.role-screen .tenant-sidebar,
 html:not(.dark) body.role-screen .empty-tenant,
 html:not(.dark) body.role-screen .tenant-card {
 	border-color: #e2e8f0;
@@ -112,15 +111,6 @@ html:not(.dark) body.role-screen .catalog-promo {
 		linear-gradient(120deg, #eff6ff, #f8fafc 75%);
 	color: #1e293b;
 	box-shadow: 0 4px 16px rgb(15 23 42 / 5%);
-}
-
-html:not(.dark) body.role-screen .tenant-sidebar {
-	background: #fff;
-}
-
-html:not(.dark) body.role-screen .tenant-sidebar > div.rounded-2xl {
-	border-color: #bae6fd;
-	background: #f0f9ff;
 }
 
 html:not(.dark) body.role-screen .text-white,
@@ -165,6 +155,14 @@ html:not(.dark) body.role-screen .catalog-header {
 	background-color: #fff;
 }
 
+@media (max-width: 767px) {
+	html:not(.dark) body.role-screen .catalog-links {
+		border-color: #e2e8f0;
+		background: #fff;
+		box-shadow: 0 18px 40px rgb(15 23 42 / 16%);
+	}
+}
+
 html:not(.dark) body.role-screen .tenant-card {
 	border-radius: 1.5rem;
 }
@@ -201,18 +199,16 @@ html:not(.dark) body.role-screen .tenant-card a.bg-emerald-400 {
 	color: #fff;
 }
 
-html:not(.dark) body.role-screen .tenant-filter {
-	color: #475569;
+html:not(.dark) .tenant-status-open {
+	border: 1px solid #15803d;
+	background: #15803d;
+	color: #fff;
 }
 
-html:not(.dark) body.role-screen .tenant-filter:hover,
-html:not(.dark) body.role-screen .tenant-filter.is-active {
-	background: #eff6ff;
-	color: #1e3a8a;
-}
-
-html:not(.dark) body.role-screen .tenant-filter.is-active {
-	box-shadow: inset 0 0 0 1px #bfdbfe;
+html.dark .tenant-status-open {
+	border: 1px solid #166534;
+	background: #14532d;
+	color: #bbf7d0;
 }
 
 html:not(.dark) body.role-screen [class~="border-white/10"],

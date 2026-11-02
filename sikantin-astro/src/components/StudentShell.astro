@@ -90,7 +90,7 @@ const { title } = Astro.props;
 		const profileButton = document.getElementById('studentProfileButton');
 		const profileMenu = document.getElementById('studentProfileMenu');
 		const shellMessage = document.getElementById('studentShellMessage');
-		const desktopSidebar = window.matchMedia('(min-width: 1024px)');
+		const desktopSidebar = window.matchMedia('(min-width: 768px)');
 
 		function setSidebarPosition(isOpen) {
 			if (desktopSidebar.matches) {
@@ -110,7 +110,7 @@ const { title } = Astro.props;
 
 		function closeSidebar(restoreFocus = false) {
 			const wasOpen = menuButton.getAttribute('aria-expanded') === 'true';
-			const isDrawer = window.matchMedia('(max-width: 1023px)').matches;
+			const isDrawer = !desktopSidebar.matches;
 			menuButton.setAttribute('aria-expanded', 'false');
 			menuButton.setAttribute('aria-label', 'Buka menu');
 			backdrop.classList.add('hidden');
@@ -125,7 +125,7 @@ const { title } = Astro.props;
 		}
 
 		menuButton.addEventListener('click', () => {
-			const isDrawer = window.matchMedia('(max-width: 1023px)').matches;
+			const isDrawer = !desktopSidebar.matches;
 			const isOpen = isDrawer
 				? !sidebar.classList.contains('hidden') && !sidebar.classList.contains('student-sidebar-closed')
 				: !sidebar.classList.contains('hidden') && !sidebar.classList.contains('student-sidebar-collapsed');
@@ -239,7 +239,7 @@ const { title } = Astro.props;
 	</script>
 
 	<style>
-		@media (max-width: 1023px) {
+		@media (max-width: 767px) {
 			header {
 				z-index: 60 !important;
 			}
@@ -288,7 +288,7 @@ const { title } = Astro.props;
 			}
 		}
 
-		@media (min-width: 1024px) {
+		@media (min-width: 768px) {
 			#studentSidebar {
 				display: flex !important;
 				position: sticky !important;

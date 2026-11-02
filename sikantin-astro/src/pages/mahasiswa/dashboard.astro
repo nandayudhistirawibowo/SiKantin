@@ -116,7 +116,7 @@ import StudentShell from '../../components/StudentShell.astro';
 			location.textContent = tenant.lokasi || 'Lokasi belum diisi';
 			const status = document.createElement('span');
 			const isOpen = tenant.status_buka === true;
-			status.className = `mt-3 inline-flex rounded-full px-2.5 py-1 text-xs font-bold ${isOpen ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600'}`;
+			status.className = `tenant-status-badge mt-3 inline-flex rounded-full px-2.5 py-1 text-xs font-bold ${isOpen ? 'tenant-status-open' : 'tenant-status-closed bg-slate-100 text-slate-600'}`;
 			status.textContent = isOpen ? 'Sedang buka' : 'Sedang tutup';
 			details.append(name, location, status);
 
