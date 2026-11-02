@@ -24,7 +24,9 @@ Order tracking uses a cryptographically random token as a bearer credential. Gue
 
 The tenant dashboard loads `order_items.add_ons` and shows add-on names and extra prices beneath each menu item. It subscribes to tenant-filtered order INSERT/UPDATE/DELETE events so changes in another tab refresh the order list; successful local status changes refresh orders, menu data, and statistics as well.
 
-After an order reaches `Selesai`, its token can be used to submit one 1–5 star rating for the order's tenant. Ratings are stored in `tenant_reviews`; direct table access is disabled, and the `submit_guest_order_rating` RPC verifies the token and completed status before saving. Public catalog pages read aggregated averages through `get_public_tenant_ratings`. Apply `../supabase/migrations/20261029000001_tenant_reviews.sql` after the existing menu-review migration to enable this feature. Existing per-menu ratings are migrated to one rounded average per order.
+After an order reaches `Selesai`, its token can be used to submit one 1–5 star rating and optional feedback (up to 1000 characters) for the order's tenant. Ratings and feedback are stored in `tenant_reviews`; direct guest table access is disabled, and `submit_guest_order_rating` verifies the token and completed status before saving. `orders.completed_at` is set when the order reaches `Selesai`. Public catalog pages read aggregated averages through `get_public_tenant_ratings`. Apply `20261029000001_tenant_reviews.sql`, then `20261102000000_order_feedback.sql` and `20261103000000_tenant_reviews_realtime.sql` from `../supabase/migrations` to bring the repository's review schema and Realtime publication up to date. Existing per-menu ratings are migrated to one rounded average per order.
+
+The tenant dashboard includes completed-order history with menu/add-on details, total, rating, optional feedback, and completion time. It listens for `tenant_reviews` changes to refresh that history. Sales summary filters are Today, Last 7 Days, and This Month (default Today), calculated in the browser from the tenant's loaded orders using `created_at` in `Asia/Jakarta`; cancelled orders are excluded from revenue. Applying migrations in the repository does not prove that the target Supabase project's publication, policies, or jobs are configured as intended; verify them on the live project.
 
 Daily queue numbers increase continuously for each tenant and restart at `A-01` when the date changes in the `Asia/Jakarta` timezone. Apply `../supabase/migrations/20261029000003_restore_daily_queue_numbering.sql` to restore this behavior if the queue-cycle migration was previously applied.
 
@@ -52,7 +54,7 @@ The free ngrok URL can change when its tunnel restarts; update the `WA_GATEWAY_U
 
 ## SEO and sitemap
 
-`/robots.txt` points crawlers to the dynamic `/sitemap.xml` endpoint. The sitemap lists the homepage, order tracking page, and public tenant catalog pages; it excludes login and dashboard routes. The endpoint queries public tenant slugs using `PUBLIC_SUPABASE_URL` and `PUBLIC_SUPABASE_ANON_KEY`. Apply the migration that grants `anon` read access to public tenant data before deploying; the endpoint falls back to querying only `slug` if `updated_at` is unavailable.
+`/robots.txt` points crawlers to the dynamic `/sitemap.xml` endpoint. The sitemap lists the homepage and public tenant catalog pages only; it excludes order tracking, checkout, login, and dashboard routes. The endpoint queries public tenant slugs and uses `updated_at` for `lastmod` when available. It requires `PUBLIC_SUPABASE_URL`, `PUBLIC_SUPABASE_ANON_KEY`, and anonymous read access to the relevant tenant data. The endpoint falls back to querying only `slug` if `updated_at` is unavailable; verify the live grants/policies before deployment.
 
 WhatsApp session files stay in the existing `auth_info_baileys` directory outside this project. Set `WA_AUTH_DIR` to use a different session location. Do not copy or commit session credentials.
 
@@ -61,11 +63,12 @@ WhatsApp session files stay in the existing `auth_info_baileys` directory outsid
 ## Routes
 
 - `/` — guest tenant directory
-- `/tenant/<slug>` — guest menu and checkout
+- `/tenant/<slug>` — guest tenant menu/catalog
+- `/checkout?tenant=<slug>` — separate checkout for the selected tenant
 - `/cek-pesanan` — token-based order tracking
 - `/sitemap.xml` — generated public sitemap
 - `/robots.txt` — crawler directives and sitemap location
 - `/tenant/login` — tenant owner login
-- `/tenant/<slug>/dashboard` — tenant dashboard
+- `/tenant-dashboard` — tenant dashboard (`/tenant/<slug>/dashboard` rewrites here)
 - `/admin/login` — administrator login
 - `/admin/dashboard` — existing administrator CRUD dashboard

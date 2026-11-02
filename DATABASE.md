@@ -2,7 +2,7 @@
 
 Dokumen ini merangkum skema yang dapat diverifikasi dari SQL migrations dan query aplikasi dalam repository. Dokumen ini **bukan dump skema live** dan tidak boleh digunakan sebagai DDL pemulihan tanpa membandingkan database Supabase target.
 
-Migration terbaru `20261101000000_remove_student_activation_codes.sql` menghapus kolom dan unique index `profiles.activation_code` yang sempat ditambahkan migration sebelumnya. Kolom tersebut bukan bagian dari skema akhir repository. Password awal mahasiswa ditetapkan sama dengan NIM; autentikasi memakai Supabase Auth.
+Migration terbaru dalam repository `20261103000000_tenant_reviews_realtime.sql` mendaftarkan `tenant_reviews` pada publikasi Supabase Realtime dan menetapkan `REPLICA IDENTITY FULL`. Migration `20261102000000_order_feedback.sql` sebelumnya menambahkan `tenant_reviews.feedback_text` dan `orders.completed_at`, memperbarui RPC review, serta menambahkan akses baca review terbatas bagi pemilik tenant. Migration `20261101000000_remove_student_activation_codes.sql` menghapus kolom dan unique index `profiles.activation_code`; kolom itu bukan bagian skema akhir repository. Password awal mahasiswa ditetapkan sama dengan NIM; autentikasi memakai Supabase Auth.
 
 ## 1. Catatan Sumber dan Cara Membaca
 
@@ -91,6 +91,7 @@ Objek add-on pada JSON array memiliki `id`, `name`, dan `price`. Edge Function m
 | `metode_pembayaran` | `text NOT NULL DEFAULT 'qris'` | Check eksplisit membatasi nilai ke `qris` atau `tunai`; checkout guest aktif mengirim `qris`. |
 | `bukti_transfer` | `text NULL` | URL bukti transfer; ditulis oleh Edge Function. |
 | `alasan_pembatalan` | `text NULL` | Alasan penolakan/pembatalan order. |
+| `completed_at` | `timestamptz NULL` | Ditambahkan oleh migration `20261102000000_order_feedback.sql`; diisi saat status berubah menjadi `Selesai`. Data selesai yang lama di-backfill menggunakan `updated_at` atau `created_at`. |
 | `tenant_whatsapp` | `text NOT NULL DEFAULT 'not_applicable'` | Status integrasi WA tenant; ditambahkan migration `20261029000005_order_tenant_whatsapp.sql`. |
 | `created_at`, `updated_at` | `timestamptz` | Timestamp order; `created_at` dipakai untuk sorting/riwayat. |
 
@@ -138,9 +139,10 @@ Dibuat oleh migration `20261029000001_tenant_reviews.sql`.
 | `order_id` | `uuid` | PK sekaligus FK ke `orders(id) ON DELETE CASCADE`; satu review tenant per order. |
 | `tenant_id` | `uuid NOT NULL` | FK ke `tenants(id) ON DELETE CASCADE`. |
 | `rating` | `integer NOT NULL` | Check `BETWEEN 1 AND 5`. |
+| `feedback_text` | `text NULL` | Ditambahkan oleh migration `20261102000000_order_feedback.sql`; saran/masukan opsional, maksimal 1000 karakter melalui RPC. |
 | `created_at` | `timestamptz NOT NULL` | Default `now()`. |
 
-Index: `tenant_id`. RPC menolak rating sebelum order berstatus `Selesai`.
+Index: `tenant_id`. RPC menolak rating/feedback sebelum order berstatus `Selesai`. Submit memakai RPC berbasis token; baca review untuk dashboard hanya diizinkan bagi pemilik tenant terkait.
 
 ### 3.3 `menu_reviews`
 
@@ -219,7 +221,7 @@ ERD menunjukkan relasi logis aplikasi. Repository secara eksplisit membuat sebag
 | `orders` | Authenticated dapat membaca order sendiri, order tenant miliknya, atau semua order sebagai admin. Insert langsung dibatasi untuk mahasiswa login dan `mahasiswa_id = auth.uid()`. Update owner hanya untuk order tenant miliknya; privilege update dibatasi pada `status` dan `alasan_pembatalan`. | Guest checkout ditulis Edge Function memakai service role, bukan insert langsung dari `anon`. |
 | `order_items` | Read jika parent order dapat dibaca; insert langsung untuk order mahasiswa pemilik. | Penulisan guest dilakukan Edge Function/service role. |
 | `favorites` | Select/insert/delete untuk `user_id = auth.uid()` dan role mahasiswa. | Admin tidak mendapat akses aplikasi khusus ke favorites dari migration ini. |
-| `tenant_reviews` | RLS aktif; table privileges dicabut dari `PUBLIC`, `anon`, dan `authenticated`. | Agregasi dan submit lewat RPC `SECURITY DEFINER` yang memeriksa token, rating, dan status order selesai. |
+| `tenant_reviews` | RLS aktif; akses `PUBLIC` dan `anon` dicabut. Role authenticated mendapat `SELECT` dengan policy pemilik tenant. | Submit guest lewat RPC `SECURITY DEFINER` yang memeriksa token dan status order selesai; klien tidak mendapat akses tulis langsung. |
 | `menu_reviews` | RLS aktif; table privileges dicabut dari `PUBLIC`, `anon`, dan `authenticated`. | Data hanya diakses oleh fungsi dengan hak yang sesuai; fungsi agregasi menu lama dapat dihapus pada migration berikutnya. |
 | `tenant_daily_order_counters` | RLS aktif; akses table dicabut dari `PUBLIC`, `anon`, dan `authenticated`. | Alokasi nomor via RPC yang diberikan kepada service role. |
 | `messages` | RLS aktif; tidak ada akses `PUBLIC`/`anon`/`authenticated`; service role mendapat select/insert/update. | Digunakan integrasi server/gateway. |
@@ -245,8 +247,9 @@ RLS di atas adalah ringkasan migrasi repository, bukan audit konfigurasi Supabas
 | `broadcast_guest_order_status()` | Trigger mengirim broadcast saat status order dengan token berubah. |
 | `next_tenant_queue_number(uuid)` | Mengalokasikan nomor antrean dengan counter per tenant/tanggal WIB; execute dibatasi ke service role. |
 | `lookup_guest_order_with_queue(text)` | Mengembalikan order/item untuk token yang valid. Token harus diperlakukan rahasia. |
-| `submit_guest_order_rating(text, integer)` | Menyimpan rating tenant 1–5 hanya untuk order selesai yang cocok dengan token. |
+| `submit_guest_order_rating(text, integer, text)` | Menyimpan rating 1–5 dan feedback opsional (maksimal 1000 karakter) hanya untuk order selesai yang cocok dengan token. |
 | `get_public_tenant_ratings(uuid)` | Menghasilkan agregat rating tenant. |
+| `set_order_completed_at()` | Trigger mengisi `orders.completed_at` saat status berubah menjadi `Selesai`. |
 | `refresh_tenant_open_status()` | Scheduler menghitung status sesuai jadwal WIB bila override tidak aktif. |
 | `set_tenant_manual_status(uuid, boolean)` | Memastikan pemanggil pemilik tenant dan menyimpan status manual serta batas override. |
 
@@ -264,6 +267,8 @@ RLS di atas adalah ringkasan migrasi repository, bukan audit konfigurasi Supabas
 
 - Dashboard tenant mengambil `order_items.add_ons` bersama order, lalu merender nama add-on dan harga tambahannya sebagai daftar di bawah nama menu.
 - Dashboard tenant subscribe ke `public.orders` untuk event `INSERT`, `UPDATE`, dan `DELETE`, difilter dengan `tenant_id`. Event memuat ulang daftar order; perubahan status lokal juga memuat ulang order/menu dan menghitung ulang statistik.
+- Dashboard tenant subscribe ke `public.tenant_reviews` untuk perubahan review tenant dan memuat ulang riwayat. Migration `20261103000000_tenant_reviews_realtime.sql` menambahkan tabel ke publikasi `supabase_realtime`.
+- Ringkasan tenant menyediakan filter Hari Ini, 7 Hari Terakhir, dan Bulan Ini. Browser memfilter data order tenant yang dimuat berdasarkan `created_at` dalam `Asia/Jakarta`; pesanan dibatalkan tidak dihitung sebagai pendapatan.
 - `Layout.astro` menerapkan title, description, keywords, canonical tanpa query string, Open Graph, dan Twitter Card untuk halaman yang memakai layout. Halaman autentikasi/dashboard menggunakan `noIndex`.
 - Endpoint Astro `/sitemap.xml` mengambil `slug` dan `updated_at` tenant dengan Supabase public/anon client; `updated_at` dipakai sebagai `lastmod` jika tersedia dan valid. Policy `SELECT` serta grant role `anon` pada `tenants` harus tersedia. Bila kolom `updated_at` tidak ada, endpoint mencoba query `slug` saja; error konfigurasi, query, atau akses dicatat dan dikembalikan secara eksplisit.
 - Sitemap hanya memuat beranda dan katalog tenant ber-slug; halaman cek pesanan, checkout, login, dan dashboard tidak dimasukkan.

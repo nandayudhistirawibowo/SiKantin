@@ -10,9 +10,9 @@
 
 ## 1. Ringkasan Produk
 
-SiKantin adalah aplikasi web untuk menemukan tenant kantin kampus, melihat katalog menu, membuat pesanan, dan mengikuti status pesanan. Pengunjung dapat memilih menu di katalog lalu melanjutkan ke halaman Checkout terpisah sebagai guest; mahasiswa yang login memperoleh checkout dengan data profil, favorit, riwayat, dan akses untuk memberi rating setelah pesanan selesai. Tenant menangani pesanan dan operasional kantinnya. Admin mengelola akun, tenant, menu, dan jadwal.
+SiKantin adalah aplikasi web untuk menemukan tenant kantin kampus, melihat katalog menu, membuat pesanan, dan mengikuti status pesanan. Pengunjung dapat memilih menu di katalog lalu melanjutkan ke halaman Checkout terpisah sebagai guest; mahasiswa yang login memperoleh checkout dengan data profil, favorit, riwayat, dan akses untuk memberi rating serta saran opsional setelah pesanan selesai. Tenant menangani pesanan dan operasional kantinnya. Admin mengelola akun, tenant, menu, dan jadwal.
 
-Transaksi disimpan pada Supabase. Bukti QRIS diperiksa manusia; aplikasi tidak mengonfirmasi pembayaran dari jaringan pembayaran. WhatsApp digunakan sebagai kanal notifikasi tambahan melalui gateway terpisah yang menggunakan Baileys. Status pesanan dan token pelacakan tetap bersumber dari database.
+Transaksi disimpan pada Supabase. Bukti QRIS diperiksa manusia; aplikasi tidak mengonfirmasi pembayaran dari jaringan pembayaran. Tenant dapat melihat rating dan saran/masukan pada riwayat order selesai. WhatsApp digunakan sebagai kanal notifikasi tambahan melalui gateway terpisah yang menggunakan Baileys. Status pesanan dan token pelacakan tetap bersumber dari database.
 
 ## 2. Latar Belakang dan Masalah
 
@@ -25,7 +25,7 @@ SiKantin menyatukan katalog tenant dan menu dengan alur pemesanan web. Setelah c
 1. Memudahkan mahasiswa menemukan kantin dan menu kampus melalui web.
 2. Memungkinkan pemesanan tanpa membuat akun, serta menyediakan pengalaman lebih personal untuk mahasiswa login.
 3. Memberikan tenant satu tempat untuk melihat antrean dan memperbarui status pesanan.
-4. Memberikan nomor antrean harian per tenant dan token pelacakan pesanan.
+4. Memberikan nomor antrean harian per tenant, token pelacakan, dan ringkasan penjualan terfilter periode.
 5. Mengurangi ketergantungan pada komunikasi manual dengan menyediakan status database, realtime, dan notifikasi WhatsApp tambahan.
 6. Mengelola jadwal buka/tutup otomatis sambil mempertahankan override manual tenant.
 7. Membatasi akses data melalui autentikasi, role, Row Level Security (RLS), dan validasi server-side.
@@ -61,7 +61,7 @@ SiKantin menyatukan katalog tenant dan menu dengan alur pemesanan web. Setelah c
 - Mengunggah bukti pembayaran QRIS sesuai batas format/ukuran aplikasi.
 - Melihat konfirmasi, nomor pesanan, nomor antrean, dan token.
 - Membuka halaman **Cek Pesanan** dengan token untuk melihat item, total, status, dan pembaruan realtime.
-- Memberi rating tenant setelah pesanan berstatus selesai.
+- Memberi rating tenant dan saran/masukan opsional setelah pesanan berstatus selesai.
 
 ### 6.2 Mahasiswa Login
 
@@ -73,12 +73,13 @@ SiKantin menyatukan katalog tenant dan menu dengan alur pemesanan web. Setelah c
 - Memilih tenant favorit dan melihatnya di dashboard.
 - Checkout dengan data NIM dan nomor HP dari profil terisi otomatis. Profil harus memenuhi validasi sebelum checkout.
 - Melihat maksimal tiga pesanan terbaru di dashboard serta daftar riwayat penuh.
-- Memberi rating tenant setelah pesanan selesai melalui token/order yang tersedia.
+- Memberi rating tenant dan saran/masukan opsional setelah pesanan selesai melalui token order.
 
 ### 6.3 Pemilik Tenant
 
 - Login ke dashboard dan hanya mengelola data tenant yang terkait dengan akunnya.
-- Melihat ringkasan penjualan, pesanan baru, pesanan yang perlu diproses, pesanan siap diambil, dan riwayat.
+- Melihat ringkasan pendapatan dan jumlah pesanan dengan filter Hari Ini, 7 Hari Terakhir, atau Bulan Ini. Periode menggunakan `created_at` berdasarkan tanggal WIB; pendapatan tidak mencakup pesanan dibatalkan.
+- Melihat pesanan baru, detail order, pesanan yang perlu diproses, pesanan siap diambil, dan riwayat order selesai beserta menu/add-on, rating, dan saran pelanggan.
 - Memeriksa detail pesanan serta bukti pembayaran QRIS yang diunggah.
 - Untuk pesanan QRIS, melakukan tindakan verifikasi manual pada dashboard tenant: menerima ke proses atau menolak dengan alasan.
 - Mengubah status order melalui kontrol dashboard: status proses, siap diambil, dan selesai sesuai status awal.
@@ -118,19 +119,21 @@ SiKantin menyatukan katalog tenant dan menu dengan alur pemesanan web. Setelah c
 - Nomor antrean dibuat oleh fungsi database per tenant dan tanggal lokal WIB, misalnya `A-01`; counter dimulai kembali pada tanggal berikutnya.
 - Token order adalah kredensial pelacakan. Token tidak boleh dibagikan secara publik.
 - Checkout guest yang aktif saat ini menggunakan QRIS dan status awal `Menunggu Verifikasi`.
+- Saat status order berubah menjadi `Selesai`, trigger mengisi `completed_at`; order lama yang telah selesai di-backfill oleh migration.
+- Rating dan saran disimpan melalui RPC yang memvalidasi token dan status selesai. Saran opsional dibatasi maksimal 1000 karakter.
 
 ### 7.3 Status Pesanan
 
 Status yang dijumpai pada implementasi saat ini:
 
-1. `Menunggu Verifikasi` — order QRIS baru menunggu pemeriksaan tenant.
-2. `Menunggu` — status pesanan menunggu yang dapat muncul pada alur dashboard.
-3. `Diproses` — tenant menerima/verifikasi pembayaran dan mulai menyiapkan pesanan.
-4. `Siap diambil` — pembeli dapat mengambil pesanan.
-5. `Selesai` — order selesai; rating dapat diberikan.
+1. `Menunggu Verifikasi` — order QRIS menunggu pemeriksaan tenant; dashboard menyediakan aksi verifikasi ke `Diproses` atau pembatalan dengan alasan.
+2. `Menunggu` — dashboard menyediakan aksi menerima pesanan ke `Diproses`.
+3. `Diproses` — tenant menyiapkan pesanan.
+4. `Siap diambil` — dashboard menyediakan aksi menyelesaikan pesanan.
+5. `Selesai` — order selesai; waktu selesai dicatat dan rating/saran dapat diberikan.
 6. `Dibatalkan` — pesanan ditolak/dibatalkan; alasan dapat disimpan.
 
-Status disimpan sebagai teks pada baseline yang ada. Seluruh transisi perlu mengikuti tombol dan validasi status pada dashboard; daftar di atas bukan pernyataan bahwa setiap transisi bebas dilakukan.
+Status disimpan sebagai teks pada baseline yang ada. Urutan di atas merangkum aksi yang tampak pada dashboard, bukan berarti setiap transisi bebas dilakukan.
 
 ### 7.4 Pembayaran dan WhatsApp
 
@@ -152,7 +155,7 @@ Status disimpan sebagai teks pada baseline yang ada. Seluruh transisi perlu meng
 6. Server menghitung harga dan total, membuat token, mendapatkan nomor antrean, lalu menyimpan `orders` dan `order_items`.
 7. Sistem mencoba mengirim WhatsApp melalui gateway terpisah dan mengarahkan pembeli ke `/cek-pesanan?token=...`.
 8. Tenant memeriksa bukti pembayaran secara manual, menerima/menolak order, lalu memperbarui status hingga siap diambil/selesai.
-9. Pembeli melacak order melalui token dan realtime. Setelah selesai, pembeli dapat mengirim rating bintang; halaman cek pesanan mengarahkan kembali ke katalog atau dashboard mahasiswa berdasarkan asal yang tersimpan di session.
+9. Pembeli melacak order melalui token dan realtime. Setelah selesai, pembeli dapat mengirim rating bintang dan saran opsional; waktu selesai, menu, total, dan feedback tersedia pada riwayat tenant. Setelah menyelesaikan alur, guest kembali ke beranda dan mahasiswa yang berasal dari dashboard kembali ke dashboard.
 
 ## 9. Kebutuhan Nonfungsional
 
@@ -191,6 +194,7 @@ Status disimpan sebagai teks pada baseline yang ada. Seluruh transisi perlu meng
 - Jadwal saat ini berulang tiap hari tanpa kalender libur, hari khusus, atau jadwal mingguan.
 - Baseline DDL core tables tidak seluruhnya tersedia di repository. Tipe/FK/constraint aktual core table perlu dicocokkan dengan database Supabase sebelum restore/migrasi.
 - Policies yang dibuat langsung pada Supabase Dashboard tidak otomatis tercatat dalam repository dan perlu diaudit saat deployment.
+- Bucket `bukti-transfer` memiliki akses baca publik pada migration repository. URL bukti yang tersebar dapat diakses tanpa token order; jangan memakai bukti nyata untuk demo dan evaluasi akses Storage pada Supabase live sebelum produksi.
 - Dashboard admin belum memiliki aksi verifikasi pembayaran; verifikasi berjalan dari dashboard pemilik tenant.
 
 ## 12. Di Luar Ruang Lingkup
@@ -210,14 +214,16 @@ Status disimpan sebagai teks pada baseline yang ada. Seluruh transisi perlu meng
 - Detail order menampilkan add-on terpilih dan harga tambahannya di bawah nama menu.
 - Pesanan dapat dicari melalui token dan menunjukkan status yang tersimpan.
 - Penolakan order mencoba mengirim alasan ke nomor pembeli (`orders.phone`) dengan template penolakan yang ditentukan; gagalnya WA tidak membatalkan order.
-- Mahasiswa login dapat auto-fill profil, melihat favorit/riwayat, dan memberi rating setelah selesai.
+- Mahasiswa login dapat auto-fill profil, melihat favorit/riwayat, dan memberi rating serta saran opsional setelah selesai.
 
 ### Tenant
 
 - Tenant hanya dapat mengakses pesanan/operasional tenant miliknya.
 - Bukti QRIS tersedia untuk pemeriksaan manual.
 - Tenant dapat mengubah status order sesuai alur dashboard dan melakukan override manual buka/tutup.
-- Setelah perubahan status berhasil, data order/menu dan angka statistik dimuat ulang. Dashboard di tab lain memperbarui order dari event Realtime `INSERT`, `UPDATE`, dan `DELETE` tenant terkait.
+- Ringkasan penjualan dapat difilter ke Hari Ini, 7 Hari Terakhir, atau Bulan Ini berdasarkan `created_at` dan tanggal WIB. Pendapatan mengecualikan order yang dibatalkan.
+- Riwayat order selesai menampilkan antrean, mahasiswa, menu/add-on, total, rating, saran, dan tanggal selesai bila tersedia.
+- Setelah perubahan status berhasil, data order/menu dan angka statistik dimuat ulang. Dashboard di tab lain memperbarui order dari event Realtime `INSERT`, `UPDATE`, dan `DELETE` tenant terkait; event review juga menyegarkan riwayat.
 - Status otomatis menghormati jadwal WIB dan override sampai jadwal berikutnya.
 
 ### Admin

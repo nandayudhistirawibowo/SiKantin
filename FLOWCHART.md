@@ -34,8 +34,11 @@ flowchart TD
     X --> Y[Lihat status, antrean, dan rincian order]
     Y --> Z{Order selesai?}
     Z -- Belum --> X
-    Z -- Ya --> AA[Opsional: kirim rating tenant bintang 1-5]
-    AA --> AB[Redirect ke asal tersimpan: katalog tenant atau dashboard mahasiswa]
+    Z -- Ya --> AA[Opsional: kirim rating dan saran/masukan]
+    AA --> AB[Riwayat tenant menampilkan rating, feedback, dan waktu selesai]
+    AB --> AC{Asal pembeli}
+    AC -- Guest --> AD[Kembali ke beranda]
+    AC -- Dashboard mahasiswa --> AE[Kembali ke dashboard mahasiswa]
     Q -. Gateway gagal: token dan cek pesanan tetap tersedia .-> R
 ```
 
@@ -68,7 +71,7 @@ flowchart TD
     U --> V[Lihat order pada riwayat akun]
     V --> W{Status Selesai?}
     W -- Tidak --> U
-    W -- Ya --> X[Kirim rating tenant]
+    W -- Ya --> X[Kirim rating dan saran opsional ke tenant_reviews]
     X --> Y[Redirect selesai kembali ke dashboard mahasiswa]
     T -. Pengiriman tidak tersedia/gagal .-> U
 ```
@@ -95,9 +98,13 @@ flowchart TD
     L --> M
     M --> N[Coba kirim notifikasi WhatsApp sesuai integrasi]
     M --> O[Pembeli melihat status pada halaman cek order]
+    L --> R[Riwayat tenant menampilkan detail order selesai dan feedback]
+    R --> S[Perubahan tenant_reviews menyegarkan riwayat via Realtime]
     P[Tab dashboard tenant lain menerima event INSERT/UPDATE/DELETE dengan filter tenant_id] --> Q[Muat ulang order dan hitung statistik]
     M --> P
 ```
+
+Ringkasan pendapatan dan jumlah order pada dashboard tenant dapat difilter berdasarkan Hari Ini, 7 Hari Terakhir, atau Bulan Ini menggunakan tanggal `created_at` WIB. Pendapatan mengecualikan pesanan dibatalkan.
 
 ### Buka/tutup tenant
 
@@ -142,7 +149,7 @@ flowchart LR
     C -->|Simpan referrer tenant| D[Submit order]
     D --> E[Halaman Cek Pesanan dengan token]
     E -->|Selesaikan Pesanan| F{referrer aman dan tersedia?}
-    F -- Katalog --> G[Kembali ke katalog tenant]
+    F -- Guest --> G[Kembali ke beranda]
     F -- Dashboard mahasiswa --> H[Kembali ke dashboard mahasiswa]
     F -- Kosong atau tidak dikenal --> I[Kembali ke beranda]
 ```
@@ -200,8 +207,10 @@ sequenceDiagram
     Tenant->>DB: Perbarui status order
     DB-->>Web: Realtime status update
     Web-->>Buyer: Render status terbaru
-    Buyer->>Web: Kirim rating setelah selesai
-    Web->>DB: submit_guest_order_rating(token, rating)
-    DB-->>Web: Validasi order selesai dan simpan rating
-    Web->>Web: Redirect ke referrer session yang tervalidasi atau /
+    Buyer->>Web: Kirim rating dan feedback opsional setelah selesai
+    Web->>DB: submit_guest_order_rating(token, rating, feedback_text)
+    DB-->>Web: Validasi order selesai dan simpan rating/feedback
+    DB-->>Tenant: Realtime tenant_reviews
+    Tenant->>DB: Muat ulang riwayat pesanan selesai
+    Web->>Web: Redirect ke beranda (guest) atau dashboard mahasiswa
 ```
