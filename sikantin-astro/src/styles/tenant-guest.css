@@ -55,7 +55,26 @@
 }
 .menu-quantity-button:hover:not(:disabled) { border-color: #1d4ed8; background: #eff6ff; }
 .menu-quantity-button:disabled { cursor: not-allowed; opacity: .45; }
-@media (max-width: 640px) {
+html:not(.dark) body.tenant-guest #studentCheckoutProfileCard p.text-slate-800,
+html:not(.dark) body.tenant-guest #studentCheckoutName,
+html:not(.dark) body.tenant-guest #studentCheckoutPhone,
+html:not(.dark) body.tenant-guest #guestNimField,
+html:not(.dark) body.tenant-guest #guestPhoneField {
+	color: #1e293b !important;
+}
+html.dark body.tenant-guest .site-header img {
+	border-color: #334155 !important;
+}
+html.dark body.tenant-guest #studentCheckoutProfileCard p.text-slate-800,
+html.dark body.tenant-guest #studentCheckoutProfileCard p.text-slate-600,
+html.dark body.tenant-guest #guestNimField,
+html.dark body.tenant-guest #guestPhoneField {
+	color: #cbd5e1 !important;
+}
+html.dark body.tenant-guest #studentCheckoutName {
+	color: #f8fafc !important;
+}
+@media (max-width: 767px) {
 	.tenant-checkout-cart {
 		position: sticky;
 		bottom: .5rem;
@@ -69,6 +88,14 @@
 	.menu-grid-single .menu-photo { height: 15rem; min-height: 0; }
 	.menu-grid-single .menu-card > div { padding: 1rem; }
 	.menu-grid-single .menu-card h3 { font-size: 1.125rem; }
+}
+
+@media (min-width: 768px) {
+	.menu-grid:not(.menu-grid-single) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (min-width: 1280px) {
+	.menu-grid:not(.menu-grid-single) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
 @media (prefers-reduced-motion: reduce) {

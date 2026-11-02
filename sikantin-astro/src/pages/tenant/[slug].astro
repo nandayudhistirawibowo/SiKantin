@@ -142,7 +142,7 @@ const menuCategories = [...new Set((menuItems ?? []).map((item) => item.kategori
                   </div>
                 </div>
 
-              <div id="menuGrid" data-count={menuItems.length} class:list={['menu-grid mt-4 grid gap-5', menuItems.length === 1 ? 'menu-grid-single' : 'sm:grid-cols-2 xl:grid-cols-3']}>
+              <div id="menuGrid" data-count={menuItems.length} class:list={['menu-grid mt-4 grid gap-5', menuItems.length === 1 ? 'menu-grid-single' : 'md:grid-cols-2 xl:grid-cols-3']}>
                 {menuItems.map((item) => (
                   <article
                     class="menu-card group overflow-hidden rounded-3xl border border-white/10 bg-white shadow-lg shadow-slate-950/20"
@@ -251,15 +251,15 @@ const menuCategories = [...new Set((menuItems ?? []).map((item) => item.kategori
                 <div class="mb-4 flex items-center justify-between gap-2">
                   <div>
                     <p class="text-[11px] font-extrabold uppercase tracking-[0.16em] text-emerald-700">Checkout Mahasiswa</p>
-                    <p class="mt-1 text-xs text-slate-500">Data terhubung ke profil kamu</p>
+                    <p class="mt-1 text-xs text-slate-800 dark:text-slate-300">Data terhubung ke profil kamu</p>
                   </div>
                   <span class="rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-bold text-emerald-800">Login</span>
                 </div>
                 <div class="flex min-w-0 items-center gap-3">
                   <img id="checkoutStudentAvatar" src="" alt="" class="h-12 w-12 rounded-full bg-white object-cover" />
                   <div class="min-w-0">
-                    <p id="checkoutStudentName" class="truncate font-extrabold text-slate-900"></p>
-                    <p id="checkoutStudentPhone" class="mt-0.5 text-sm text-slate-600"></p>
+                    <p id="checkoutStudentName" class="truncate font-extrabold text-slate-800 dark:text-white"></p>
+                    <p id="checkoutStudentPhone" class="mt-0.5 text-sm text-slate-800 dark:text-slate-300"></p>
                   </div>
                 </div>
                 <p class="mt-4 flex items-center gap-2 border-t border-emerald-200 pt-3 text-xs font-semibold leading-5 text-emerald-800">
@@ -267,12 +267,12 @@ const menuCategories = [...new Set((menuItems ?? []).map((item) => item.kategori
                   Pesanan akan dikirim ke nomor ini.
                 </p>
               </section>
-              <label id="guestNimField" class="block text-sm font-bold text-slate-700" for="guestNim">
+              <label id="guestNimField" class="block text-sm font-bold text-slate-800 dark:text-slate-300" for="guestNim">
                 NIM mahasiswa
                 <input id="guestNim" name="nim" inputmode="numeric" pattern="[0-9]{6,20}" minlength="6" maxlength="20" required class="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal" />
                 <span id="nimValidationMessage" class="mt-1 block text-xs font-normal text-slate-500">NIM akan diverifikasi sebelum pesanan dibuat.</span>
               </label>
-              <label id="guestPhoneField" class="block text-sm font-bold text-slate-700" for="guestPhone">
+              <label id="guestPhoneField" class="block text-sm font-bold text-slate-800 dark:text-slate-300" for="guestPhone">
                 Nomor HP / WhatsApp
                 <input id="guestPhone" name="phone" type="tel" inputmode="numeric" autocomplete="tel" placeholder="6281234567890" pattern="628[0-9]{8,13}" required class="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal" />
                 <span class="mt-1 block text-xs font-normal text-slate-500">Gunakan format 628... agar notifikasi WhatsApp dapat dikirim.</span>
