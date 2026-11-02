@@ -1,6 +1,6 @@
 # Panduan Presentasi SiKantin
 
-Panduan ini membantu tim mempresentasikan produk dalam sekitar **7–10 menit**. Spesifikasi kebutuhan ada di [PRD.md](./PRD.md), alur sistem pada [FLOWCHART.md](./FLOWCHART.md), dan struktur data/RLS pada [DATABASE.md](./DATABASE.md).
+Panduan ini membantu tim mempresentasikan produk dalam sekitar **7–10 menit**. Spesifikasi kebutuhan ada di [PRD.md](./PRD.md), alur sistem pada [FLOWCHART.md](./FLOWCHART.md), struktur data/RLS pada [DATABASE.md](./DATABASE.md), dan pembagian anggota tim pada [ROLES.md](./ROLES.md).
 
 ## 1. Tujuan Presentasi
 
@@ -161,11 +161,10 @@ Belum dapat disimpulkan hanya dari repository. Migration mendokumentasikan konfi
 
 | Peran | Penanggung jawab | Fokus persiapan dan presentasi |
 |---|---|---|
-| Founder / Product Lead | **Nanda** | Menjelaskan latar belakang, target pengguna, prioritas, scope, metrik, dan keputusan produk; membuka serta menutup presentasi. |
-| Frontend | **Isya** | Mendemonstrasikan katalog, checkout, dashboard mahasiswa, responsive UI, aksesibilitas, dan pengalaman mobile. |
-| Backend | **Nanda** | Menjelaskan Supabase, model database, Edge Functions, validasi checkout, RLS, RPC, Realtime, scheduler, dan integrasi gateway. |
-| Research | **Tim** | Menjelaskan kebutuhan mahasiswa/tenant, alur kampus, asumsi QRIS, wawancara/temuan yang benar-benar dilakukan, dan alasan UX. |
-| QA | **Tim** | Menyiapkan akun/data sintetis; menguji skenario guest/login/tenant/admin, validasi input, status, jadwal, fallback WA, SEO publik/private, sitemap/robots, dan build. |
+| Product Engineer / Lead | **Nanda Yudhistira Wibowo** | Menjelaskan latar belakang, target pengguna, prioritas, scope, metrik, dan keputusan produk; membuka serta menutup presentasi. |
+| Product Designer | **Isya Prasetia** | Mendemonstrasikan dan menjelaskan alur UX, katalog, checkout, dashboard, responsive UI, dan aksesibilitas. |
+| QA Engineer | **Rifqi Zaki Bahriansyah, Barkah** | Menyiapkan akun/data sintetis; menguji skenario guest/login/tenant/admin, validasi input, status, jadwal, fallback WA, SEO, sitemap/robots, dan build. |
+| User Research | **Muhammad Dirham, Evandra Septian, Muhammad Afif Fadila** | Menjelaskan riset kantin, pencatatan menu, wawancara, kebutuhan pengguna, temuan yang benar-benar diperoleh, dan alasan UX. |
 
 > Satu anggota boleh memegang lebih dari satu peran. Selaraskan pembagian dengan kontribusi aktual tim sebelum presentasi.
 
@@ -195,4 +194,5 @@ Belum dapat disimpulkan hanya dari repository. Migration mendokumentasikan konfi
 - Spesifikasi produk: [PRD.md](./PRD.md).
 - Diagram proses: [FLOWCHART.md](./FLOWCHART.md).
 - Struktur data dan RLS: [DATABASE.md](./DATABASE.md).
+- Daftar anggota dan peran: [ROLES.md](./ROLES.md).
 - Jalankan web dari `sikantin-astro/` dengan `npm run dev`; validasi build dengan `npm run build`.
