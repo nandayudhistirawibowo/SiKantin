@@ -74,15 +74,56 @@ html.dark body.tenant-guest #guestPhoneField {
 html.dark body.tenant-guest #studentCheckoutName {
 	color: #f8fafc !important;
 }
-@media (max-width: 767px) {
+@media (max-width: 1023px) {
+	.tenant-menu-hero + .grid {
+		animation: none;
+	}
 	.tenant-checkout-cart {
-		position: sticky;
-		bottom: .5rem;
-		z-index: 20;
-		max-height: min(72vh, 42rem);
+		position: fixed;
+		right: 0;
+		bottom: 0;
+		left: 0;
+		z-index: 50;
+		display: flex;
+		height: 40vh;
+		max-height: 40vh;
+		flex-direction: column;
+		overflow: hidden;
+		border-radius: 1.25rem 1.25rem 0 0;
+		padding: 1rem;
+		box-shadow: 0 -8px 28px rgba(15, 23, 42, .24);
+	}
+	.tenant-checkout-cart h2,
+	.tenant-checkout-cart #guestCart + div,
+	.tenant-checkout-cart #tenantClosedMessage,
+	.tenant-checkout-cart #checkoutPrompt,
+	.tenant-checkout-cart #goCheckoutButton {
+		flex: 0 0 auto;
+	}
+	.tenant-checkout-cart #guestCart {
+		flex: 1 1 auto;
+		min-height: 0;
 		overflow-y: auto;
 		overscroll-behavior: contain;
-		box-shadow: 0 -8px 28px rgba(15, 23, 42, .18);
+	}
+	.tenant-checkout-cart #guestCart + div {
+		margin-top: .75rem;
+		padding-top: .75rem;
+	}
+	.tenant-checkout-cart #tenantClosedMessage,
+	.tenant-checkout-cart #checkoutPrompt {
+		margin-top: .5rem;
+		padding: .5rem .75rem;
+	}
+	.tenant-checkout-cart #goCheckoutButton {
+		margin-top: .75rem;
+		width: 100%;
+	}
+	.tenant-checkout-cart #goCheckoutButton + a {
+		display: none;
+	}
+	.tenant-menu-list {
+		padding-bottom: calc(40vh + 1rem);
 	}
 	.menu-grid-single .menu-card { grid-template-columns: minmax(0, 1fr); }
 	.menu-grid-single .menu-photo { height: 15rem; min-height: 0; }

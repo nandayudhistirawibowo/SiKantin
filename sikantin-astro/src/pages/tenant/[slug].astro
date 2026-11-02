@@ -117,7 +117,7 @@ const menuCategories = [...new Set((menuItems ?? []).map((item) => item.kategori
         <p role="alert" class="rounded-xl bg-rose-950/60 p-4 text-rose-100">Menu gagal dimuat. Coba muat ulang halaman.</p>
       ) : (
         <div class="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
-          <section class="min-w-0">
+          <section class="tenant-menu-list min-w-0">
             <div class="mb-5 flex flex-wrap items-end justify-between gap-3">
               <div>
                 <p class="text-xs font-extrabold uppercase tracking-[0.2em] text-blue-200">Pilih yang kamu suka</p>
@@ -243,7 +243,7 @@ const menuCategories = [...new Set((menuItems ?? []).map((item) => item.kategori
             data-tenant-open={tenant.status_buka ? 'true' : 'false'}
           >
             <h2 class="text-xl font-extrabold text-slate-900">Pesanan Anda</h2>
-            <ul id="guestCart" class="mt-4 space-y-3">
+            <ul id="guestCart" class="mt-4 min-h-0 space-y-3 overflow-y-auto">
               <li class="text-sm text-slate-500">Pilih menu untuk mulai memesan.</li>
             </ul>
             <div class="mt-4 flex justify-between border-t border-slate-200 pt-4 font-extrabold text-slate-900">
