@@ -6,6 +6,7 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
                 linear-gradient(125deg, #26394f 0%, #172b40 52%, #101b2c 100%);
         }
         .glass { border: 1px solid rgba(177, 198, 222, .2); background: rgba(25, 43, 64, .68); backdrop-filter: blur(14px); }
+        .catalog-header { border: 0; box-shadow: 0 6px 20px rgba(15, 23, 42, .06); }
         .catalog-promo {
             background:
                 radial-gradient(ellipse at 86% 20%, rgba(245, 158, 11, .16), transparent 34%),
