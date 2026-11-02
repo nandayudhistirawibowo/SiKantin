@@ -7,5 +7,5 @@
 | Rifqi Zaki Bahriansyah | QA Engineer | Pengujian kualitas dan verifikasi fitur |
 | Barkah | QA Engineer | Pengujian kualitas dan verifikasi fitur |
 | Muhammad Dirham | User Research | Riset kantin, pencatatan menu, dan wawancara |
-| Evandra Septian | User Research | Riset dan pemahaman kebutuhan pengguna |
-| Muhammad Afif Fadila | User Research | Riset dan pemahaman kebutuhan pengguna |
+| Evandra Septian | User Research | Riset kantin, pencatatan menu, dan wawancara |
+| Muhammad Afif Fadila | User Research | Riset kantin, pencatatan menu, dan wawancara |
