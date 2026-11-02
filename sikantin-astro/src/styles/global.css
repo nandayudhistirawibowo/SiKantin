@@ -61,8 +61,10 @@ html:not(.dark) [data-theme-toggle-slot] .theme-toggle {
 }
 
 html:not(.dark) body.role-screen {
-	background: #f8fafc;
-	color: #0f172a;
+	background:
+		radial-gradient(ellipse at 92% 8%, rgb(219 234 254 / 48%), transparent 34rem),
+		linear-gradient(145deg, #f8fafc, #f1f5f9 72%, #f8fafc);
+	color: #1e293b;
 }
 
 html:not(.dark) body.role-screen .glass,
@@ -72,27 +74,27 @@ html:not(.dark) body.role-screen .empty-tenant,
 html:not(.dark) body.role-screen .tenant-card {
 	border-color: #e2e8f0;
 	background: #fff;
-	color: #0f172a;
-	box-shadow: 0 2px 8px rgb(15 23 42 / 6%);
+	color: #1e293b;
+	box-shadow: 0 4px 14px rgb(15 23 42 / 5%);
 }
 
 html:not(.dark) body.role-screen .glass {
-	background: rgb(255 255 255 / 92%);
+	background: rgb(255 255 255 / 96%);
 }
 
 html:not(.dark) body.role-screen .catalog-hero {
-	border-color: #dbeafe;
+	border-color: #bfdbfe;
 	background:
-		radial-gradient(ellipse at 86% 28%, rgb(191 219 254 / 55%), transparent 36%),
-		linear-gradient(125deg, #eff6ff, #f8fafc 68%, #ecfeff);
-	color: #0f172a;
-	box-shadow: 0 12px 32px rgb(30 64 175 / 8%);
+		radial-gradient(ellipse at 88% 24%, rgb(191 219 254 / 48%), transparent 36%),
+		linear-gradient(135deg, #dbeafe, #f8fafc 62%, #fff);
+	color: #1e293b;
+	box-shadow: 0 12px 32px rgb(30 64 175 / 7%);
 }
 
 html:not(.dark) body.role-screen .catalog-promo {
 	border-color: #dbeafe;
 	background:
-		radial-gradient(ellipse at 90% 15%, rgb(254 243 199 / 70%), transparent 38%),
+	radial-gradient(ellipse at 90% 15%, rgb(219 234 254 / 70%), transparent 38%),
 		linear-gradient(120deg, #eff6ff, #f8fafc 75%);
 	color: #1e293b;
 	box-shadow: 0 4px 16px rgb(15 23 42 / 5%);
@@ -122,7 +124,7 @@ html:not(.dark) body.role-screen [class~="text-blue-200/75"] {
 
 html:not(.dark) body.role-screen [class~="text-sky-300"],
 html:not(.dark) body.role-screen [class~="text-sky-100"] {
-	color: #0369a1;
+	color: #1e3a8a;
 }
 
 html:not(.dark) body.role-screen [class~="text-amber-300"],
@@ -134,15 +136,39 @@ html:not(.dark) body.role-screen [class~="text-emerald-300"] {
 	color: #047857;
 }
 
+html:not(.dark) body.role-screen .catalog-hero [class~="text-blue-800"],
+html:not(.dark) body.role-screen .catalog-promo [class~="text-blue-800"] {
+	color: #1e3a8a;
+}
+
 html:not(.dark) body.role-screen [class~="bg-white/5"],
 html:not(.dark) body.role-screen [class~="bg-white/10"] {
 	background: #f1f5f9;
 	color: #334155;
 }
 
-html:not(.dark) body.role-screen [class~="bg-blue-500"].text-white,
-html:not(.dark) body.role-screen [class~="bg-blue-600"].text-white {
+html:not(.dark) body.role-screen .catalog-header {
+	background-color: #fff;
+}
+
+html:not(.dark) body.role-screen .tenant-card {
+	border-left: 3px solid #1e3a8a;
+	border-radius: 1.5rem;
+}
+
+html:not(.dark) body.role-screen .catalog-hero a.bg-blue-500,
+html:not(.dark) body.role-screen .tenant-card a.bg-emerald-400,
+html:not(.dark) body.role-screen .catalog-header a.bg-emerald-400 {
+	border-color: #1e3a8a;
+	background: #1e3a8a;
 	color: #fff;
+	box-shadow: 0 5px 12px rgb(30 58 138 / 16%);
+}
+
+html:not(.dark) body.role-screen .catalog-hero a.bg-blue-500:hover,
+html:not(.dark) body.role-screen .tenant-card a.bg-emerald-400:hover,
+html:not(.dark) body.role-screen .catalog-header a.bg-emerald-400:hover {
+	background: #1e40af;
 }
 
 html:not(.dark) body.role-screen .tenant-card [class~="text-emerald-300"] {
@@ -159,7 +185,7 @@ html:not(.dark) body.role-screen .tenant-card [class~="bg-white/5"] {
 }
 
 html:not(.dark) body.role-screen .tenant-card a.bg-emerald-400 {
-	color: #064e3b;
+	color: #fff;
 }
 
 html:not(.dark) body.role-screen .tenant-filter {
@@ -169,7 +195,11 @@ html:not(.dark) body.role-screen .tenant-filter {
 html:not(.dark) body.role-screen .tenant-filter:hover,
 html:not(.dark) body.role-screen .tenant-filter.is-active {
 	background: #eff6ff;
-	color: #1d4ed8;
+	color: #1e3a8a;
+}
+
+html:not(.dark) body.role-screen .tenant-filter.is-active {
+	box-shadow: inset 0 0 0 1px #bfdbfe;
 }
 
 html:not(.dark) body.role-screen [class~="border-white/10"],
