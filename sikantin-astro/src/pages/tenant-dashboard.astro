@@ -109,22 +109,23 @@ import '../styles/tenant-dashboard.css';
         </section>
         <section id="tenantHistoryPanel" class="tenant-panel hidden">
             <div class="tenant-panel-heading">
-                <div><h2 class="text-lg font-extrabold text-slate-900">Riwayat Pesanan</h2><p class="mt-1 text-sm text-slate-500">Pesanan dengan status selesai atau dibatalkan.</p></div>
+                <div><h2 class="text-lg font-extrabold text-slate-900">Riwayat Pesanan</h2><p class="mt-1 text-sm text-slate-500">Pesanan selesai, termasuk menu, rating, dan saran dari pelanggan.</p></div>
                 <span class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">Database</span>
             </div>
             <div class="overflow-x-auto">
-                <table class="w-full min-w-[42rem] text-left text-sm">
+                <table class="w-full min-w-[64rem] text-left text-sm">
                     <thead class="bg-slate-50 text-xs font-bold uppercase tracking-wide text-slate-500">
                         <tr>
-                            <th class="px-5 py-3">Nomor Pesanan</th>
-                            <th class="px-5 py-3">Tanggal</th>
+                            <th class="px-5 py-3">Antrean / Pesanan</th>
+                            <th class="px-5 py-3">Tanggal Selesai</th>
                             <th class="px-5 py-3">Nama Mahasiswa</th>
+                            <th class="px-5 py-3">Menu &amp; Add-on</th>
                             <th class="px-5 py-3">Total</th>
-                            <th class="px-5 py-3">Status</th>
+                            <th class="px-5 py-3">Rating &amp; Saran</th>
                         </tr>
                     </thead>
                     <tbody id="tenantHistoryBody" class="divide-y divide-slate-100">
-                        <tr><td colspan="5" role="status" aria-label="Memuat riwayat pesanan"><span class="skeleton-line m-4 block w-2/3"></span></td></tr>
+                        <tr><td colspan="6" role="status" aria-label="Memuat riwayat pesanan"><span class="skeleton-line m-4 block w-2/3"></span></td></tr>
                     </tbody>
                 </table>
             </div>
@@ -630,38 +631,60 @@ import '../styles/tenant-dashboard.css';
             const historyBody = document.getElementById('tenantHistoryBody');
             const { data: orders, error } = await db
                 .from('orders')
-                .select('nomor_pesanan, created_at, nama_mahasiswa, status, total')
+                .select('id, nomor_pesanan, nomor_antrean, created_at, completed_at, nama_mahasiswa, total, order_items(id, nama_menu, jumlah, add_ons), tenant_reviews!tenant_reviews_order_id_fkey(rating, feedback_text)')
                 .eq('tenant_id', activeTenantId)
-                .in('status', ['Selesai', 'Dibatalkan'])
-                .order('created_at', { ascending: false });
+                .eq('status', 'Selesai')
+                .order('completed_at', { ascending: false, nullsFirst: false });
             historyBody.replaceChildren();
             if (error) {
                 const row = document.createElement('tr');
                 const cell = addText(row, 'td', 'px-5 py-4 text-sm text-rose-600', `Gagal memuat riwayat pesanan: ${error.message}`);
-                cell.colSpan = 5;
+                cell.colSpan = 6;
                 historyBody.append(row);
                 return;
             }
             if (!orders?.length) {
                 const row = document.createElement('tr');
                 const cell = addText(row, 'td', 'px-5 py-4 text-sm text-slate-500', 'Belum ada riwayat pesanan.');
-                cell.colSpan = 5;
+                cell.colSpan = 6;
                 historyBody.append(row);
                 return;
             }
             orders.forEach((order) => {
                 const row = document.createElement('tr');
-                addText(row, 'td', 'px-5 py-4 font-semibold text-slate-800', order.nomor_pesanan || '-');
-                addText(row, 'td', 'whitespace-nowrap px-5 py-4 text-slate-600', formatOrderDate(order.created_at));
-                addText(row, 'td', 'px-5 py-4 text-slate-600', order.nama_mahasiswa || 'Mahasiswa');
+                const queueCell = document.createElement('td');
+                queueCell.className = 'px-5 py-4';
+                addText(queueCell, 'p', 'font-extrabold text-amber-900', `ANTREAN ${order.nomor_antrean || '-'}`);
+                addText(queueCell, 'p', 'mt-1 text-xs font-semibold text-slate-500', order.nomor_pesanan || '-');
+                row.append(queueCell);
+                addText(row, 'td', 'whitespace-nowrap px-5 py-4 text-slate-600', formatOrderDate(order.completed_at || order.created_at));
+                addText(row, 'td', 'px-5 py-4 text-slate-700', order.nama_mahasiswa || 'Mahasiswa');
+                const menuCell = document.createElement('td');
+                menuCell.className = 'max-w-sm px-5 py-4';
+                const menuList = document.createElement('ul');
+                menuList.className = 'space-y-2';
+                (order.order_items || []).forEach((item) => {
+                    const menuRow = document.createElement('li');
+                    addText(menuRow, 'p', 'font-semibold text-slate-800', `${item.nama_menu} × ${item.jumlah}`);
+                    const addons = normalizeOrderAddons(item.add_ons);
+                    if (addons.length) {
+                        const addonText = addons.map((addon) => {
+                            const price = addon.price === null ? '' : addon.price === 0 ? ' (Gratis)' : ` (+${formatRupiah(addon.price)})`;
+                            return `${addon.name}${price}`;
+                        }).join(', ');
+                        addText(menuRow, 'p', 'mt-1 text-xs text-slate-500', `Add-on: ${addonText}`);
+                    }
+                    menuList.append(menuRow);
+                });
+                menuCell.append(menuList);
+                row.append(menuCell);
                 addText(row, 'td', 'whitespace-nowrap px-5 py-4 font-semibold text-slate-800', formatRupiah(order.total));
-                const statusCell = addText(row, 'td', 'px-5 py-4', '');
-                addText(
-                    statusCell,
-                    'span',
-                    `rounded-full px-2.5 py-1 text-xs font-bold ${order.status === 'Selesai' ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}`,
-                    order.status
-                );
+                const reviewCell = document.createElement('td');
+                reviewCell.className = 'max-w-sm px-5 py-4';
+                const review = Array.isArray(order.tenant_reviews) ? order.tenant_reviews[0] : order.tenant_reviews;
+                addText(reviewCell, 'p', 'font-bold text-amber-700', review?.rating ? `${review.rating} / 5 ★` : 'Belum ada rating');
+                addText(reviewCell, 'p', 'mt-1 whitespace-pre-wrap text-slate-600', review?.feedback_text || 'Belum ada saran atau masukan.');
+                row.append(reviewCell);
                 historyBody.append(row);
             });
         }
