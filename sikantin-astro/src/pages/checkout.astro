@@ -218,6 +218,7 @@ const tenantIsOpen = isTenantOpen(tenant?.status_buka);
       const studentCheckoutProfileCard = document.getElementById('studentCheckoutProfileCard');
       const tenantSlug = checkoutPage.dataset.tenantSlug;
       const storageKey = 'sikantin-checkout-cart-v1';
+      const previousPathStorageKey = 'sikantin-previous-path-v1';
       let tenantIsOpen = checkoutPage.dataset.tenantOpen === 'true';
       let cartItems = [];
       let cartIsValid = false;
@@ -228,6 +229,15 @@ const tenantIsOpen = isTenantOpen(tenant?.status_buka);
       let validatingNim = false;
       let tenantStatusChannel;
       let tenantStatusRevision = 0;
+
+      try {
+        const referrer = new URL(document.referrer);
+        if (referrer.origin === window.location.origin && /^\/tenant\/[^/]+\/?$/.test(referrer.pathname)) {
+          sessionStorage.setItem(previousPathStorageKey, referrer.pathname.replace(/\/$/, ''));
+        }
+      } catch (error) {
+        if (document.referrer) console.warn('Halaman asal checkout tidak dapat disimpan:', error);
+      }
 
       function showPageMessage(text, isError = true) {
         pageMessage.textContent = text;
@@ -608,6 +618,8 @@ const tenantIsOpen = isTenantOpen(tenant?.status_buka);
                 : 'Pesanan tersimpan, tetapi notifikasi WhatsApp gagal dikirim. Simpan token untuk mengecek status.';
           document.getElementById('orderConfirmation').classList.remove('hidden');
           checkoutForm.classList.add('hidden');
+          const orderStatusUrl = `/cek-pesanan?token=${encodeURIComponent(order.token_pesanan)}`;
+          window.location.assign(orderStatusUrl);
           try {
             sessionStorage.removeItem(storageKey);
           } catch (error) {

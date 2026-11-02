@@ -79,12 +79,7 @@ import logo from '../../assets/logo-uym.png';
 					window.location.assign('/mahasiswa/profil?change_password=1');
 					return;
 				}
-				const requestedPath = new URLSearchParams(window.location.search).get('redirect') || '';
-				const destination = requestedPath.startsWith('/mahasiswa/')
-					&& !requestedPath.startsWith('/mahasiswa/login')
-					? requestedPath
-					: '/mahasiswa/dashboard';
-				window.location.assign(destination);
+				window.location.assign('/mahasiswa/dashboard');
 			} catch (error) {
 				const { error: signOutError } = await db.auth.signOut();
 				const errorMessage = error instanceof Error ? error.message : String(error);

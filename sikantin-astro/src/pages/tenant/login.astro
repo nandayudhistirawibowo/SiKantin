@@ -78,7 +78,7 @@ import '../../styles/tenant-login.css';
 					.maybeSingle();
 				if (tenantError) throw new Error(`Tenant gagal dimuat: ${tenantError.message}`);
 				if (!tenant?.slug) throw new Error('Belum ada tenant yang terhubung dengan akun ini.');
-				window.location.assign(`/tenant/${encodeURIComponent(tenant.slug)}/dashboard`);
+				window.location.assign('/tenant-dashboard');
 			} catch (error) {
 				const { error: signOutError } = await db.auth.signOut();
 				message.textContent = signOutError

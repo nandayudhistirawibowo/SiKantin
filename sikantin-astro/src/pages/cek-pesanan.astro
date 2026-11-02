@@ -12,7 +12,7 @@ import '../styles/cek-pesanan.css';
 >
 	<header class="site-header border-b border-slate-200 bg-white">
 		<div class="mx-auto flex max-w-3xl items-center justify-between px-4 py-4">
-			<a href="/" class="text-sm font-bold text-blue-700 hover:underline">← Katalog Kantin</a>
+			<a id="backToCatalogLink" href="/" class="text-sm font-bold text-blue-700 hover:underline">← Katalog Kantin</a>
 			<div class="flex items-center gap-3">
 				<span class="font-extrabold text-slate-900">Cek Pesanan</span>
 				<span data-theme-toggle-slot class="contents"></span>
@@ -132,6 +132,7 @@ import '../styles/cek-pesanan.css';
 	<script>
 		import { db } from '../scripts/supabase.js';
 
+		const previousPathStorageKey = 'sikantin-previous-path-v1';
 		const form = document.getElementById('lookupForm');
 		const tokenInput = document.getElementById('orderToken');
 		const button = document.getElementById('lookupButton');
@@ -145,6 +146,50 @@ import '../styles/cek-pesanan.css';
 		let currentOrder;
 		let hoveredRating = 0;
 		let statusChangeSoundRequested = false;
+
+		function getSafePreviousPath(value) {
+			if (!value) return null;
+			try {
+				const url = new URL(value, window.location.origin);
+				if (url.origin !== window.location.origin) return null;
+				if (url.pathname === '/mahasiswa/dashboard') return url.pathname;
+				if (/^\/tenant\/[^/]+\/?$/.test(url.pathname)) return url.pathname.replace(/\/$/, '');
+				if (url.pathname === '/checkout') {
+					const tenant = url.searchParams.get('tenant');
+					return tenant ? `/tenant/${encodeURIComponent(tenant)}` : null;
+				}
+			} catch (error) {
+				console.warn('Path sebelumnya tidak valid:', error);
+			}
+			return null;
+		}
+
+		function getOrderCompletionPath() {
+			let storedPath = null;
+			try {
+				storedPath = sessionStorage.getItem(previousPathStorageKey);
+			} catch (error) {
+				console.warn('Tujuan sebelumnya tidak dapat dibaca:', error);
+			}
+			const referrerPath = getSafePreviousPath(document.referrer);
+			const destination = referrerPath || getSafePreviousPath(storedPath) || '/';
+			try {
+				sessionStorage.removeItem(previousPathStorageKey);
+			} catch (error) {
+				console.warn('Tujuan sebelumnya tidak dapat dibersihkan:', error);
+			}
+			return destination;
+		}
+
+		function finishOrderFlow() {
+			window.location.assign(getOrderCompletionPath());
+		}
+
+		document.getElementById('backToCatalogLink').addEventListener('click', (event) => {
+			event.preventDefault();
+			if (window.history.length > 1) window.history.back();
+			else window.location.assign('/');
+		});
 
 		window.playNotificationSound = function () {
 			statusChangeSoundRequested = true;
@@ -450,7 +495,7 @@ import '../styles/cek-pesanan.css';
 				submitButton.textContent = 'Perbarui Rating';
 				updateRatingStars(rating);
 				document.getElementById('realtimeMessage').textContent = 'Rating tenant berhasil disimpan.';
-				window.location.assign('/');
+				finishOrderFlow();
 			} catch (error) {
 				result.textContent = `Rating gagal disimpan: ${error.message}`;
 				result.className = 'w-full text-xs text-rose-700';
@@ -460,7 +505,7 @@ import '../styles/cek-pesanan.css';
 		});
 
 		document.getElementById('finishOrderButton').addEventListener('click', () => {
-			window.location.assign('/');
+			finishOrderFlow();
 		});
 
 		const initialToken = new URLSearchParams(window.location.search).get('token');

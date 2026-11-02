@@ -263,7 +263,24 @@ const menuCategories = [...new Set((menuItems ?? []).map((item) => item.kategori
     import { db } from '../../scripts/supabase.js';
 
     const checkoutContext = document.querySelector('[data-tenant-slug]');
-    if (checkoutContext) initializeCatalog();
+    const mobileCartMedia = window.matchMedia('(max-width: 1023px)');
+    const checkoutCartParent = checkoutContext?.parentElement;
+    const checkoutCartNextSibling = checkoutContext?.nextSibling;
+
+    function positionCheckoutCart() {
+      if (!checkoutContext || !checkoutCartParent) return;
+      if (mobileCartMedia.matches) {
+        if (checkoutContext.parentElement !== document.body) document.body.append(checkoutContext);
+      } else if (checkoutContext.parentElement !== checkoutCartParent) {
+        checkoutCartParent.insertBefore(checkoutContext, checkoutCartNextSibling);
+      }
+    }
+
+    if (checkoutContext) {
+      positionCheckoutCart();
+      mobileCartMedia.addEventListener('change', positionCheckoutCart);
+      initializeCatalog();
+    }
 
     function initializeCatalog() {
     const guestCart = new Map();
@@ -488,6 +505,7 @@ const menuCategories = [...new Set((menuItems ?? []).map((item) => item.kategori
             quantity,
           })),
         }));
+        sessionStorage.setItem('sikantin-previous-path-v1', window.location.pathname);
         window.location.href = `/checkout?tenant=${encodeURIComponent(tenantSlug)}`;
       } catch (error) {
         console.error('Keranjang checkout gagal disimpan:', error);
@@ -598,6 +616,7 @@ const menuCategories = [...new Set((menuItems ?? []).map((item) => item.kategori
     subscribeToTenantStatus();
     window.addEventListener('pagehide', () => {
       if (tenantStatusChannel) db.removeChannel(tenantStatusChannel);
+      mobileCartMedia.removeEventListener('change', positionCheckoutCart);
     }, { once: true });
     }
   </script>

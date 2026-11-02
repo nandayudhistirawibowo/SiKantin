@@ -97,7 +97,10 @@ import '../styles/tenant-dashboard.css';
         <section id="tenantMenuPanel" class="tenant-panel hidden">
             <div class="tenant-panel-heading">
                 <div><h2 class="text-lg font-extrabold text-slate-900">Menu kantin</h2><p class="mt-1 text-sm text-slate-500">Daftar menu dari database.</p></div>
-                <span class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">Database</span>
+                <div class="flex items-center gap-3">
+                    <a id="tenantCatalogLink" href="/" class="text-sm font-bold text-blue-700 underline" hidden>Lihat katalog</a>
+                    <span class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">Database</span>
+                </div>
             </div>
             <div id="tenantMenuList" class="grid gap-3 p-5 sm:grid-cols-2" role="status" aria-label="Memuat menu">
                 <div class="skeleton-card"><span class="skeleton-line w-2/3"></span><span class="skeleton-line w-1/2"></span></div>
@@ -743,6 +746,9 @@ import '../styles/tenant-dashboard.css';
             }
             activeTenantId = tenant.id;
             document.getElementById('tenantName').textContent = tenant.nama_tenant;
+            const tenantCatalogLink = document.getElementById('tenantCatalogLink');
+            tenantCatalogLink.href = `/tenant/${encodeURIComponent(tenant.slug)}`;
+            tenantCatalogLink.hidden = false;
             setTenantOpenStatus(tenant.status_buka, tenant);
             document.getElementById('tenantOpenStatus').disabled = false;
             subscribeToTenantStatus(session.user.id);
