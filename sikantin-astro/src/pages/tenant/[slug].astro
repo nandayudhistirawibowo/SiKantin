@@ -236,7 +236,12 @@ const menuCategories = [...new Set((menuItems ?? []).map((item) => item.kategori
             )}
           </section>
 
-          <aside class="tenant-checkout-cart rounded-2xl border border-slate-200 bg-white p-5 shadow-xl lg:sticky lg:top-5">
+          <aside
+            class="tenant-checkout-cart rounded-2xl border border-slate-200 bg-white p-5 shadow-xl lg:sticky lg:top-5"
+            data-tenant-id={tenant.id}
+            data-tenant-slug={tenant.slug}
+            data-tenant-open={tenant.status_buka ? 'true' : 'false'}
+          >
             <h2 class="text-xl font-extrabold text-slate-900">Pesanan Anda</h2>
             <ul id="guestCart" class="mt-4 space-y-3">
               <li class="text-sm text-slate-500">Pilih menu untuk mulai memesan.</li>
@@ -245,86 +250,10 @@ const menuCategories = [...new Set((menuItems ?? []).map((item) => item.kategori
               <span>Total</span><span id="guestCartTotal">Rp 0</span>
             </div>
             <p id="tenantClosedMessage" class:list={['mt-4 rounded-lg bg-amber-50 p-3 text-xs font-semibold text-amber-800', tenant.status_buka ? 'hidden' : '']}>Tenant sedang tutup. Pesanan baru belum dapat dibuat.</p>
-            <form id="guestCheckoutForm" data-tenant-id={tenant.id} data-tenant-open={tenant.status_buka ? 'true' : 'false'} class="mt-5 space-y-4">
-              <div id="studentCheckoutInfo" role="status" aria-live="polite" class="hidden rounded-xl border border-blue-200 bg-blue-50 p-3 text-sm text-blue-900"></div>
-              <section id="studentCheckoutProfileCard" class="hidden rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50 to-white p-4 shadow-sm sm:p-5" aria-label="Profil checkout">
-                <div class="mb-4 flex items-center justify-between gap-2">
-                  <div>
-                    <p class="text-[11px] font-extrabold uppercase tracking-[0.16em] text-emerald-700">Checkout Mahasiswa</p>
-                    <p class="mt-1 text-xs text-slate-800 dark:text-slate-300">Data terhubung ke profil kamu</p>
-                  </div>
-                  <span class="rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-bold text-emerald-800">Login</span>
-                </div>
-                <div class="flex min-w-0 items-center gap-3">
-                  <img id="checkoutStudentAvatar" src="" alt="" class="h-12 w-12 rounded-full bg-white object-cover" />
-                  <div class="min-w-0">
-                    <p id="checkoutStudentName" class="truncate font-extrabold text-slate-800 dark:text-white"></p>
-                    <p id="checkoutStudentPhone" class="mt-0.5 text-sm text-slate-800 dark:text-slate-300"></p>
-                  </div>
-                </div>
-                <p class="mt-4 flex items-center gap-2 border-t border-emerald-200 pt-3 text-xs font-semibold leading-5 text-emerald-800">
-                  <svg aria-hidden="true" viewBox="0 0 20 20" fill="currentColor" class="h-4 w-4 shrink-0"><path fill-rule="evenodd" d="M16.704 5.29a1 1 0 0 1 .006 1.414l-7.2 7.26a1 1 0 0 1-1.42.003L3.294 9.18a1 1 0 1 1 1.412-1.416l4.086 4.076 6.498-6.545a1 1 0 0 1 1.414-.006Z" clip-rule="evenodd" /></svg>
-                  Pesanan akan dikirim ke nomor ini.
-                </p>
-              </section>
-              <label id="guestNimField" class="block text-sm font-bold text-slate-800 dark:text-slate-300" for="guestNim">
-                NIM mahasiswa
-                <input id="guestNim" name="nim" inputmode="numeric" pattern="[0-9]{6,20}" minlength="6" maxlength="20" required class="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal" />
-                <span id="nimValidationMessage" class="mt-1 block text-xs font-normal text-slate-500">NIM akan diverifikasi sebelum pesanan dibuat.</span>
-              </label>
-              <label id="guestPhoneField" class="block text-sm font-bold text-slate-800 dark:text-slate-300" for="guestPhone">
-                Nomor HP / WhatsApp
-                <input id="guestPhone" name="phone" type="tel" inputmode="numeric" autocomplete="tel" placeholder="6281234567890" pattern="628[0-9]{8,13}" required class="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal" />
-                <span class="mt-1 block text-xs font-normal text-slate-500">Gunakan format 628... agar notifikasi WhatsApp dapat dikirim.</span>
-              </label>
-              <section class="rounded-xl border border-slate-200 bg-slate-50 p-4" aria-labelledby="guestQrisHeading">
-                <h3 id="guestQrisHeading" class="font-extrabold text-slate-900">Pembayaran QRIS</h3>
-                {tenant.qris_image_url ? (
-                  <img
-                    src={tenant.qris_image_url}
-                    alt={`QRIS pembayaran ${tenant.nama_tenant}`}
-                    loading="lazy"
-                    class="mx-auto mt-3 max-h-64 w-full rounded-lg bg-white object-contain p-2"
-                  />
-                ) : (
-                  <p class="mt-3 rounded-lg bg-amber-50 p-3 text-sm text-amber-800">QRIS tenant belum tersedia.</p>
-                )}
-                <p class="mt-3 text-sm text-slate-600">Silakan scan QRIS tenant dan upload bukti transfer.</p>
-                <label for="guestTransferProof" class="mt-3 block text-sm font-bold text-slate-700">
-                  Bukti transfer (JPG/PNG)
-                  <input
-                    id="guestTransferProof"
-                    name="bukti_transfer"
-                    type="file"
-                    accept=".jpg,.jpeg,.png,image/jpeg,image/png"
-                    required
-                    class="mt-1.5 block w-full rounded-lg border border-slate-300 p-2 text-sm font-normal file:mr-3 file:rounded-md file:border-0 file:bg-blue-50 file:px-3 file:py-2 file:font-bold file:text-blue-700"
-                  />
-                  <span class="mt-1 block text-xs font-normal text-slate-500">Format JPG atau PNG, maksimal 5 MB.</span>
-                </label>
-              </section>
-              <p id="checkoutMessage" role="status" aria-live="polite" class="hidden rounded-lg p-3 text-sm"></p>
-              <div class="sticky bottom-0 z-10 -mx-1 bg-white/95 py-2 backdrop-blur">
-                <button
-                  id="guestCheckoutButton"
-                  type="submit"
-                  class="w-full rounded-lg bg-emerald-500 px-4 py-3 font-extrabold text-emerald-950 shadow-md transition hover:bg-emerald-400 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-60"
-                  disabled={!tenant.status_buka || !menuItems?.length}
-                >
-                  Buat Pesanan
-                </button>
-              </div>
-            </form>
-            <section id="orderConfirmation" class="mt-5 hidden rounded-xl border border-emerald-200 bg-emerald-50 p-4" aria-live="polite">
-              <h3 class="font-extrabold text-emerald-900">Pesanan berhasil dibuat</h3>
-              <p class="mt-3 text-xs font-bold uppercase tracking-wide text-emerald-800">Nomor antrean</p>
-              <p id="confirmationQueueNumber" class="mt-1 text-4xl font-black tracking-tight text-emerald-950"></p>
-              <p class="mt-2 text-sm text-emerald-800">Nomor pesanan: <strong id="confirmationNumber"></strong></p>
-              <p class="mt-2 text-sm text-emerald-800">Token cek pesanan:</p>
-              <code id="confirmationToken" class="mt-1 block break-all rounded bg-white p-2 text-sm font-extrabold text-emerald-900"></code>
-              <a id="trackOrderLink" href="/cek-pesanan" class="mt-3 inline-flex text-sm font-bold text-emerald-800 underline">Pantau status pesanan</a>
-              <p id="whatsappNotice" class="mt-2 text-xs text-emerald-800"></p>
-            </section>
+            <p id="checkoutPrompt" role="status" aria-live="polite" class="mt-4 hidden rounded-lg p-3 text-sm"></p>
+            <button id="goCheckoutButton" type="button" class="mt-5 w-full rounded-xl bg-emerald-600 px-4 py-3.5 text-sm font-extrabold text-white shadow-md transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50" disabled>
+              Lanjut ke Checkout
+            </button>
           </aside>
         </div>
       )}
@@ -333,17 +262,18 @@ const menuCategories = [...new Set((menuItems ?? []).map((item) => item.kategori
   <script>
     import { db } from '../../scripts/supabase.js';
 
+    const checkoutContext = document.querySelector('[data-tenant-slug]');
+    if (checkoutContext) initializeCatalog();
+
+    function initializeCatalog() {
     const guestCart = new Map();
     const cartList = document.getElementById('guestCart');
     const totalElement = document.getElementById('guestCartTotal');
-    const checkoutForm = document.getElementById('guestCheckoutForm');
-    const checkoutMessage = document.getElementById('checkoutMessage');
-    const checkoutButton = document.getElementById('guestCheckoutButton');
-    const proofInput = document.getElementById('guestTransferProof');
-    const studentCheckoutInfo = document.getElementById('studentCheckoutInfo');
-    const studentCheckoutProfileCard = document.getElementById('studentCheckoutProfileCard');
-    const tenantSlug = window.location.pathname.split('/').filter(Boolean).at(-1);
-    let tenantIsOpen = checkoutForm?.dataset.tenantOpen === 'true';
+    const checkoutButton = document.getElementById('goCheckoutButton');
+    const checkoutPrompt = document.getElementById('checkoutPrompt');
+    const tenantSlug = checkoutContext.dataset.tenantSlug;
+    const storageKey = 'sikantin-checkout-cart-v1';
+    let tenantIsOpen = checkoutContext.dataset.tenantOpen === 'true';
     const menuSearch = document.getElementById('menuSearch');
     const menuGrid = document.getElementById('menuGrid');
     const menuCards = [...document.querySelectorAll('[data-menu-card]')];
@@ -353,77 +283,8 @@ const menuCategories = [...new Set((menuItems ?? []).map((item) => item.kategori
     const menuNoResults = document.getElementById('menuNoResults');
     let activeCategory = 'all';
     let sortByCheapest = false;
-    let nimIsValid = false;
-    let validatingNim = false;
-    let studentCheckoutProfile = null;
-    let studentProfileRequiresCompletion = false;
-    let studentCheckoutReady = false;
-    let studentSessionDetected = false;
     let tenantStatusChannel;
     let tenantStatusRevision = 0;
-
-    function showGuestCheckoutPrompt() {
-      studentCheckoutInfo.innerHTML = 'Login untuk pesan lebih cepat. <a href="/mahasiswa/login" class="font-extrabold underline">Login Mahasiswa</a>';
-      studentCheckoutInfo.classList.remove('hidden');
-    }
-
-    async function initializeStudentCheckout() {
-      try {
-        const { data: { session }, error: sessionError } = await db.auth.getSession();
-        if (sessionError) throw new Error(`Sesi login gagal diperiksa: ${sessionError.message}`);
-        if (!session) return;
-        studentSessionDetected = true;
-        studentProfileRequiresCompletion = true;
-
-        const { data: profile, error: profileError } = await db
-          .from('profiles')
-          .select('id, nama, nim, no_telepon, avatar_url, peran')
-          .eq('id', session.user.id)
-          .single();
-        if (profileError) throw new Error(`Profil gagal dimuat untuk checkout: ${profileError.message}`);
-        if (profile.peran !== 'mahasiswa') {
-          studentSessionDetected = false;
-          studentProfileRequiresCompletion = false;
-          return;
-        }
-
-        studentCheckoutProfile = profile;
-        const nimInput = document.getElementById('guestNim');
-        const phoneInput = document.getElementById('guestPhone');
-        nimInput.value = profile.nim || '';
-        phoneInput.value = profile.no_telepon || '';
-        document.getElementById('guestNimField').classList.add('hidden');
-        document.getElementById('guestPhoneField').classList.add('hidden');
-        studentCheckoutProfileCard.classList.remove('hidden');
-        document.getElementById('checkoutStudentName').textContent = profile.nama || 'Mahasiswa';
-        document.getElementById('checkoutStudentPhone').textContent = profile.no_telepon || 'Nomor HP belum diisi';
-        const avatar = document.getElementById('checkoutStudentAvatar');
-        avatar.src = profile.avatar_url || document.body.dataset.logoUrl;
-        avatar.onerror = () => { avatar.src = document.body.dataset.logoUrl; };
-        studentProfileRequiresCompletion = !/^\d{6,20}$/.test(profile.nim || '')
-          || !/^628\d{8,13}$/.test(profile.no_telepon || '');
-        if (studentProfileRequiresCompletion) {
-          studentCheckoutInfo.innerHTML = 'Silakan isi NIM dan No HP di <a href="/mahasiswa/profil" class="font-extrabold underline">Profil</a> dulu.';
-          studentCheckoutInfo.classList.remove('hidden');
-        } else {
-          document.getElementById('checkoutStudentPhone').textContent = profile.no_telepon;
-        }
-      } catch (error) {
-        console.error('Gagal memuat profil checkout:', error);
-        if (studentSessionDetected) {
-          studentCheckoutInfo.textContent = `Profil checkout gagal dimuat: ${error.message || error}`;
-          studentCheckoutInfo.classList.remove('hidden');
-          document.getElementById('guestNimField').classList.add('hidden');
-          document.getElementById('guestPhoneField').classList.add('hidden');
-        } else {
-          showGuestCheckoutPrompt();
-        }
-      } finally {
-        if (!studentSessionDetected) showGuestCheckoutPrompt();
-        studentCheckoutReady = true;
-        if (guestCart.size) renderCart();
-      }
-    }
 
     function parseTenantOpenStatus(value) {
       if (value === true || value === 1) return true;
@@ -440,7 +301,6 @@ const menuCategories = [...new Set((menuItems ?? []).map((item) => item.kategori
       const isOpen = parseTenantOpenStatus(value);
       if (isOpen === null) return;
       tenantIsOpen = isOpen;
-      checkoutForm.dataset.tenantOpen = String(isOpen);
       const badge = document.getElementById('tenantOpenBadge');
       badge.textContent = isOpen ? 'Sedang buka' : 'Sedang tutup';
       badge.classList.toggle('tenant-status-open', isOpen);
@@ -448,12 +308,12 @@ const menuCategories = [...new Set((menuItems ?? []).map((item) => item.kategori
       badge.classList.toggle('bg-slate-400/15', !isOpen);
       badge.classList.toggle('text-slate-200', !isOpen);
       document.getElementById('tenantClosedMessage').classList.toggle('hidden', isOpen);
-      checkoutButton.disabled = !isOpen || menuCards.length === 0 || !studentCheckoutReady || studentProfileRequiresCompletion;
+      checkoutButton.disabled = !isOpen || guestCart.size === 0;
       menuCards.forEach(updateCardQuantity);
     }
 
     function subscribeToTenantStatus() {
-      const tenantId = document.querySelector('[data-tenant-id]')?.dataset.tenantId;
+      const tenantId = checkoutContext.dataset.tenantId;
       if (!tenantId) return;
 
       tenantStatusChannel = db
@@ -532,37 +392,6 @@ const menuCategories = [...new Set((menuItems ?? []).map((item) => item.kategori
         sortedCards.forEach((card) => menuGrid?.append(card));
       });
     });
-
-    function showCheckoutMessage(text, isError) {
-      checkoutMessage.textContent = text;
-      checkoutMessage.className = `rounded-lg p-3 text-sm ${isError ? 'bg-rose-50 text-rose-700' : 'bg-emerald-50 text-emerald-700'}`;
-    }
-
-    async function getFunctionErrorMessage(error) {
-      console.error('Supabase Edge Function request failed:', error);
-      if (error?.context instanceof Response) {
-        const body = await error.context.clone().json().catch(() => null);
-        if (typeof body?.error === 'string') return body.error;
-        if (typeof body?.message === 'string') return body.message;
-      }
-      return error?.message || 'Tidak dapat terhubung ke Supabase Edge Function.';
-    }
-
-    function getCreatedOrder(response) {
-      const candidates = [
-        response?.order,
-        response?.data?.order,
-        response?.result?.order,
-        response?.data,
-        response?.result,
-      ];
-      return candidates.find((candidate) =>
-        candidate
-        && typeof candidate === 'object'
-        && typeof candidate.nomor_pesanan === 'string'
-        && typeof candidate.token_pesanan === 'string'
-      );
-    }
 
     function formatRupiah(value) {
       return `Rp ${Number(value).toLocaleString('id-ID')}`;
@@ -646,6 +475,28 @@ const menuCategories = [...new Set((menuItems ?? []).map((item) => item.kategori
       renderCart();
     }
 
+    function saveCartForCheckout() {
+      try {
+        sessionStorage.setItem(storageKey, JSON.stringify({
+          tenantId: checkoutContext.dataset.tenantId,
+          tenantSlug,
+          items: [...guestCart.values()].map(({ id, name, price, addons, quantity }) => ({
+            id,
+            name,
+            price,
+            addons,
+            quantity,
+          })),
+        }));
+        window.location.href = `/checkout?tenant=${encodeURIComponent(tenantSlug)}`;
+      } catch (error) {
+        console.error('Keranjang checkout gagal disimpan:', error);
+        checkoutPrompt.textContent = 'Browser tidak dapat menyimpan keranjang. Aktifkan penyimpanan situs lalu coba lagi.';
+        checkoutPrompt.className = 'mt-4 rounded-lg bg-rose-50 p-3 text-sm text-rose-700';
+        checkoutPrompt.classList.remove('hidden');
+      }
+    }
+
     function renderCart() {
       cartList.replaceChildren();
       if (!guestCart.size) {
@@ -721,7 +572,7 @@ const menuCategories = [...new Set((menuItems ?? []).map((item) => item.kategori
         cartList.append(row);
       }
       totalElement.textContent = formatRupiah(total);
-      checkoutButton.disabled = !guestCart.size || !tenantIsOpen || !studentCheckoutReady || studentProfileRequiresCompletion;
+      checkoutButton.disabled = !guestCart.size || !tenantIsOpen;
       menuCards.forEach(updateCardQuantity);
     }
 
@@ -742,161 +593,12 @@ const menuCategories = [...new Set((menuItems ?? []).map((item) => item.kategori
     });
     menuCards.forEach(updateCardQuantity);
 
-    const nimInput = document.getElementById('guestNim');
-    const nimStatus = document.getElementById('nimValidationMessage');
-    nimInput?.addEventListener('input', () => {
-      nimIsValid = false;
-      nimStatus.textContent = 'NIM akan diverifikasi sebelum pesanan dibuat.';
-    });
-    nimInput?.addEventListener('blur', async () => {
-      const nim = nimInput.value.trim();
-      if (!/^\d{6,20}$/.test(nim) || validatingNim) return;
-      validatingNim = true;
-      nimStatus.textContent = 'Memeriksa NIM...';
-      try {
-        const { data, error } = await db.functions.invoke('validate-nim', {
-          body: { nim },
-          timeout: 10000,
-        });
-        if (error) throw new Error(await getFunctionErrorMessage(error));
-        if (data?.error || data?.success === false) throw new Error(data.error || data.message || 'Validasi NIM gagal.');
-        nimIsValid = data?.valid === true;
-        nimStatus.textContent = nimIsValid ? 'NIM terverifikasi.' : 'NIM tidak terdaftar sebagai mahasiswa.';
-        nimStatus.className = `mt-1 block text-xs font-normal ${nimIsValid ? 'text-emerald-700' : 'text-rose-600'}`;
-      } catch (error) {
-        nimStatus.textContent = `Validasi NIM gagal: ${error.message}`;
-        nimStatus.className = 'mt-1 block text-xs font-normal text-rose-600';
-      } finally {
-        validatingNim = false;
-      }
-    });
-
-    checkoutForm?.addEventListener('submit', async (event) => {
-      event.preventDefault();
-      if (!tenantIsOpen) {
-        showCheckoutMessage('Tenant sedang tutup dan belum dapat menerima pesanan.', true);
-        return;
-      }
-      if (!guestCart.size) {
-        showCheckoutMessage('Tambahkan menu sebelum membuat pesanan.', true);
-        return;
-      }
-      if (!studentCheckoutReady) {
-        showCheckoutMessage('Sedang memeriksa profil checkout. Silakan coba kembali sebentar lagi.', true);
-        return;
-      }
-      if (studentProfileRequiresCompletion) {
-        showCheckoutMessage('Silakan isi NIM dan No HP di Profil dulu sebelum membuat pesanan.', true);
-        return;
-      }
-      const nim = studentCheckoutProfile
-        ? studentCheckoutProfile.nim.trim()
-        : nimInput.value.trim();
-      const phone = (studentCheckoutProfile
-        ? studentCheckoutProfile.no_telepon
-        : document.getElementById('guestPhone').value).replace(/[\s()+-]/g, '');
-      const proofFile = proofInput.files?.[0];
-      if (!/^\d{6,20}$/.test(nim)) {
-        showCheckoutMessage('NIM harus terdiri dari 6 sampai 20 digit.', true);
-        if (!studentCheckoutProfile) nimInput.focus();
-        return;
-      }
-      if (!/^628\d{8,13}$/.test(phone)) {
-        showCheckoutMessage('Nomor HP harus memakai format 628 yang valid.', true);
-        return;
-      }
-      const validProof = proofFile
-        && /\.(jpe?g|png)$/i.test(proofFile.name)
-        && ['image/jpeg', 'image/png'].includes(proofFile.type);
-      if (!validProof) {
-        showCheckoutMessage('Silakan pilih bukti transfer berupa file JPG atau PNG.', true);
-        proofInput.focus();
-        return;
-      }
-      if (proofFile.size > 5 * 1024 * 1024) {
-        showCheckoutMessage('Ukuran bukti transfer maksimal 5 MB.', true);
-        proofInput.focus();
-        return;
-      }
-
-      checkoutButton.disabled = true;
-      checkoutButton.textContent = 'Mengunggah bukti dan membuat pesanan...';
-      try {
-        nimStatus.textContent = 'Memeriksa NIM...';
-        const { data: validation, error: validationError } = await db.functions.invoke('validate-nim', {
-          body: { nim },
-          timeout: 10000,
-        });
-        if (validationError) throw new Error(await getFunctionErrorMessage(validationError));
-        if (validation?.error) throw new Error(validation.error);
-        if (validation?.valid !== true) {
-          nimIsValid = false;
-          nimStatus.textContent = validation?.message || 'NIM tidak terdaftar sebagai mahasiswa.';
-          nimStatus.className = 'mt-1 block text-xs font-normal text-rose-600';
-          throw new Error('NIM tidak valid.');
-        }
-        nimIsValid = true;
-        nimStatus.textContent = 'NIM terverifikasi.';
-        nimStatus.className = 'mt-1 block text-xs font-normal text-emerald-700';
-        const orderForm = new FormData();
-        orderForm.set('tenant_slug', tenantSlug);
-        orderForm.set('tenant_id', checkoutForm.dataset.tenantId);
-        orderForm.set('nim', nim);
-        orderForm.set('phone', phone);
-        orderForm.set('items', JSON.stringify([...guestCart.values()].map(({ id, quantity, addons }) => ({
-          menu_item_id: id,
-          qty: quantity,
-          addon_ids: addons.map((addon) => addon.id),
-        }))));
-        orderForm.set('proof', proofFile);
-        const { data, error } = await db.functions.invoke('create-guest-order', {
-          body: orderForm,
-          timeout: 30000,
-        });
-        if (error) throw new Error(await getFunctionErrorMessage(error));
-        if (data?.error || data?.success === false) {
-          throw new Error(data.error || data.message || 'Pembuatan pesanan gagal.');
-        }
-        const order = getCreatedOrder(data);
-        if (!order) {
-          console.error('Respons create-guest-order tidak sesuai kontrak:', data);
-          throw new Error('Respons create-guest-order tidak berisi nomor dan token pesanan. Pastikan Edge Function sudah di-deploy ulang.');
-        }
-
-        document.getElementById('confirmationNumber').textContent = order.nomor_pesanan;
-        const validQueueNumber = typeof order.nomor_antrean === 'string' && /^A-\d{2,}$/.test(order.nomor_antrean);
-        document.getElementById('confirmationQueueNumber').textContent = validQueueNumber
-          ? order.nomor_antrean
-          : 'Belum tersedia';
-        if (!validQueueNumber) {
-          console.error('Pesanan berhasil dibuat tanpa nomor antrean yang valid:', order);
-        }
-        document.getElementById('confirmationToken').textContent = order.token_pesanan;
-        document.getElementById('trackOrderLink').href = `/cek-pesanan?token=${encodeURIComponent(order.token_pesanan)}`;
-        document.getElementById('whatsappNotice').textContent = !validQueueNumber
-          ? 'Pesanan tersimpan. Nomor antrean belum tersedia; gunakan token di halaman cek pesanan.'
-          : data.whatsapp === 'sent'
-          ? 'Token pesanan juga dikirim ke WhatsApp Anda.'
-          : data.whatsapp === 'not_configured'
-            ? 'Simpan token ini untuk mengecek status pesanan; notifikasi WhatsApp belum dikonfigurasi.'
-            : 'Pesanan tersimpan, tetapi notifikasi WhatsApp gagal dikirim. Simpan token untuk mengecek status.';
-        document.getElementById('orderConfirmation').classList.remove('hidden');
-        checkoutForm.classList.add('hidden');
-        guestCart.clear();
-        renderCart();
-      } catch (error) {
-        console.error('Checkout guest gagal:', error);
-        showCheckoutMessage(`Pesanan gagal dibuat: ${error.message || error}`, true);
-        checkoutButton.disabled = !guestCart.size || !tenantIsOpen || !studentCheckoutReady || studentProfileRequiresCompletion;
-      } finally {
-        checkoutButton.textContent = 'Buat Pesanan';
-      }
-    });
-
-    initializeStudentCheckout();
+    checkoutButton.addEventListener('click', saveCartForCheckout);
+    renderCart();
     subscribeToTenantStatus();
     window.addEventListener('pagehide', () => {
       if (tenantStatusChannel) db.removeChannel(tenantStatusChannel);
     }, { once: true });
+    }
   </script>
 </Layout>
