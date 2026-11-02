@@ -23,7 +23,8 @@ const {
 } = Astro.props;
 
 const siteUrl = 'https://sikantin.ndhistira.my.id';
-const canonicalUrl = new URL(Astro.url.pathname, siteUrl).href;
+const canonicalPath = Astro.url.pathname.replace(/\/+$/, '') || '/';
+const canonicalUrl = new URL(canonicalPath, siteUrl).href;
 const socialImage = new URL(ogImage || logo.src, siteUrl).href;
 ---
 
@@ -41,6 +42,7 @@ const socialImage = new URL(ogImage || logo.src, siteUrl).href;
 		<meta property="og:description" content={description} />
 		<meta property="og:image" content={socialImage} />
 		<meta property="og:image:alt" content={`SiKantin UYM - ${title}`} />
+		<meta property="og:image:secure_url" content={socialImage} />
 		<meta property="og:type" content="website" />
 		<meta property="og:url" content={canonicalUrl} />
 		<meta property="og:site_name" content="SiKantin UYM" />
@@ -49,6 +51,7 @@ const socialImage = new URL(ogImage || logo.src, siteUrl).href;
 		<meta name="twitter:title" content={title} />
 		<meta name="twitter:description" content={description} />
 		<meta name="twitter:image" content={socialImage} />
+		<meta name="twitter:image:alt" content={`SiKantin UYM - ${title}`} />
 		<script is:inline>
 			try {
 				const savedTheme = localStorage.getItem('sikantin-theme');

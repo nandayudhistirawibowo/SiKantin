@@ -101,7 +101,7 @@ tenantRatings?.forEach((rating) => {
 				<h1 class="text-2xl font-black tracking-tight sm:text-4xl">Lapar? <span class="text-sky-300">Ayo ke kantin favoritmu!</span></h1>
 				<p class="mt-4 max-w-xl text-base leading-7 text-blue-100/75 sm:text-lg">Pesan makanan kampus tanpa perlu login. Pantau status dengan token, lalu ambil pesanan saat siap.</p>
 				<div class="catalog-hero-actions mt-7 flex flex-col gap-3 sm:flex-row">
-					<a href="#daftar-tenant" class="rounded-xl bg-blue-500 px-5 py-3 text-center text-sm font-extrabold text-white shadow-lg shadow-blue-950/30 transition hover:bg-blue-400">Jelajahi kantin <span aria-hidden="true">↓</span></a>
+					<a href="#daftar-tenant" class="arrow-action rounded-xl bg-blue-500 px-5 py-3 text-center text-sm font-extrabold text-white shadow-lg shadow-blue-950/30 transition hover:bg-blue-400">Jelajahi kantin <span class="arrow-icon" aria-hidden="true">→</span></a>
 					<a href="/cek-pesanan" class="rounded-xl border border-white/15 bg-white/5 px-5 py-3 text-center text-sm font-bold text-white transition hover:bg-white/10">Cek pesanan</a>
 				</div>
 			</div>
@@ -165,7 +165,7 @@ tenantRatings?.forEach((rating) => {
 									data-tenant-open={tenant.status_buka ? 'true' : 'false'}
 									class="tenant-card glass ui-enter flex min-h-80 flex-col overflow-hidden rounded-3xl shadow-xl hover:border-sky-200/30"
 								>
-									<a href={`/tenant/${encodeURIComponent(tenant.slug)}`} class="tenant-card-cover group relative block h-44 overflow-hidden" aria-label={`Lihat menu ${tenant.nama_tenant}`}>
+									<a href={`/tenant/${encodeURIComponent(tenant.slug)}`} class="tenant-card-cover group relative block aspect-video overflow-hidden" aria-label={`Lihat menu ${tenant.nama_tenant}`}>
 										{coverImageByTenant.get(tenant.id) ? (
 											<img src={coverImageByTenant.get(tenant.id)} alt="" loading="lazy" data-fallback-on-error class="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105" />
 										) : (
@@ -183,7 +183,7 @@ tenantRatings?.forEach((rating) => {
 									<div class="flex flex-1 flex-col p-5">
 										<div class="flex items-start justify-between gap-3">
 											<div>
-												<h3 class="text-xl font-extrabold tracking-tight">{tenant.nama_tenant}</h3>
+												<h3 class="text-xl font-extrabold tracking-tight text-slate-900 dark:text-white">{tenant.nama_tenant}</h3>
 												<p class="mt-1 text-sm text-blue-100/70">{tenant.lokasi || 'Lokasi belum diisi'}</p>
 											</div>
 										</div>
@@ -203,8 +203,8 @@ tenantRatings?.forEach((rating) => {
 											})()}
 											{cheapestPriceByTenant.has(tenant.id) && <span class="whitespace-nowrap text-emerald-300">Mulai Rp {cheapestPriceByTenant.get(tenant.id).toLocaleString('id-ID')}</span>}
 										</div>
-										<a href={`/tenant/${encodeURIComponent(tenant.slug)}`} class="mt-5 inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-400 px-4 py-3 text-sm font-extrabold text-emerald-950 shadow-lg shadow-emerald-950/20 transition hover:bg-emerald-300">
-											Pesan Sekarang <span aria-hidden="true">→</span>
+										<a href={`/tenant/${encodeURIComponent(tenant.slug)}`} class="arrow-action mt-5 inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-400 px-4 py-3 text-sm font-extrabold text-emerald-950 shadow-lg shadow-emerald-950/20 transition hover:bg-emerald-300">
+											Pesan Sekarang <span class="arrow-icon" aria-hidden="true">→</span>
 										</a>
 									</div>
 								</article>

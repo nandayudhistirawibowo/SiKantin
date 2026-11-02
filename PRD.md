@@ -10,7 +10,7 @@
 
 ## 1. Ringkasan Produk
 
-SiKantin adalah aplikasi web untuk menemukan tenant kantin kampus, melihat katalog menu, membuat pesanan, dan mengikuti status pesanan. Pengunjung dapat checkout sebagai guest; mahasiswa yang login memperoleh checkout dengan data profil, favorit, riwayat, dan akses untuk memberi rating setelah pesanan selesai. Tenant menangani pesanan dan operasional kantinnya. Admin mengelola akun, tenant, menu, dan jadwal.
+SiKantin adalah aplikasi web untuk menemukan tenant kantin kampus, melihat katalog menu, membuat pesanan, dan mengikuti status pesanan. Pengunjung dapat memilih menu di katalog lalu melanjutkan ke halaman Checkout terpisah sebagai guest; mahasiswa yang login memperoleh checkout dengan data profil, favorit, riwayat, dan akses untuk memberi rating setelah pesanan selesai. Tenant menangani pesanan dan operasional kantinnya. Admin mengelola akun, tenant, menu, dan jadwal.
 
 Transaksi disimpan pada Supabase. Bukti QRIS diperiksa manusia; aplikasi tidak mengonfirmasi pembayaran dari jaringan pembayaran. WhatsApp digunakan sebagai kanal notifikasi tambahan melalui gateway terpisah yang menggunakan Baileys. Status pesanan dan token pelacakan tetap bersumber dari database.
 
@@ -56,6 +56,7 @@ SiKantin menyatukan katalog tenant dan menu dengan alur pemesanan web. Setelah c
 
 - Melihat katalog tenant, lokasi, status buka/tutup, rating, dan kisaran harga yang tersedia.
 - Membuka katalog menu per tenant; mencari, menyaring kategori, mengurutkan harga, memilih jumlah, dan add-on.
+- Keranjang katalog disimpan sementara di `sessionStorage` dan dibawa ke `/checkout?tenant=[slug]`; data cart ditampilkan sebagai ringkasan agar pembeli tidak memilih menu ulang.
 - Memasukkan NIM dan nomor HP/WhatsApp secara manual.
 - Mengunggah bukti pembayaran QRIS sesuai batas format/ukuran aplikasi.
 - Melihat konfirmasi, nomor pesanan, nomor antrean, dan token.
@@ -143,14 +144,15 @@ Status disimpan sebagai teks pada baseline yang ada. Seluruh transisi perlu meng
 
 ## 8. Alur Bisnis Utama
 
-1. Pembeli membuka beranda dan memilih tenant yang buka.
-2. Pembeli memilih menu, jumlah, dan add-on.
-3. Guest mengisi NIM serta nomor HP; mahasiswa login memakai data profil yang telah diisi otomatis.
-4. Checkout mengirim informasi order dan bukti QRIS. Edge Function melakukan validasi ulang ke Supabase.
-5. Server menghitung harga dan total, membuat token, mendapatkan nomor antrean, lalu menyimpan `orders` dan `order_items`.
-6. Sistem mencoba mengirim WhatsApp melalui gateway terpisah dan menampilkan konfirmasi order.
-7. Tenant memeriksa bukti pembayaran secara manual, menerima/menolak order, lalu memperbarui status hingga siap diambil/selesai.
-8. Pembeli melacak order melalui token dan realtime. Setelah selesai, pembeli dapat mengirim rating bintang.
+1. Pembeli membuka beranda, memilih tenant, lalu masuk ke katalog tenant.
+2. Pembeli memilih menu, jumlah, dan add-on. Katalog menyimpan keranjang sementara di `sessionStorage`.
+3. Pembeli menekan **Lanjut ke Checkout**. `/checkout` memulihkan ringkasan cart berdasarkan tenant.
+4. Guest mengisi NIM serta nomor HP; mahasiswa login memakai data profil yang diisi otomatis. Pembeli mengunggah bukti pembayaran QRIS.
+5. Halaman Checkout mengirim informasi order dan bukti ke Edge Function. Edge Function melakukan validasi ulang ke Supabase.
+6. Server menghitung harga dan total, membuat token, mendapatkan nomor antrean, lalu menyimpan `orders` dan `order_items`.
+7. Sistem mencoba mengirim WhatsApp melalui gateway terpisah dan mengarahkan pembeli ke `/cek-pesanan?token=...`.
+8. Tenant memeriksa bukti pembayaran secara manual, menerima/menolak order, lalu memperbarui status hingga siap diambil/selesai.
+9. Pembeli melacak order melalui token dan realtime. Setelah selesai, pembeli dapat mengirim rating bintang; halaman cek pesanan mengarahkan kembali ke katalog atau dashboard mahasiswa berdasarkan asal yang tersimpan di session.
 
 ## 9. Kebutuhan Nonfungsional
 
@@ -159,7 +161,7 @@ Status disimpan sebagai teks pada baseline yang ada. Seluruh transisi perlu meng
 - **Keamanan:** jangan mengekspos service-role key ke browser; role dan hak akses database ditegakkan server-side/RLS.
 - **Integritas transaksi:** server menghitung harga, subtotal, status tenant, dan kelayakan item sebelum menyimpan order.
 - **Ketersediaan:** halaman lacak order tetap bersumber dari database ketika WhatsApp tidak tersedia.
-- **SEO:** beranda dan katalog tenant memiliki metadata title/description/keywords, canonical per halaman, dan metadata sosial. Endpoint `/sitemap.xml` memuat tenant dari Supabase dengan akses anon; `robots.txt` menunjuk ke endpoint tersebut. Halaman private menggunakan `noindex`.
+- **SEO:** `Layout.astro` menghasilkan title, description, keywords, canonical path tanpa query string, Open Graph, dan Twitter Card dari props halaman. Sitemap dinamis hanya memuat beranda dan katalog tenant ber-slug yang dapat diakses publik; tenant yang sedang tutup tetap termasuk karena `status_buka` adalah status operasional, bukan status publikasi. `robots.txt` menunjuk ke sitemap dan melarang crawl route privat.
 - **Privasi:** gunakan akun, NIM, nomor, token, QRIS, dan bukti sintetis untuk demonstrasi. Jangan menampilkan data produksi.
 
 ## 10. Tech Stack dan Arsitektur
@@ -167,7 +169,8 @@ Status disimpan sebagai teks pada baseline yang ada. Seluruh transisi perlu meng
 | Komponen | Teknologi / tanggung jawab |
 |---|---|
 | Frontend | Astro, HTML, JavaScript, Tailwind CSS, komponen dan script Astro. |
-| Hosting web | Adapter Vercel untuk deployment aplikasi. |
+| Hosting web | Astro memakai adapter Vercel untuk deployment aplikasi. |
+| DNS/edge delivery | Cloudflare dapat digunakan untuk DNS/proxy/CDN di depan domain web sesuai konfigurasi deployment; bukan bagian dari sumber data transaksi. |
 | Database | Supabase PostgreSQL, SQL migrations, RPC dan trigger. |
 | Auth | Supabase Auth; profil dan role aplikasi berada di `public.profiles`. |
 | File | Supabase Storage untuk avatar, gambar menu, QRIS, dan bukti transfer. |

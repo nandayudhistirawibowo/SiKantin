@@ -8,62 +8,69 @@ Diagram berikut membedakan alur yang tersedia saat ini dari kondisi eksternal ya
 flowchart TD
     A[Buka beranda SiKantin] --> B[Pilih tenant yang buka]
     B --> C[Lihat, cari, dan pilih menu]
-    C --> D[Atur jumlah dan add-on]
-    D --> E[Isi NIM dan nomor HP/WhatsApp]
-    E --> F[Unggah bukti transfer QRIS]
-    F --> G[Kirim checkout ke Edge Function]
-    G --> H{NIM terdaftar, tenant buka, menu dan bukti valid?}
-    H -- Tidak --> I[Tampilkan alasan gagal; pembeli memperbaiki input]
-    I --> E
-    H -- Ya --> J[Server baca harga dan add-on dari database]
-    J --> K[Server hitung total dan nomor antrean WIB]
-    K --> L[Simpan order dan order_items]
-    L --> M[Buat token pelacakan]
-    M --> N[Coba kirim konfirmasi melalui gateway WhatsApp]
-    N --> O[Tampilkan konfirmasi, token, dan nomor antrean]
-    O --> P[Tenant memeriksa bukti QRIS secara manual]
-    P --> Q{Bukti sesuai?}
-    Q -- Tidak --> R[Tenant menolak/membatalkan dan mencatat alasan]
-    Q -- Ya --> S[Tenant memproses pesanan]
-    S --> T[Status diperbarui: Siap diambil lalu Selesai]
-    R --> U[Pembeli membuka Cek Pesanan dengan token]
-    T --> U
-    U --> V[Lihat status, antrean, dan rincian order]
-    V --> W{Order selesai?}
-    W -- Belum --> U
-    W -- Ya --> X[Opsional: kirim rating tenant bintang 1-5]
-    N -. Gateway gagal: order tetap ditelusuri dengan token .-> O
+    C --> D[Atur jumlah dan add-on di katalog]
+    D --> E[Simpan keranjang dan asal tenant di sessionStorage]
+    E --> F[Klik Lanjut ke Checkout]
+    F --> G[Halaman /checkout memulihkan ringkasan keranjang]
+    G --> H[Isi NIM dan nomor HP/WhatsApp]
+    H --> I[Unggah bukti transfer QRIS]
+    I --> J[Kirim checkout ke Edge Function]
+    J --> K{NIM terdaftar, tenant buka, menu dan bukti valid?}
+    K -- Tidak --> L[Tampilkan alasan gagal; perbaiki input di checkout]
+    L --> H
+    K -- Ya --> M[Server baca harga dan add-on dari database]
+    M --> N[Server hitung total dan nomor antrean WIB]
+    N --> O[Simpan order dan order_items]
+    O --> P[Buat token pelacakan]
+    P --> Q[Coba kirim notifikasi melalui gateway WhatsApp]
+    Q --> R[Alihkan ke /cek-pesanan?token=...]
+    R --> S[Tenant memeriksa bukti QRIS secara manual]
+    S --> T{Bukti sesuai?}
+    T -- Tidak --> U[Tenant menolak order dan mencatat alasan]
+    T -- Ya --> V[Tenant memproses pesanan]
+    V --> W[Status diperbarui: Siap diambil lalu Selesai]
+    U --> X[Pembeli melacak order dengan token]
+    W --> X
+    X --> Y[Lihat status, antrean, dan rincian order]
+    Y --> Z{Order selesai?}
+    Z -- Belum --> X
+    Z -- Ya --> AA[Opsional: kirim rating tenant bintang 1-5]
+    AA --> AB[Redirect ke asal tersimpan: katalog tenant atau dashboard mahasiswa]
+    Q -. Gateway gagal: token dan cek pesanan tetap tersedia .-> R
 ```
 
 ## 2. Mahasiswa Login Flow
 
 ```mermaid
 flowchart TD
-    A[Admin mendaftarkan NIM dan nama] --> B[Auth user dibuat dengan password sama dengan NIM]
-    B --> C[Mahasiswa login memakai NIM dan password NIM]
+    A[Admin mendaftarkan NIM dan nama] --> B[Auth user dibuat dengan password awal sama dengan NIM]
+    B --> C[Mahasiswa login memakai NIM dan password]
     C --> D{Metadata is_temp_password aktif?}
     D -- Ya --> E[Login mengarahkan mahasiswa ke Profil]
     E --> F[Ganti password dengan Supabase Auth updateUser]
-    F --> G[Masuk ke dashboard mahasiswa]
+    F --> G[Masuk ke /mahasiswa/dashboard]
     D -- Tidak --> G
     H[Admin reset password mahasiswa] --> I[Edge Function cek JWT, role admin, dan NIM target]
     I --> J[Set password menjadi NIM dan aktifkan is_temp_password]
     J --> C
     G --> K[Tampilkan sapaan, favorit, dan tiga order terbaru]
-    K --> L[Pilih tenant dan menu]
-    L --> M[Checkout dengan NIM dan nomor HP dari profil]
-    M --> N{Profil lengkap dan valid?}
-    N -- Tidak --> O[Isi/perbaiki profil]
-    O --> M
-    N -- Ya --> P[Unggah bukti QRIS dan kirim checkout]
-    P --> Q[Server validasi dan simpan order, item, token, serta antrean]
-    Q --> R[Coba kirim notifikasi WhatsApp]
-    R --> S[Pantau order via token/realtime]
-    S --> T[Lihat order pada riwayat akun]
-    T --> U{Status Selesai?}
-    U -- Tidak --> S
-    U -- Ya --> V[Kirim rating tenant]
-    R -. Pengiriman tidak tersedia/gagal .-> S
+    K --> L[Pilih kantin dari /#daftar-tenant atau daftar dashboard]
+    L --> M[Pilih menu, jumlah, dan add-on]
+    M --> N[Simpan keranjang; asal dicatat sebagai /mahasiswa/dashboard]
+    N --> O[Checkout terpisah di /checkout]
+    O --> P[Profil lengkap?]
+    P -- Tidak --> Q[Isi/perbaiki profil]
+    Q --> O
+    P -- Ya --> R[Unggah bukti QRIS dan kirim checkout]
+    R --> S[Server validasi dan simpan order, item, token, serta antrean]
+    S --> T[Coba kirim notifikasi WhatsApp]
+    T --> U[Pantau order via /cek-pesanan dan token]
+    U --> V[Lihat order pada riwayat akun]
+    V --> W{Status Selesai?}
+    W -- Tidak --> U
+    W -- Ya --> X[Kirim rating tenant]
+    X --> Y[Redirect selesai kembali ke dashboard mahasiswa]
+    T -. Pengiriman tidak tersedia/gagal .-> U
 ```
 
 > Email `[NIM]@uym.ac.id` hanya dipakai sebagai identitas internal Supabase Auth. Registrasi tidak mengirim email atau WhatsApp.
@@ -72,8 +79,9 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    A[Pemilik login] --> B[Dashboard memvalidasi sesi, role, dan tenant]
-    B --> C[Terima order baru melalui database/Realtime]
+    A[Pemilik login] --> B[Login memvalidasi sesi, role, dan tenant]
+    B --> B1[Redirect ke /tenant-dashboard]
+    B1 --> C[Terima order baru melalui database/Realtime]
     C --> D[Lihat antrean, rincian, dan bukti QRIS]
     D --> E{Pembayaran terverifikasi manual?}
     E -- Tidak --> F[Tolak order dan isi alasan]
@@ -109,22 +117,37 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    A[Admin login] --> B[Dashboard memvalidasi sesi dan role admin]
-    B --> C[Kelola tenant, pemilik, kontak, QRIS, dan jam operasi]
-    B --> D[Kelola menu, harga, add-on, foto, dan ketersediaan]
-    B --> E[Daftarkan mahasiswa dengan NIM dan nama tanpa WA]
+    A[Admin login] --> B[Login memvalidasi sesi dan role admin]
+    B --> B1[Redirect ke /admin/dashboard]
+    B1 --> C[Kelola tenant, pemilik, kontak, QRIS, dan jam operasi]
+    B1 --> D[Kelola menu, harga, add-on, foto, dan ketersediaan]
+    B1 --> E[Daftarkan mahasiswa dengan NIM dan nama tanpa WA]
     E --> F[Buat Auth user dengan password sama dengan NIM]
     F --> G[Mahasiswa login; akun diarahkan ke Profil untuk mengganti password]
-    B --> H[Pilih mahasiswa dan tekan Reset Password]
+    B1 --> H[Pilih mahasiswa dan tekan Reset Password]
     H --> I[Edge Function memvalidasi JWT dan role admin]
     I --> J{Target terdaftar sebagai mahasiswa dengan NIM valid?}
     J -- Tidak --> K[Tolak permintaan]
     J -- Ya --> L[Set password menjadi NIM dan aktifkan is_temp_password]
     L --> M[Mahasiswa login dan mengganti password melalui Profil]
-    B -. Verifikasi pembayaran tidak tersedia di dashboard admin .-> N[Verifikasi dilakukan pemilik tenant]
+    B1 -. Verifikasi pembayaran tidak tersedia di dashboard admin .-> N[Verifikasi dilakukan pemilik tenant]
 ```
 
-## 5. Sequence Checkout dan WhatsApp
+## 5. Checkout Terpisah dan Navigasi Sesi
+
+```mermaid
+flowchart LR
+    A[Katalog tenant] -->|Pilih menu dan add-on| B[Keranjang sessionStorage]
+    B -->|Lanjut ke Checkout| C[Halaman Checkout dengan slug tenant]
+    C -->|Simpan referrer tenant| D[Submit order]
+    D --> E[Halaman Cek Pesanan dengan token]
+    E -->|Selesaikan Pesanan| F{referrer aman dan tersedia?}
+    F -- Katalog --> G[Kembali ke katalog tenant]
+    F -- Dashboard mahasiswa --> H[Kembali ke dashboard mahasiswa]
+    F -- Kosong atau tidak dikenal --> I[Kembali ke beranda]
+```
+
+## 6. Sequence Checkout dan WhatsApp
 
 ```mermaid
 sequenceDiagram
@@ -137,7 +160,11 @@ sequenceDiagram
     participant Gateway as Gateway WhatsApp
     participant WA as WhatsApp/Baileys
 
-    Buyer->>Web: Pilih item, isi identitas, unggah bukti
+    Buyer->>Web: Pilih item, jumlah, dan add-on di katalog tenant
+    Web->>Web: Simpan cart dan tenant sebagai asal di sessionStorage
+    Buyer->>Web: Lanjut ke halaman /checkout
+    Web-->>Buyer: Tampilkan ringkasan cart; identitas dan pembayaran
+    Buyer->>Web: Isi identitas dan unggah bukti QRIS
     Web->>EF: Checkout multipart/form-data
     EF->>DB: Validasi NIM, tenant, menu, harga, add-on
     DB-->>EF: Data tervalidasi
@@ -150,13 +177,14 @@ sequenceDiagram
     WA-->>Gateway: Hasil kirim atau gagal
     Gateway-->>EF: Hasil notifikasi
     EF-->>Web: Konfirmasi order dan token
-    Web-->>Buyer: Nomor pesanan, antrean, dan token
+    Web->>Web: Simpan asal untuk redirect dan bersihkan cart
+    Web-->>Buyer: Redirect ke /cek-pesanan?token=...
     Note over Buyer,DB: Token menjadi jalur pelacakan jika pesan WhatsApp gagal
 ```
 
 Saat tenant menolak order, `notify-order-rejected` mencoba mengirim alasan penolakan ke `orders.phone`. Formatnya: `Mohon maaf, pesanan Anda [Nomor Pesanan] di [Nama Tenant] ditolak. Alasan: [Alasan]. Silakan pesan menu lain.` Pengiriman ini tidak mengubah status transaksi database atau mengubah gateway/Baileys.
 
-## 6. Cek Status dan Rating
+## 7. Cek Status dan Rating
 
 ```mermaid
 sequenceDiagram
@@ -175,4 +203,5 @@ sequenceDiagram
     Buyer->>Web: Kirim rating setelah selesai
     Web->>DB: submit_guest_order_rating(token, rating)
     DB-->>Web: Validasi order selesai dan simpan rating
+    Web->>Web: Redirect ke referrer session yang tervalidasi atau /
 ```

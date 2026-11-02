@@ -8,7 +8,7 @@ import '../styles/profile.css';
 
 <header class="site-header border-b border-slate-200 bg-white">
         <div class="mx-auto flex max-w-3xl items-center justify-between px-4 py-4">
-            <a href="/" id="backLink" class="text-sm font-bold text-blue-700 hover:underline">← Kembali ke beranda</a>
+            <a href="/" id="backLink" class="arrow-action arrow-left arrow-before text-sm font-bold text-blue-700 hover:underline">Kembali ke beranda</a>
         <div class="flex items-center gap-3">
             <span data-theme-toggle-slot class="contents"></span>
             <img src={logo.src} alt="Universitas Yatsi Madani" class="h-10 w-10 object-contain">
@@ -160,14 +160,14 @@ import '../styles/profile.css';
                     showMessage(`Gagal memuat tautan dashboard tenant: ${tenantError.message}`, true);
                 } else if (tenant?.slug) {
                     backLink.href = `/tenant/${encodeURIComponent(tenant.slug)}/dashboard`;
-                    backLink.textContent = '← Kembali ke dashboard tenant';
+                    backLink.textContent = 'Kembali ke dashboard tenant';
                 } else {
                     backLink.href = '/tenant/login';
-                    backLink.textContent = '← Kembali ke login tenant';
+                    backLink.textContent = 'Kembali ke login tenant';
                 }
             } else if (profile.peran === 'admin') {
                 backLink.href = '/admin/dashboard';
-                backLink.textContent = '← Kembali ke dashboard admin';
+                backLink.textContent = 'Kembali ke dashboard admin';
             }
         }
 

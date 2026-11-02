@@ -29,13 +29,13 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
         .tenant-stat-card, .tenant-panel, .tenant-order-row, .tenant-menu-item {
             transition: translate 300ms ease-in-out, transform 300ms ease-in-out, border-color 300ms ease-in-out, background-color 300ms ease-in-out, box-shadow 300ms ease-in-out;
         }
-        .tenant-panel:hover { translate: 0 -4px; box-shadow: 0 10px 20px rgba(0, 0, 0, .1); }
+        .tenant-panel:hover { translate: 0 -4px; box-shadow: 0 16px 32px rgba(15, 23, 42, .16); }
         .tenant-stat-card:hover, .tenant-menu-item:hover {
             translate: 0 -4px;
             border-color: #bfdbfe;
-            box-shadow: 0 10px 20px rgba(0, 0, 0, .1);
+            box-shadow: 0 16px 32px rgba(15, 23, 42, .16);
         }
-        .tenant-order-row:hover { translate: 0 -4px; box-shadow: 0 10px 20px rgba(0, 0, 0, .1); }
+        .tenant-order-row:hover { translate: 0 -4px; box-shadow: 0 16px 32px rgba(15, 23, 42, .16); }
         .tenant-stat-card { padding: 1.2rem; }
         .tenant-stat-icon {
             display: inline-flex; width: 2.5rem; height: 2.5rem; align-items: center;
@@ -70,7 +70,8 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
         .tenant-order-action:hover { background: #1e40af; }
         .tenant-order-action:disabled { cursor: default; background: #e2e8f0; color: #64748b; }
         .tenant-menu-item { display: flex; align-items: center; gap: .85rem; border: 1px solid #e7ebf2; border-radius: .9rem; padding: .85rem; }
-        .tenant-menu-item img { width: 3.5rem; height: 3.5rem; flex: 0 0 auto; border-radius: .7rem; object-fit: cover; }
+        .tenant-menu-item img { width: 3.5rem; height: 3.5rem; flex: 0 0 auto; border-radius: .7rem; object-fit: cover; transition: transform 300ms ease; }
+        .tenant-menu-item:hover img { transform: scale(1.05); }
         .tenant-order-row > * { min-width: 0; max-width: 100%; }
         .tenant-order-row .tenant-order-action { max-width: 100%; white-space: normal; }
         .tenant-dashboard-menu-button { border-color: #dbe5f1; color: #334155; }

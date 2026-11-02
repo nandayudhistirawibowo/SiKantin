@@ -38,6 +38,7 @@ const tenantIsOpen = isTenantOpen(tenant?.status_buka);
   description="Periksa pesanan, isi identitas, dan selesaikan pembayaran melalui SiKantin."
   themeColor="#172b40"
   bodyClass="tenant-guest checkout-page min-h-screen"
+  noIndex
 >
   <header class="site-header border-b border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-900">
     <div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
@@ -47,7 +48,7 @@ const tenantIsOpen = isTenantOpen(tenant?.status_buka);
       </a>
       <div class="flex items-center gap-2">
         <span data-theme-toggle-slot class="contents"></span>
-        <a href={tenant ? `/tenant/${encodeURIComponent(tenant.slug)}` : '/'} class="rounded-full border border-slate-300 px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800">Kembali</a>
+        <a id="checkoutBackButton" href={tenant ? `/tenant/${encodeURIComponent(tenant.slug)}` : '/'} class="arrow-action arrow-left rounded-full border border-slate-300 px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800"><span class="arrow-icon" aria-hidden="true">←</span>Kembali</a>
       </div>
     </div>
   </header>
@@ -57,7 +58,7 @@ const tenantIsOpen = isTenantOpen(tenant?.status_buka);
       <section class="rounded-2xl border border-rose-200 bg-white p-6 text-center shadow-sm dark:border-rose-900 dark:bg-slate-800">
         <h1 class="text-xl font-extrabold text-slate-800 dark:text-white">{tenantError ? 'Checkout gagal dimuat' : 'Tenant tidak ditemukan'}</h1>
         <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">{tenantError ? 'Terjadi kendala saat memuat informasi kantin. Silakan coba kembali.' : 'Pilih tenant dari katalog untuk melanjutkan checkout.'}</p>
-        <a href="/" class="checkout-catalog-link mt-5 inline-flex rounded-xl bg-blue-700 px-5 py-3 text-sm font-bold text-white hover:bg-blue-800">Kembali ke katalog</a>
+        <a href="/" class="arrow-action arrow-left checkout-catalog-link mt-5 inline-flex rounded-xl bg-blue-700 px-5 py-3 text-sm font-bold text-white hover:bg-blue-800"><span class="arrow-icon" aria-hidden="true">←</span>Kembali ke katalog</a>
       </section>
     </main>
   ) : (
@@ -87,7 +88,7 @@ const tenantIsOpen = isTenantOpen(tenant?.status_buka);
             <span id="checkoutItemCount" class="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-800 dark:bg-blue-950 dark:text-blue-200">0 item</span>
           </div>
           <ul id="checkoutItems" class="mt-5 divide-y divide-slate-100 dark:divide-slate-700">
-            <li class="py-4 text-sm text-slate-500 dark:text-slate-400">Memuat ringkasan pesanan...</li>
+            <li class="grid gap-3 py-4" role="status" aria-label="Memuat ringkasan pesanan"><span class="skeleton-line block w-2/3"></span><span class="skeleton-line block w-1/2"></span></li>
           </ul>
           <div class="mt-4 flex items-center justify-between gap-3 border-t border-slate-200 pt-4 text-base font-extrabold text-slate-900 dark:border-slate-700 dark:text-white">
             <span>Total pembayaran</span>
@@ -154,8 +155,8 @@ const tenantIsOpen = isTenantOpen(tenant?.status_buka);
 
           <p id="checkoutMessage" role="status" aria-live="polite" class="hidden rounded-lg p-3 text-sm"></p>
           <p id="tenantClosedMessage" class:list={['rounded-lg bg-amber-50 p-3 text-sm font-semibold text-amber-900 dark:bg-amber-950 dark:text-amber-200', tenantIsOpen ? 'hidden' : '' ]}>Tenant sedang tutup dan belum dapat menerima pesanan.</p>
-          <button id="guestCheckoutButton" type="submit" class="w-full rounded-xl bg-emerald-700 px-5 py-4 text-base font-extrabold text-white shadow-md transition hover:bg-emerald-800 dark:bg-emerald-500 dark:text-emerald-950 dark:hover:bg-emerald-400 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50" disabled>
-            Buat Pesanan
+          <button id="guestCheckoutButton" type="submit" class="arrow-action w-full rounded-xl bg-emerald-700 px-5 py-4 text-base font-extrabold text-white shadow-md transition hover:bg-emerald-800 dark:bg-emerald-500 dark:text-emerald-950 dark:hover:bg-emerald-400 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50" disabled>
+            Buat Pesanan <span class="arrow-icon" aria-hidden="true">→</span>
           </button>
         </form>
       </div>
@@ -204,6 +205,15 @@ const tenantIsOpen = isTenantOpen(tenant?.status_buka);
     }
   </style>
 
+  <script>
+    const checkoutBackButton = document.getElementById('checkoutBackButton');
+    checkoutBackButton?.addEventListener('click', (event) => {
+      event.preventDefault();
+      if (window.history.length > 1) window.history.back();
+      else window.location.assign(checkoutBackButton.href);
+    });
+  </script>
+
   {tenant && (
     <script>
       import { db } from '../scripts/supabase.js';
@@ -218,7 +228,7 @@ const tenantIsOpen = isTenantOpen(tenant?.status_buka);
       const studentCheckoutProfileCard = document.getElementById('studentCheckoutProfileCard');
       const tenantSlug = checkoutPage.dataset.tenantSlug;
       const storageKey = 'sikantin-checkout-cart-v1';
-      const previousPathStorageKey = 'sikantin-previous-path-v1';
+      const referrerStorageKey = 'referrer';
       let tenantIsOpen = checkoutPage.dataset.tenantOpen === 'true';
       let cartItems = [];
       let cartIsValid = false;
@@ -231,12 +241,9 @@ const tenantIsOpen = isTenantOpen(tenant?.status_buka);
       let tenantStatusRevision = 0;
 
       try {
-        const referrer = new URL(document.referrer);
-        if (referrer.origin === window.location.origin && /^\/tenant\/[^/]+\/?$/.test(referrer.pathname)) {
-          sessionStorage.setItem(previousPathStorageKey, referrer.pathname.replace(/\/$/, ''));
-        }
+        sessionStorage.setItem(referrerStorageKey, `/tenant/${encodeURIComponent(tenantSlug)}`);
       } catch (error) {
-        if (document.referrer) console.warn('Halaman asal checkout tidak dapat disimpan:', error);
+        console.warn('Asal tenant checkout tidak dapat disimpan:', error);
       }
 
       function showPageMessage(text, isError = true) {

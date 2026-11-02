@@ -2,6 +2,8 @@
 
 Dokumen ini merangkum skema yang dapat diverifikasi dari SQL migrations dan query aplikasi dalam repository. Dokumen ini **bukan dump skema live** dan tidak boleh digunakan sebagai DDL pemulihan tanpa membandingkan database Supabase target.
 
+Migration terbaru `20261101000000_remove_student_activation_codes.sql` menghapus kolom dan unique index `profiles.activation_code` yang sempat ditambahkan migration sebelumnya. Kolom tersebut bukan bagian dari skema akhir repository. Password awal mahasiswa ditetapkan sama dengan NIM; autentikasi memakai Supabase Auth.
+
 ## 1. Catatan Sumber dan Cara Membaca
 
 - Migration aktif ada di [`supabase/migrations/`](./supabase/migrations/).
@@ -44,6 +46,8 @@ Profil aplikasi dipasangkan dengan identitas Supabase Auth. User mahasiswa memak
 | `qris_image_url` | `text` | URL QRIS tenant; definisi core perlu dicocokkan dengan baseline live. |
 | `status_buka` | `boolean` | Status operasional efektif yang dipakai katalog dan validasi checkout. |
 | `created_at`, `updated_at` | `timestamptz` | Timestamp baseline bila tersedia; verifikasi pada proyek live. |
+
+Skema migration yang tersedia tidak mendefinisikan flag publikasi terpisah seperti `is_active`. Sitemap memakai tenant dengan slug non-kosong yang tersedia di katalog publik. `status_buka` hanya berarti tenant sedang buka atau tutup; tenant tutup tetap memiliki halaman katalog publik.
 
 Constraint yang dibuat untuk jam operasi:
 
@@ -260,9 +264,10 @@ RLS di atas adalah ringkasan migrasi repository, bukan audit konfigurasi Supabas
 
 - Dashboard tenant mengambil `order_items.add_ons` bersama order, lalu merender nama add-on dan harga tambahannya sebagai daftar di bawah nama menu.
 - Dashboard tenant subscribe ke `public.orders` untuk event `INSERT`, `UPDATE`, dan `DELETE`, difilter dengan `tenant_id`. Event memuat ulang daftar order; perubahan status lokal juga memuat ulang order/menu dan menghitung ulang statistik.
-- Beranda dan halaman katalog tenant memakai title, description, keywords, canonical per path, Open Graph, dan Twitter metadata dari `Layout.astro`.
-- Endpoint Astro `/sitemap.xml` mengambil `slug` dan `updated_at` tenant dengan Supabase public/anon client. Policy `SELECT` serta grant role `anon` pada `tenants` harus tersedia. Bila kolom `updated_at` tidak ada, endpoint mencoba query `slug` saja; error konfigurasi, query, atau akses dicatat dan dikembalikan secara eksplisit.
-- `public/robots.txt` menunjuk ke sitemap production. Sitemap saat ini mencantumkan beranda, cek pesanan, dan halaman katalog tenant.
+- `Layout.astro` menerapkan title, description, keywords, canonical tanpa query string, Open Graph, dan Twitter Card untuk halaman yang memakai layout. Halaman autentikasi/dashboard menggunakan `noIndex`.
+- Endpoint Astro `/sitemap.xml` mengambil `slug` dan `updated_at` tenant dengan Supabase public/anon client; `updated_at` dipakai sebagai `lastmod` jika tersedia dan valid. Policy `SELECT` serta grant role `anon` pada `tenants` harus tersedia. Bila kolom `updated_at` tidak ada, endpoint mencoba query `slug` saja; error konfigurasi, query, atau akses dicatat dan dikembalikan secara eksplisit.
+- Sitemap hanya memuat beranda dan katalog tenant ber-slug; halaman cek pesanan, checkout, login, dan dashboard tidak dimasukkan.
+- `public/robots.txt` menunjuk ke sitemap production dan melarang crawl halaman login, dashboard, profil, checkout, dan cek pesanan. Aturan robots bukan kontrol akses; autentikasi dan RLS tetap menjadi perlindungan data.
 
 ## 7. Jadwal dan Override
 

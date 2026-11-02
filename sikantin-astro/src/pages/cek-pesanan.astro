@@ -132,7 +132,7 @@ import '../styles/cek-pesanan.css';
 	<script>
 		import { db } from '../scripts/supabase.js';
 
-		const previousPathStorageKey = 'sikantin-previous-path-v1';
+		const referrerStorageKey = 'referrer';
 		const form = document.getElementById('lookupForm');
 		const tokenInput = document.getElementById('orderToken');
 		const button = document.getElementById('lookupButton');
@@ -147,39 +147,56 @@ import '../styles/cek-pesanan.css';
 		let hoveredRating = 0;
 		let statusChangeSoundRequested = false;
 
-		function getSafePreviousPath(value) {
+		function getSafeReferrer(value) {
 			if (!value) return null;
 			try {
 				const url = new URL(value, window.location.origin);
 				if (url.origin !== window.location.origin) return null;
-				if (url.pathname === '/mahasiswa/dashboard') return url.pathname;
+				if (/^\/mahasiswa\/dashboard\/?$/.test(url.pathname)) return '/mahasiswa/dashboard';
 				if (/^\/tenant\/[^/]+\/?$/.test(url.pathname)) return url.pathname.replace(/\/$/, '');
-				if (url.pathname === '/checkout') {
-					const tenant = url.searchParams.get('tenant');
-					return tenant ? `/tenant/${encodeURIComponent(tenant)}` : null;
-				}
 			} catch (error) {
-				console.warn('Path sebelumnya tidak valid:', error);
+				console.warn('Asal navigasi tidak valid:', error);
 			}
 			return null;
 		}
 
-		function getOrderCompletionPath() {
-			let storedPath = null;
+		function captureOrderReferrer() {
+			const navigationReferrer = getSafeReferrer(document.referrer);
 			try {
-				storedPath = sessionStorage.getItem(previousPathStorageKey);
+				if (navigationReferrer) {
+					sessionStorage.setItem(referrerStorageKey, navigationReferrer);
+					return;
+				}
+
+				const sourceUrl = document.referrer ? new URL(document.referrer) : null;
+				if (sourceUrl?.origin === window.location.origin && sourceUrl.pathname === '/checkout') {
+					const storedReferrer = getSafeReferrer(sessionStorage.getItem(referrerStorageKey));
+					if (storedReferrer) return;
+				}
+
+				sessionStorage.removeItem(referrerStorageKey);
 			} catch (error) {
-				console.warn('Tujuan sebelumnya tidak dapat dibaca:', error);
+				console.warn('Asal pesanan tidak dapat disimpan:', error);
 			}
-			const referrerPath = getSafePreviousPath(document.referrer);
-			const destination = referrerPath || getSafePreviousPath(storedPath) || '/';
+		}
+
+		function getOrderCompletionPath() {
+			let storedReferrer = null;
 			try {
-				sessionStorage.removeItem(previousPathStorageKey);
+				storedReferrer = sessionStorage.getItem(referrerStorageKey);
 			} catch (error) {
-				console.warn('Tujuan sebelumnya tidak dapat dibersihkan:', error);
+				console.warn('Asal pesanan tidak dapat dibaca:', error);
+			}
+			const destination = getSafeReferrer(storedReferrer) || '/';
+			try {
+				sessionStorage.removeItem(referrerStorageKey);
+			} catch (error) {
+				console.warn('Asal pesanan tidak dapat dibersihkan:', error);
 			}
 			return destination;
 		}
+
+		captureOrderReferrer();
 
 		function finishOrderFlow() {
 			window.location.assign(getOrderCompletionPath());

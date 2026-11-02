@@ -21,17 +21,42 @@
 	background: rgba(14, 165, 233, .2);
 	color: #e0f2fe;
 }
+.menu-category-badge {
+	border-color: rgb(255 255 255 / 80%);
+	background: rgb(255 255 255 / 95%);
+	color: #1e293b;
+}
+html.dark body.tenant-guest .category-filter {
+	border-color: #475569;
+	background: #1e293b;
+	color: #e2e8f0;
+}
+html.dark body.tenant-guest .category-filter:hover {
+	border-color: #60a5fa;
+	background: #334155;
+	color: #fff;
+}
+html.dark body.tenant-guest .category-filter.is-active {
+	border-color: #38bdf8;
+	background: #075985;
+	color: #f0f9ff;
+}
+html.dark body.tenant-guest .menu-category-badge {
+	border-color: #475569;
+	background: #0f172a;
+	color: #f8fafc;
+}
 .menu-grid-single { grid-template-columns: minmax(0, 1fr); }
 .menu-grid-single .menu-card {
 	display: grid;
 	grid-template-columns: minmax(0, 1.1fr) minmax(260px, .9fr);
 	align-items: stretch;
 }
-.menu-grid-single .menu-photo { height: 100%; min-height: 20rem; }
-.menu-grid-single .menu-card > div { display: flex; flex-direction: column; justify-content: center; padding: 2rem; }
+.menu-grid-single .menu-photo-frame { align-self: start; width: 100%; }
+.menu-grid-single .menu-card > div:not(.menu-photo-frame) { display: flex; flex-direction: column; justify-content: center; padding: 2rem; }
 .menu-grid-single .menu-card h3 { font-size: 1.5rem; }
 .menu-card { animation: fade-in-up 550ms cubic-bezier(.2, .7, .2, 1) both; transition: translate 300ms ease-in-out, box-shadow 300ms ease-in-out, border-color 300ms ease-in-out; }
-.menu-card:hover { translate: 0 -4px; box-shadow: 0 10px 20px rgba(0, 0, 0, .1); }
+.menu-card:hover { translate: 0 -4px; box-shadow: 0 16px 32px rgba(15, 23, 42, .16); }
 .menu-card:nth-child(2n) { animation-delay: 80ms; }
 .menu-card:nth-child(3n) { animation-delay: 140ms; }
 .menu-quantity-button.is-bouncing { animation: button-bounce 360ms ease-in-out; }
@@ -125,8 +150,7 @@ html.dark body.tenant-guest #studentCheckoutName {
 		padding-bottom: calc(40dvh + 1rem + env(safe-area-inset-bottom));
 	}
 	.menu-grid-single .menu-card { grid-template-columns: minmax(0, 1fr); }
-	.menu-grid-single .menu-photo { height: 15rem; min-height: 0; }
-	.menu-grid-single .menu-card > div { padding: 1rem; }
+	.menu-grid-single .menu-card > div:not(.menu-photo-frame) { padding: 1rem; }
 	.menu-grid-single .menu-card h3 { font-size: 1.125rem; }
 }
 

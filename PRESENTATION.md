@@ -43,7 +43,7 @@ Tunjukkan masalah pemesanan kantin, peragakan alur pembeli sampai tenant, lalu j
 |---|---|---|---|
 | 0:00–0:45 | Masalah dan beranda | Tunjukkan katalog, nama tenant, lokasi, status buka/tutup, dan harga awal. | “Mahasiswa bisa melihat pilihan lebih dulu, sehingga pencarian dan keputusan makan lebih praktis.” |
 | 0:45–1:30 | Katalog tenant | Buka satu tenant; cari/filter menu, harga, jumlah, add-on. | “Katalog memberi informasi untuk memilih; ketersediaan serta harga akhir tetap diverifikasi server.” |
-| 1:30–2:30 | Checkout guest | Pilih menu, isi NIM/nomor kontak demo, unggah gambar sintetis. Jelaskan QRIS manual. | “Guest bisa pesan tanpa membuat akun. Bukti QRIS tidak otomatis dianggap lunas.” |
+| 1:30–2:30 | Checkout guest | Pilih menu/add-on di katalog, tekan **Lanjut ke Checkout**, verifikasi ringkasan, isi NIM/nomor kontak demo, lalu unggah gambar sintetis. Jelaskan QRIS manual. | “Guest bisa pesan tanpa membuat akun. Menu dibawa ke halaman checkout terpisah; bukti QRIS tidak otomatis dianggap lunas.” |
 | 2:30–3:00 | Konfirmasi pesanan | Tunjukkan nomor pesanan, nomor antrean, token cek. | “Token memungkinkan pembeli melacak status; simpan token sebagai informasi rahasia.” |
 | 3:00–4:00 | Dashboard tenant | Buka order yang disiapkan; periksa bukti, verifikasi manual, ubah status sampai siap diambil. | “Tenant memeriksa bukti dan mengelola status. Perubahan tersimpan di database.” |
 | 4:00–4:40 | Cek Pesanan | Masukkan token demo; perlihatkan status dan detail yang diperbarui. | “Pelacakan tetap mengandalkan database, bukan keberhasilan pesan WhatsApp.” |
@@ -54,7 +54,7 @@ Tunjukkan masalah pemesanan kantin, peragakan alur pembeli sampai tenant, lalu j
 
 ### Jalur demo singkat (3–4 menit)
 
-Beranda → satu katalog → order/token demo → dashboard tenant → Cek Pesanan. Jelaskan QRIS manual dan WA sebagai notifikasi tambahan; jangan menunggu transaksi atau pesan sungguhan.
+Beranda → satu katalog → `/checkout` dengan ringkasan menu → token dan `/cek-pesanan` → dashboard tenant. Jelaskan QRIS manual, redirect kembali sesuai asal pembeli, dan WA sebagai notifikasi tambahan; jangan menunggu transaksi atau pesan sungguhan.
 
 ## 4. Poin Penting untuk Dosen/Teman
 
@@ -102,7 +102,7 @@ SiKantin saat ini menerima bukti transfer untuk diperiksa tenant; belum ada kone
 
 ### 3. Bagaimana hosting dan arsitekturnya?
 
-Frontend Astro dibangun menggunakan adapter Vercel. Auth, PostgreSQL, Storage, Realtime, dan Edge Functions menggunakan Supabase. Gateway WhatsApp berjalan sebagai komponen terpisah; Ngrok dapat membantu mengekspos gateway lokal untuk development, bukan sebagai pengganti deployment produksi.
+Frontend Astro dibangun menggunakan adapter Vercel. Auth, PostgreSQL, Storage, Realtime, dan Edge Functions menggunakan Supabase. Cloudflare menangani DNS/proxy/CDN jika diaktifkan untuk domain deployment; gateway WhatsApp berjalan sebagai komponen terpisah. Ngrok dapat membantu mengekspos gateway lokal untuk development, bukan sebagai pengganti deployment produksi.
 
 ### 4. Bagaimana mencegah harga diubah melalui browser?
 
@@ -148,7 +148,7 @@ Belum. Implementasi saat ini menggunakan satu rentang jam yang berulang setiap h
 | Frontend | **Isya** | Mendemonstrasikan katalog, checkout, dashboard mahasiswa, responsive UI, aksesibilitas, dan pengalaman mobile. |
 | Backend | **Nanda** | Menjelaskan Supabase, model database, Edge Functions, validasi checkout, RLS, RPC, Realtime, scheduler, dan integrasi gateway. |
 | Research | **Tim** | Menjelaskan kebutuhan mahasiswa/tenant, alur kampus, asumsi QRIS, wawancara/temuan yang benar-benar dilakukan, dan alasan UX. |
-| QA | **Tim** | Menyiapkan akun/data sintetis; menguji skenario guest/login/tenant/admin, validasi input, status, jadwal, fallback WA, dan build. |
+| QA | **Tim** | Menyiapkan akun/data sintetis; menguji skenario guest/login/tenant/admin, validasi input, status, jadwal, fallback WA, SEO publik/private, sitemap/robots, dan build. |
 
 > Satu anggota boleh memegang lebih dari satu peran. Selaraskan pembagian dengan kontribusi aktual tim sebelum presentasi.
 
@@ -162,7 +162,7 @@ Belum. Implementasi saat ini menggunakan satu rentang jam yang berulang setiap h
 - [ ] Password awal mahasiswa demo sudah diganti melalui Profil; alur reset admin diuji hanya dengan akun sintetis.
 - [ ] Jika mendemokan Realtime, buka dashboard tenant di dua tab dan siapkan order uji untuk memperlihatkan sinkronisasi.
 - [ ] Gateway WA siap atau screenshot/video fallback sudah tersedia.
-- [ ] Sitemap dapat diakses jika SEO/deployment akan didemokan; akses anon ke data slug tenant telah diverifikasi.
+- [ ] Sitemap dapat diakses jika SEO/deployment akan didemokan; isinya hanya beranda/katalog tenant publik dan akses anon ke slug tenant telah diverifikasi.
 - [ ] Migration jadwal dan cron telah diverifikasi di Supabase bila fitur jadwal didemokan.
 - [ ] Kredensial, token, service key, nomor pribadi, dan QR sesi tidak terlihat di layar.
 - [ ] Tim mengetahui dengan jelas bahwa verifikasi pembayaran dilakukan tenant, bukan admin.

@@ -147,8 +147,8 @@ import StudentShell from '../../components/StudentShell.astro';
 			top.append(details, favoriteButton);
 			const visit = document.createElement('a');
 			visit.href = `/tenant/${encodeURIComponent(tenant.slug)}`;
-			visit.className = 'mt-5 flex items-center justify-center rounded-xl bg-blue-700 px-4 py-3 text-sm font-extrabold text-white transition hover:bg-blue-800';
-			visit.textContent = 'Lihat menu & pesan →';
+			visit.className = 'arrow-action arrow-after mt-5 flex items-center justify-center rounded-xl bg-blue-700 px-4 py-3 text-sm font-extrabold text-white transition hover:bg-blue-800';
+			visit.textContent = 'Lihat menu & pesan';
 			card.append(top, visit);
 			return card;
 		}

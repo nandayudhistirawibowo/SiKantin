@@ -79,7 +79,7 @@ const menuCategories = [...new Set((menuItems ?? []).map((item) => item.kategori
     <main class="mx-auto max-w-3xl px-4 py-20 text-center text-white">
       <h1 class="text-3xl font-black">{tenantError ? 'Tenant gagal dimuat' : 'Tenant tidak ditemukan'}</h1>
       <p class="mt-3 text-blue-100/70">{tenantError ? 'Coba muat ulang halaman beberapa saat lagi.' : 'Link tenant mungkin sudah berubah atau tidak tersedia.'}</p>
-      <a href="/" class="mt-7 inline-flex rounded-xl bg-blue-600 px-5 py-3 font-bold hover:bg-blue-500">Kembali ke daftar kantin</a>
+      <a href="/" class="arrow-action arrow-left mt-7 inline-flex rounded-xl bg-blue-600 px-5 py-3 font-bold hover:bg-blue-500"><span class="arrow-icon" aria-hidden="true">←</span>Kembali ke daftar kantin</a>
     </main>
   ) : (
     <main data-tenant-id={tenant.id} class="mx-auto max-w-7xl space-y-8 px-4 py-8 sm:px-6">
@@ -151,15 +151,15 @@ const menuCategories = [...new Set((menuItems ?? []).map((item) => item.kategori
                     data-menu-search={`${item.nama_menu} ${item.kategori || 'Menu kantin'}`.toLowerCase()}
                     data-menu-price={item.harga}
                   >
-                    <div class="relative overflow-hidden">
+                    <div class="menu-photo-frame relative aspect-[4/3] overflow-hidden">
                       <img
                         src={item.foto_url || logo.src}
                         alt={item.nama_menu}
                         loading="lazy"
                         data-fallback-on-error={item.foto_url ? true : undefined}
-                        class:list={['menu-photo w-full bg-slate-100 object-cover transition duration-500 group-hover:scale-105', menuItems.length === 1 ? 'h-64' : 'h-48']}
+                        class="menu-photo absolute inset-0 h-full w-full bg-slate-100 object-cover transition duration-500 group-hover:scale-105"
                       />
-                      <span class="absolute left-3 top-3 rounded-full border border-white/70 bg-white/90 px-3 py-1 text-[11px] font-extrabold text-slate-700 shadow-sm backdrop-blur">
+                      <span class="menu-category-badge absolute left-3 top-3 rounded-full border px-3 py-1 text-[11px] font-extrabold shadow-sm backdrop-blur">
                         {item.kategori || 'Menu kantin'}
                       </span>
                     </div>
@@ -251,8 +251,8 @@ const menuCategories = [...new Set((menuItems ?? []).map((item) => item.kategori
             </div>
             <p id="tenantClosedMessage" class:list={['mt-4 rounded-lg bg-amber-50 p-3 text-xs font-semibold text-amber-800', tenant.status_buka ? 'hidden' : '']}>Tenant sedang tutup. Pesanan baru belum dapat dibuat.</p>
             <p id="checkoutPrompt" role="status" aria-live="polite" class="mt-4 hidden rounded-lg p-3 text-sm"></p>
-            <button id="goCheckoutButton" type="button" class="mt-5 w-full rounded-xl bg-emerald-600 px-4 py-3.5 text-sm font-extrabold text-white shadow-md transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50" disabled>
-              Lanjut ke Checkout
+            <button id="goCheckoutButton" type="button" class="arrow-action mt-5 w-full rounded-xl bg-emerald-600 px-4 py-3.5 text-sm font-extrabold text-white shadow-md transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50" disabled>
+              Lanjut ke Checkout <span class="arrow-icon" aria-hidden="true">→</span>
             </button>
           </aside>
         </div>
@@ -505,7 +505,7 @@ const menuCategories = [...new Set((menuItems ?? []).map((item) => item.kategori
             quantity,
           })),
         }));
-        sessionStorage.setItem('sikantin-previous-path-v1', window.location.pathname);
+        sessionStorage.setItem('referrer', window.location.pathname);
         window.location.href = `/checkout?tenant=${encodeURIComponent(tenantSlug)}`;
       } catch (error) {
         console.error('Keranjang checkout gagal disimpan:', error);

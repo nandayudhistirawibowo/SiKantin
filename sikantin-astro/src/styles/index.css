@@ -96,7 +96,7 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
         #tenant-directory { animation-delay: 160ms; }
         #daftar-tenant { animation-delay: 220ms; }
         .tenant-card { transition: translate 300ms ease-in-out, box-shadow 300ms ease-in-out, border-color 300ms ease-in-out; }
-        .tenant-card:hover { translate: 0 -4px; box-shadow: 0 10px 20px rgba(0, 0, 0, .1); }
+        .tenant-card:hover { translate: 0 -4px; box-shadow: 0 16px 32px rgba(15, 23, 42, .16); }
         .tenant-card:nth-child(2n) { animation-delay: 80ms; }
         .tenant-card:nth-child(3n) { animation-delay: 140ms; }
         html.dark .catalog-footer { color: #cbd5e1; }

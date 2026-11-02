@@ -1,4 +1,16 @@
 User-agent: *
 Allow: /
+Disallow: /login
+Disallow: /dashboard
+Disallow: /admin
+Disallow: /admin-dashboard
+Disallow: /mahasiswa/
+Disallow: /tenant/login
+Disallow: /tenant-login
+Disallow: /tenant/*/dashboard
+Disallow: /tenant-dashboard
+Disallow: /checkout
+Disallow: /cek-pesanan
+Disallow: /profile
 
 Sitemap: https://sikantin.ndhistira.my.id/sitemap.xml

@@ -7,7 +7,7 @@ import '../styles/tenant-login.css';
 <Layout title="Login Pemilik Tenant | SiKantin" themeColor="#172b40" bodyClass="login-screen flex min-h-screen items-center justify-center px-4 py-8 text-slate-100" noIndex>
 
 <main class="w-full max-w-md rounded-[1.75rem] border border-white/15 bg-slate-900/50 p-6 shadow-2xl backdrop-blur-xl sm:p-10">
-        <a href="/" class="mb-8 inline-flex items-center gap-2 text-sm font-semibold text-blue-100/75 hover:text-white">← Kembali ke katalog</a>
+        <a href="/" class="arrow-action arrow-left mb-8 inline-flex items-center gap-2 text-sm font-semibold text-blue-100/75 hover:text-white"><span class="arrow-icon" aria-hidden="true">←</span>Kembali ke katalog</a>
         <div class="mb-7 text-center">
             <img src={logo.src} alt="Logo Universitas Yatsi Madani" class="mx-auto mb-4 h-16 w-16 rounded-full bg-white p-1 shadow">
             <p class="uym-brand-text text-xs font-bold uppercase tracking-[0.2em]">SiKantin UYM</p>
@@ -90,7 +90,7 @@ import '../styles/tenant-login.css';
                 return;
             }
             showMessage('Login berhasil. Membuka dashboard...', false);
-            window.location.assign(`/tenant/${encodeURIComponent(tenant.slug)}/dashboard`);
+            window.location.assign('/tenant-dashboard');
         });
     </script>
 </Layout>

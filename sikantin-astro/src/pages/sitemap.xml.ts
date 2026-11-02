@@ -88,7 +88,6 @@ export const GET: APIRoute = async () => {
 
 	const urls = [
 		{ loc: `${siteUrl}/` },
-		{ loc: `${siteUrl}/cek-pesanan` },
 		(tenants ?? [])
 			.filter((tenant) => typeof tenant.slug === 'string' && tenant.slug.trim())
 			.map((tenant) => ({

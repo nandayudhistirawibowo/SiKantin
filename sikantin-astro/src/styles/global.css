@@ -756,7 +756,46 @@ html {
 
 .ui-hover-card:hover {
 	translate: 0 -4px;
-	box-shadow: 0 10px 20px rgb(0 0 0 / 10%);
+	box-shadow: 0 16px 32px rgb(15 23 42 / 16%);
+}
+
+.arrow-action {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: .5rem;
+}
+
+.arrow-icon,
+.arrow-after::after,
+.arrow-before::before {
+	display: inline-block;
+}
+
+.arrow-after::after {
+	content: "→";
+}
+
+.arrow-before::before {
+	content: "←";
+}
+
+.arrow-action:hover .arrow-icon,
+.arrow-after:hover::after {
+	animation: arrow-nudge-right 450ms ease-in-out infinite alternate;
+}
+
+.arrow-action.arrow-left:hover .arrow-icon,
+.arrow-action.arrow-left:hover::before {
+	animation-name: arrow-nudge-left;
+}
+
+@keyframes arrow-nudge-right {
+	to { transform: translateX(.3rem); }
+}
+
+@keyframes arrow-nudge-left {
+	to { transform: translateX(-.3rem); }
 }
 
 .ui-enter {
@@ -855,13 +894,31 @@ html {
 
 	.ui-hover-card:hover {
 		translate: none;
+		box-shadow: inherit;
 	}
 
 	.tenant-card:hover,
 	.menu-card:hover,
 	.tenant-order-row:hover,
 	.tenant-menu-item:hover,
-	.tenant-stat-card:hover {
+	.tenant-stat-card:hover,
+	.tenant-panel:hover {
 		translate: none !important;
+		box-shadow: inherit !important;
+	}
+
+	.tenant-card img,
+	.menu-card img {
+		transform: none !important;
+	}
+
+	.tenant-card-cover-art,
+	.tenant-card-cover-emoji,
+	.tenant-menu-item:hover img,
+	.arrow-action:hover .arrow-icon,
+	.arrow-after:hover::after,
+	.arrow-before:hover::before {
+		animation: none !important;
+		transform: none !important;
 	}
 }
