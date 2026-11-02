@@ -152,7 +152,7 @@ html:not(.dark) body.role-screen .catalog-header {
 }
 
 html:not(.dark) body.role-screen .tenant-card {
-	border-left: 3px solid #1e3a8a;
+	border-left: 4px solid #2563eb;
 	border-radius: 1.5rem;
 }
 
@@ -213,8 +213,17 @@ html:not(.dark) body.login-screen {
 	color: #0f172a;
 }
 
+html:not(.dark) body.login-screen main.max-w-md {
+	border-color: #e2e8f0;
+	background: #fff;
+	color: #1e293b;
+	box-shadow: 0 12px 32px rgb(15 23 42 / 8%);
+}
+
 html:not(.dark) body.login-screen [class~="bg-slate-900"],
+html:not(.dark) body.login-screen [class~="bg-slate-900/50"],
 html:not(.dark) body.login-screen [class~="bg-slate-950/30"],
+html:not(.dark) body.login-screen [class~="bg-slate-950/25"],
 html:not(.dark) body.login-screen [class~="bg-slate-950/60"] {
 	background: #fff;
 	color: #0f172a;
@@ -403,6 +412,12 @@ html:not(.dark) body.student-portal .student-dashboard-hero a.bg-white {
 	color: #1e40af;
 }
 
+html:not(.dark) .skeleton-card {
+	border-color: #e2e8f0;
+	background: #fff;
+	box-shadow: 0 2px 8px rgb(15 23 42 / 5%);
+}
+
 html.dark [class~="bg-white"],
 html.dark [class~="bg-slate-50"],
 html.dark [class~="bg-slate-100"],
@@ -443,6 +458,40 @@ html.dark [class~="text-slate-400"],
 html.dark [class~="text-gray-600"],
 html.dark [class~="text-gray-500"] {
 	color: #cbd5e1 !important;
+}
+
+html.dark body.role-screen .tenant-card {
+	border-left-width: 1px;
+	border-left-color: #374151;
+}
+
+html.dark body.student-portal .student-summary-card {
+	border-color: #334155 !important;
+	background: #1e293b !important;
+	background-image: none !important;
+	color: #f8fafc;
+}
+
+html.dark body.student-portal .student-summary-card [class~="text-slate-900"] {
+	color: #fff !important;
+}
+
+html.dark body.student-portal .student-summary-card [class~="text-slate-600"],
+html.dark body.student-portal .student-summary-card [class~="text-slate-500"] {
+	color: #cbd5e1 !important;
+}
+
+html.dark body.student-portal .student-summary-card-points [class~="text-amber-700"] {
+	color: #fcd34d !important;
+}
+
+html.dark body.student-portal .student-summary-card-favorites [class~="text-blue-700"] {
+	color: #93c5fd !important;
+}
+
+html.dark .skeleton-card {
+	border-color: #374151;
+	background: #1f2937;
 }
 
 html.dark body.tenant-dashboard {
