@@ -36,6 +36,9 @@ import '../styles/tenant-dashboard.css';
                     <span id="tenantStatusRealtime" class="text-xs font-semibold text-slate-500">Menghubungkan realtime status kantin...</span>
                     <span id="tenantScheduleInfo" class="text-right text-xs text-slate-500"><span class="skeleton-line inline-block w-36 align-middle" role="status" aria-label="Memuat jadwal operasional"></span></span>
                 </div>
+                <button id="enableNotificationSound" type="button" class="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-bold text-blue-800 transition hover:bg-blue-100">
+                    Aktifkan suara
+                </button>
                 <button id="tenantOpenStatus" type="button" disabled class="tenant-status-button disabled:cursor-wait disabled:opacity-60">
                     <span class="status-dot"></span><span id="tenantOpenStatusLabel"><span class="skeleton-line inline-block w-20 align-middle" role="status" aria-label="Memuat status"></span></span>
                 </button>
@@ -146,7 +149,11 @@ import '../styles/tenant-dashboard.css';
         let tenantOrders = [];
         let tenantStatusChannel;
         let refreshTimer;
+        let historyRefreshTimer;
         let channel;
+        let reviewChannel;
+        let notificationSoundUnlocking = false;
+        let notificationSoundUnlockRequested = false;
 
         window.playNotificationSound = function () {
             if (!notificationSoundEnabled) return;
@@ -158,19 +165,41 @@ import '../styles/tenant-dashboard.css';
             });
         };
 
-        notificationSound.volume = 0;
-        notificationSound.muted = false;
-        notificationSound.play()
-            .then(() => {
+        async function unlockNotificationSound(event) {
+            if (notificationSoundEnabled) return;
+            if (notificationSoundUnlocking) {
+                if (event instanceof Event) notificationSoundUnlockRequested = true;
+                return;
+            }
+            notificationSoundUnlocking = true;
+            notificationSound.volume = 0;
+            notificationSound.muted = false;
+            try {
+                await notificationSound.play();
                 notificationSound.pause();
                 notificationSound.currentTime = 0;
                 notificationSound.volume = 1;
                 notificationSoundEnabled = true;
-            })
-            .catch((error) => {
+                document.getElementById('enableNotificationSound').hidden = true;
+                document.getElementById('soundStatus').textContent = 'Suara notifikasi aktif.';
+                document.removeEventListener('pointerdown', unlockNotificationSound);
+                document.removeEventListener('keydown', unlockNotificationSound);
+            } catch (error) {
                 notificationSound.volume = 1;
-                console.warn('Silent notification audio unlock was blocked.', error);
-            });
+                console.warn('Aktivasi audio notifikasi diblokir browser:', error);
+            } finally {
+                notificationSoundUnlocking = false;
+                if (notificationSoundUnlockRequested) {
+                    notificationSoundUnlockRequested = false;
+                    unlockNotificationSound();
+                }
+            }
+        }
+
+        document.getElementById('enableNotificationSound').addEventListener('click', unlockNotificationSound);
+        document.addEventListener('pointerdown', unlockNotificationSound);
+        document.addEventListener('keydown', unlockNotificationSound);
+        unlockNotificationSound();
 
         function showMessage(text, isError) {
             message.textContent = text;
@@ -708,6 +737,15 @@ import '../styles/tenant-dashboard.css';
             refreshTimer = window.setTimeout(loadOrders, 200);
         }
 
+        function scheduleHistoryRefresh() {
+            window.clearTimeout(historyRefreshTimer);
+            historyRefreshTimer = window.setTimeout(() => {
+                loadOrderHistory().catch((error) => {
+                    console.error('Gagal memperbarui riwayat feedback:', error);
+                });
+            }, 200);
+        }
+
         async function initialize() {
             const { data: { session }, error: sessionError } = await db.auth.getSession();
             if (sessionError) {
@@ -802,6 +840,24 @@ import '../styles/tenant-dashboard.css';
                     }
                 });
 
+            reviewChannel = db
+                .channel(`tenant-reviews-${activeTenantId}`)
+                .on('postgres_changes', {
+                    event: '*',
+                    schema: 'public',
+                    table: 'tenant_reviews',
+                    filter: `tenant_id=eq.${activeTenantId}`,
+                }, (payload) => {
+                    const changedTenantId = payload.new?.tenant_id || payload.old?.tenant_id;
+                    if (changedTenantId !== activeTenantId) return;
+                    scheduleHistoryRefresh();
+                })
+                .subscribe((status, error) => {
+                    if (status !== 'SUBSCRIBED') {
+                        console.error('Realtime feedback tenant:', status, error);
+                    }
+                });
+
             await loadOrders();
             await loadTenantMenu();
         }
@@ -826,7 +882,9 @@ import '../styles/tenant-dashboard.css';
 
         window.addEventListener('pagehide', () => {
             window.clearTimeout(refreshTimer);
+            window.clearTimeout(historyRefreshTimer);
             if (channel) db.removeChannel(channel);
+            if (reviewChannel) db.removeChannel(reviewChannel);
             if (tenantStatusChannel) db.removeChannel(tenantStatusChannel);
         });
 
