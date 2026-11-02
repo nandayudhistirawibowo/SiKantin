@@ -152,6 +152,7 @@ import '../styles/cek-pesanan.css';
 			try {
 				const url = new URL(value, window.location.origin);
 				if (url.origin !== window.location.origin) return null;
+				if (url.pathname === '/' && !url.search && !url.hash) return '/';
 				if (/^\/mahasiswa\/dashboard\/?$/.test(url.pathname)) return '/mahasiswa/dashboard';
 				if (/^\/tenant\/[^/]+\/?$/.test(url.pathname)) return url.pathname.replace(/\/$/, '');
 			} catch (error) {

@@ -241,7 +241,9 @@ const tenantIsOpen = isTenantOpen(tenant?.status_buka);
       let tenantStatusRevision = 0;
 
       try {
-        sessionStorage.setItem(referrerStorageKey, `/tenant/${encodeURIComponent(tenantSlug)}`);
+        if (sessionStorage.getItem(referrerStorageKey) !== '/mahasiswa/dashboard') {
+          sessionStorage.setItem(referrerStorageKey, '/');
+        }
       } catch (error) {
         console.warn('Asal tenant checkout tidak dapat disimpan:', error);
       }
