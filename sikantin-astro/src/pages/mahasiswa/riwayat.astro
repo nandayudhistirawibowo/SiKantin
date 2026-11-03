@@ -26,36 +26,58 @@ import StudentShell from '../../components/StudentShell.astro';
 		notificationSound.preload = 'auto';
 		const ordersById = new Map();
 		const channels = [];
-		let statusChangeSoundRequested = false;
+		let notificationSoundUnlocked = false;
 		let studentId = '';
+
+		notificationSound.addEventListener('error', () => {
+			console.error('Notification audio could not be loaded.', notificationSound.error);
+		});
 
 		function setRealtimeMessage(text, isError = false) {
 			realtimeMessage.textContent = text;
 			realtimeMessage.className = `text-sm ${isError ? 'text-rose-700' : 'text-slate-600'}`;
 		}
 
-		window.playNotificationSound = function () {
-			statusChangeSoundRequested = true;
-			notificationSound.volume = 1;
-			notificationSound.currentTime = 0;
-			notificationSound.play().catch((error) => {
-				console.warn('Notification sound could not be played.', error);
-			});
-		};
-
-		notificationSound.volume = 0;
-		notificationSound.play()
-			.then(() => {
-				if (!statusChangeSoundRequested) {
+		function unlockNotificationSound() {
+			if (notificationSoundUnlocked) return;
+			notificationSound.volume = 0;
+			notificationSound.muted = true;
+			try {
+				notificationSound.play().then(() => {
 					notificationSound.pause();
 					notificationSound.currentTime = 0;
-				}
+					notificationSound.muted = false;
+					notificationSound.volume = 1;
+					notificationSoundUnlocked = true;
+					document.removeEventListener('pointerdown', unlockNotificationSound);
+					document.removeEventListener('keydown', unlockNotificationSound);
+					document.removeEventListener('touchstart', unlockNotificationSound);
+				}).catch((error) => {
+					notificationSound.muted = false;
+					notificationSound.volume = 1;
+					console.warn('Notification audio unlock was blocked.', error);
+				});
+			} catch (error) {
+				notificationSound.muted = false;
 				notificationSound.volume = 1;
-			})
-			.catch((error) => {
-				notificationSound.volume = 1;
-				console.warn('Silent notification audio unlock was blocked.', error);
-			});
+				console.warn('Notification audio unlock failed.', error);
+			}
+		}
+
+		document.addEventListener('pointerdown', unlockNotificationSound);
+		document.addEventListener('keydown', unlockNotificationSound);
+		document.addEventListener('touchstart', unlockNotificationSound, { passive: true });
+
+		window.playNotificationSound = function () {
+			try {
+				notificationSound.currentTime = 0;
+				notificationSound.play().catch((error) => {
+					console.warn('Notification sound could not be played.', error);
+				});
+			} catch (error) {
+				console.warn('Notification sound could not be played.', error);
+			}
+		};
 
 		function showMessage(text, isError = true) {
 			message.textContent = text;
