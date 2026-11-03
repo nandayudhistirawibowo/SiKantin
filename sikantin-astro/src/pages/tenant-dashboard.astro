@@ -554,6 +554,71 @@ import '../styles/tenant-dashboard.css';
             await Promise.all([loadOrders(), loadTenantMenu()]);
         }
 
+        ordersList.addEventListener('click', (event) => {
+            if (!(event.target instanceof Element)) return;
+            const button = event.target.closest('button[data-order-action]');
+            if (!button || !ordersList.contains(button)) return;
+
+            const orderId = button.dataset.orderId;
+            if (!orderId) {
+                console.error('Tombol tindakan pesanan tidak memiliki ID pesanan.');
+                showMessage('ID pesanan tidak ditemukan. Muat ulang daftar pesanan.', true);
+                return;
+            }
+            const order = tenantOrders.find((item) => item.id === orderId);
+            if (!order) {
+                console.error(`Pesanan ${orderId} tidak ditemukan pada daftar yang sedang ditampilkan.`);
+                showMessage('Data pesanan sudah berubah. Daftar pesanan sedang dimuat ulang.', true);
+                loadOrders();
+                return;
+            }
+
+            if (button.dataset.orderAction === 'toggle-rejection') {
+                const form = button.parentElement?.querySelector('[data-order-rejection-form]');
+                const reason = form?.querySelector('textarea');
+                if (!form || !reason) {
+                    console.error(`Form penolakan untuk pesanan ${orderId} tidak ditemukan.`);
+                    showMessage('Form penolakan tidak tersedia. Muat ulang daftar pesanan.', true);
+                    return;
+                }
+                form.classList.toggle('hidden');
+                if (!form.classList.contains('hidden')) reason.focus();
+                return;
+            }
+
+            const nextStatus = button.dataset.nextStatus;
+            if (!nextStatus) {
+                console.error(`Tombol tindakan pesanan ${orderId} tidak memiliki status tujuan.`);
+                showMessage('Status tujuan pesanan tidak ditemukan. Muat ulang daftar pesanan.', true);
+                return;
+            }
+            updateOrder(order, nextStatus, undefined, button);
+        });
+
+        ordersList.addEventListener('submit', async (event) => {
+            if (!(event.target instanceof HTMLFormElement) || !event.target.matches('[data-order-rejection-form]')) return;
+            event.preventDefault();
+            const form = event.target;
+            const orderId = form.dataset.orderId;
+            const order = tenantOrders.find((item) => item.id === orderId);
+            const reason = form.querySelector('textarea');
+            const confirmButton = form.querySelector('button[type="submit"]');
+            if (!orderId || !order || !reason || !confirmButton) {
+                console.error('Data pesanan atau elemen form penolakan tidak lengkap.', { orderId });
+                showMessage('Data pesanan tidak ditemukan untuk diproses. Muat ulang daftar pesanan.', true);
+                return;
+            }
+            const rejectionReason = reason.value.trim();
+            if (!rejectionReason) {
+                reason.setCustomValidity('Alasan penolakan wajib diisi.');
+                reason.reportValidity();
+                return;
+            }
+            confirmButton.disabled = true;
+            await updateOrder(order, 'Dibatalkan', rejectionReason, confirmButton);
+            confirmButton.disabled = false;
+        });
+
         function renderOrders(orders) {
             tenantOrders = orders;
             renderTenantStats();
@@ -565,8 +630,13 @@ import '../styles/tenant-dashboard.css';
             }
 
             orders.forEach((order) => {
+                if (typeof order.id !== 'string' || !order.id.trim()) {
+                    console.error('Pesanan diabaikan saat dirender karena ID tidak valid:', order);
+                    return;
+                }
                 const row = document.createElement('article');
                 row.className = 'tenant-order-row ui-enter';
+                row.dataset.orderId = order.id;
                 const identity = document.createElement('div');
                 identity.className = 'min-w-[12rem] flex-1';
                 addText(
@@ -665,17 +735,23 @@ import '../styles/tenant-dashboard.css';
                     verifyButton.type = 'button';
                     verifyButton.className = 'tenant-order-action';
                     verifyButton.textContent = 'Verifikasi Pembayaran';
-                    verifyButton.addEventListener('click', () => updateOrder(order, 'Diproses', undefined, verifyButton));
+                    verifyButton.dataset.orderAction = 'update-status';
+                    verifyButton.dataset.orderId = order.id;
+                    verifyButton.dataset.nextStatus = 'Diproses';
                     actions.append(verifyButton);
 
                     const rejectButton = document.createElement('button');
                     rejectButton.type = 'button';
                     rejectButton.className = 'tenant-order-action bg-rose-600 hover:bg-rose-700';
                     rejectButton.textContent = 'Tolak Pesanan';
+                    rejectButton.dataset.orderAction = 'toggle-rejection';
+                    rejectButton.dataset.orderId = order.id;
                     actions.append(rejectButton);
 
                     const rejectionForm = document.createElement('form');
                     rejectionForm.className = 'hidden basis-full space-y-2';
+                    rejectionForm.dataset.orderRejectionForm = '';
+                    rejectionForm.dataset.orderId = order.id;
                     const reason = document.createElement('textarea');
                     reason.required = true;
                     reason.maxLength = 500;
@@ -688,43 +764,33 @@ import '../styles/tenant-dashboard.css';
                     confirmReject.className = 'tenant-order-action bg-rose-600 hover:bg-rose-700';
                     confirmReject.textContent = 'Kirim Penolakan';
                     rejectionForm.append(reason, confirmReject);
-                    rejectionForm.addEventListener('submit', async (event) => {
-                        event.preventDefault();
-                        const rejectionReason = reason.value.trim();
-                        if (!rejectionReason) {
-                            reason.setCustomValidity('Alasan penolakan wajib diisi.');
-                            reason.reportValidity();
-                            return;
-                        }
-                        confirmReject.disabled = true;
-                        await updateOrder(order, 'Dibatalkan', rejectionReason, confirmReject);
-                        confirmReject.disabled = false;
-                    });
-                    rejectButton.addEventListener('click', () => {
-                        rejectionForm.classList.toggle('hidden');
-                        if (!rejectionForm.classList.contains('hidden')) reason.focus();
-                    });
                     actions.append(rejectionForm);
                 } else if (order.status === 'Menunggu') {
                     const action = document.createElement('button');
                     action.type = 'button';
                     action.className = 'tenant-order-action';
                     action.textContent = 'Terima Pesanan';
-                    action.addEventListener('click', () => updateOrder(order, 'Diproses', undefined, action));
+                    action.dataset.orderAction = 'update-status';
+                    action.dataset.orderId = order.id;
+                    action.dataset.nextStatus = 'Diproses';
                     actions.append(action);
                 } else if (order.status === 'Diproses') {
                     const action = document.createElement('button');
                     action.type = 'button';
                     action.className = 'tenant-order-action';
                     action.textContent = 'Siap Diambil';
-                    action.addEventListener('click', () => updateOrder(order, 'Siap diambil', undefined, action));
+                    action.dataset.orderAction = 'update-status';
+                    action.dataset.orderId = order.id;
+                    action.dataset.nextStatus = 'Siap diambil';
                     actions.append(action);
                 } else if (order.status === 'Siap diambil') {
                     const action = document.createElement('button');
                     action.type = 'button';
                     action.className = 'tenant-order-action bg-emerald-600 hover:bg-emerald-700';
                     action.textContent = 'Selesaikan Pesanan';
-                    action.addEventListener('click', () => updateOrder(order, 'Selesai', undefined, action));
+                    action.dataset.orderAction = 'update-status';
+                    action.dataset.orderId = order.id;
+                    action.dataset.nextStatus = 'Selesai';
                     actions.append(action);
                 }
                 row.append(actions);
