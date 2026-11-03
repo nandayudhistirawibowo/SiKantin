@@ -491,8 +491,14 @@ import '../styles/tenant-dashboard.css';
         }
 
         async function updateOrder(order, status, rejectionReason, actionButton) {
-            if (typeof activeTenantId !== 'string' || !activeTenantId.trim() || typeof order?.id !== 'string' || !order.id.trim()) {
-                showMessage('Pesanan tidak dapat diperbarui karena data tenant belum dimuat.', true);
+            if (
+                typeof activeTenantId !== 'string'
+                || !activeTenantId.trim()
+                || typeof order?.id !== 'string'
+                || !order.id.trim()
+                || order.tenant_id !== activeTenantId
+            ) {
+                showMessage('ID pesanan atau tenant tidak valid. Muat ulang daftar pesanan dan coba lagi.', true);
                 return;
             }
             const changes = { status };
@@ -505,6 +511,7 @@ import '../styles/tenant-dashboard.css';
                     .from('orders')
                     .update(changes)
                     .eq('id', order.id)
+                    .eq('tenant_id', activeTenantId)
                     .select('id')
                     .maybeSingle());
             } catch (requestError) {
@@ -517,13 +524,19 @@ import '../styles/tenant-dashboard.css';
             if (error) {
                 console.error(`Update status pesanan ${order.id} gagal:`, error);
                 if (actionButton) actionButton.disabled = false;
-                showMessage(`Status pesanan gagal diperbarui: ${error.message}`, true);
+                const errorDetails = [error.message, error.details, error.hint, error.code && `Kode: ${error.code}`]
+                    .filter(Boolean)
+                    .join(' — ');
+                showMessage(`Status pesanan gagal diperbarui: ${errorDetails}`, true);
                 return;
             }
             if (!updatedOrder) {
                 console.error(`Pesanan ${order.id} tidak ditemukan atau akses update ditolak oleh kebijakan database.`);
                 if (actionButton) actionButton.disabled = false;
-                showMessage('Pesanan sudah diperbarui atau akses perubahan ditolak. Muat ulang daftar pesanan.', true);
+                showMessage(
+                    `Status pesanan ${order.nomor_pesanan} tidak berubah. Pesanan tidak ditemukan untuk tenant ini atau akses UPDATE ditolak RLS. Pastikan policy orders_update_tenant_owner sudah diterapkan dan pengguna adalah pemilik tenant.`,
+                    true
+                );
                 await loadOrders();
                 return;
             }
