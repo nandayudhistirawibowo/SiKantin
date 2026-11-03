@@ -157,9 +157,13 @@ Deno.serve(async (request: Request): Promise<Response> => {
   }
 
   const message = `Mohon maaf, pesanan Anda ${order.nomor_pesanan} di ${tenant.nama_tenant} ditolak. Alasan: ${reason}. Silakan pesan menu lain.`;
-  const result = await notifyByWhatsApp(phone, message);
-  if (!result.sent) {
-    return jsonResponse({ error: result.error }, result.status === "not_configured" ? 500 : 502);
+  try {
+    const result = await notifyByWhatsApp(phone, message);
+    if (!result.sent) {
+      console.error("Notifikasi penolakan WhatsApp gagal dikirim:", result.error);
+    }
+  } catch (error) {
+    console.error("Notifikasi penolakan WhatsApp gagal dikirim:", error);
   }
 
   return jsonResponse({ success: true });

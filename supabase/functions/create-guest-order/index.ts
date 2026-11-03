@@ -486,15 +486,20 @@ Deno.serve(async (request: Request): Promise<Response> => {
     );
     whatsapp = "failed";
   } else {
-    whatsapp = await notifyByWhatsApp({
-      phone,
-      tenantName: tenant.nama_tenant,
-      queueNumber: order.nomor_antrean,
-      orderToken: order.token_pesanan,
-      orderNumber: order.nomor_pesanan,
-      total: Number(order.total),
-      items: savedOrderItems,
-    });
+    try {
+      whatsapp = await notifyByWhatsApp({
+        phone,
+        tenantName: tenant.nama_tenant,
+        queueNumber: order.nomor_antrean,
+        orderToken: order.token_pesanan,
+        orderNumber: order.nomor_pesanan,
+        total: Number(order.total),
+        items: savedOrderItems,
+      });
+    } catch (error) {
+      console.error("Notifikasi WhatsApp pelanggan gagal dikirim:", error);
+      whatsapp = "failed";
+    }
   }
   let tenantWhatsapp: "sent" | "not_configured" | "failed";
   const tenantPhone = typeof tenant.no_telepon === "string"
@@ -504,10 +509,15 @@ Deno.serve(async (request: Request): Promise<Response> => {
     tenantWhatsapp = "failed";
     console.error(`Notifikasi pemilik tenant ${tenant.id} tidak dikirim: nomor WhatsApp tenant tidak valid atau belum diisi.`);
   } else {
-    tenantWhatsapp = await notifyByWhatsApp({
-      phone: tenantPhone,
-      message: `Pesanan baru masuk! Antrean ${order.nomor_antrean}. Total Rp ${Math.round(Number(order.total)).toLocaleString("id-ID")}. Silakan cek Dashboard Tenant.`,
-    });
+    try {
+      tenantWhatsapp = await notifyByWhatsApp({
+        phone: tenantPhone,
+        message: `Pesanan baru masuk! Antrean ${order.nomor_antrean}. Total Rp ${Math.round(Number(order.total)).toLocaleString("id-ID")}. Silakan cek Dashboard Tenant.`,
+      });
+    } catch (error) {
+      console.error("Notifikasi WhatsApp pemilik tenant gagal dikirim:", error);
+      tenantWhatsapp = "failed";
+    }
   }
   console.log("Tenant WA:", tenantWhatsapp);
   const { data: tenantWhatsappStatusOrder, error: tenantWhatsappStatusError } = await serviceClient

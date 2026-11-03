@@ -490,29 +490,50 @@ import '../styles/tenant-dashboard.css';
             });
         }
 
-        async function updateOrder(order, status, rejectionReason) {
+        async function updateOrder(order, status, rejectionReason, actionButton) {
             if (typeof activeTenantId !== 'string' || !activeTenantId.trim() || typeof order?.id !== 'string' || !order.id.trim()) {
                 showMessage('Pesanan tidak dapat diperbarui karena data tenant belum dimuat.', true);
                 return;
             }
             const changes = { status };
             if (status === 'Dibatalkan') changes.alasan_pembatalan = rejectionReason;
-            const { data: updatedOrder, error } = await db
-                .from('orders')
-                .update(changes)
-                .eq('id', order.id)
-                .eq('tenant_id', activeTenantId)
-                .eq('status', order.status)
-                .select('id')
-                .maybeSingle();
+            if (actionButton) actionButton.disabled = true;
+            let updatedOrder;
+            let error;
+            try {
+                ({ data: updatedOrder, error } = await db
+                    .from('orders')
+                    .update(changes)
+                    .eq('id', order.id)
+                    .eq('tenant_id', activeTenantId)
+                    .eq('status', order.status)
+                    .select('id')
+                    .maybeSingle());
+            } catch (requestError) {
+                console.error(`Permintaan update status pesanan ${order.id} gagal:`, requestError);
+                if (actionButton) actionButton.disabled = false;
+                const errorMessage = requestError instanceof Error ? requestError.message : String(requestError);
+                showMessage(`Status pesanan gagal diperbarui: ${errorMessage}`, true);
+                return;
+            }
             if (error) {
+                console.error(`Update status pesanan ${order.id} gagal:`, error);
+                if (actionButton) actionButton.disabled = false;
                 showMessage(`Status pesanan gagal diperbarui: ${error.message}`, true);
                 return;
             }
             if (!updatedOrder) {
+                console.error(`Pesanan ${order.id} tidak diperbarui. Periksa tenant_id dan status saat ini.`);
+                if (actionButton) actionButton.disabled = false;
                 showMessage('Pesanan sudah diperbarui atau akses perubahan ditolak. Muat ulang daftar pesanan.', true);
                 await loadOrders();
                 return;
+            }
+            const localOrder = tenantOrders.find((item) => item.id === order.id);
+            if (localOrder) {
+                localOrder.status = status;
+                if (status === 'Dibatalkan') localOrder.alasan_pembatalan = rejectionReason;
+                renderOrders(tenantOrders);
             }
             if (status === 'Dibatalkan') {
                 const { data: notification, error: notificationError } = await db.functions.invoke('notify-order-rejected', {
@@ -638,7 +659,7 @@ import '../styles/tenant-dashboard.css';
                     verifyButton.type = 'button';
                     verifyButton.className = 'tenant-order-action';
                     verifyButton.textContent = 'Verifikasi Pembayaran';
-                    verifyButton.addEventListener('click', () => updateOrder(order, 'Diproses'));
+                    verifyButton.addEventListener('click', () => updateOrder(order, 'Diproses', undefined, verifyButton));
                     actions.append(verifyButton);
 
                     const rejectButton = document.createElement('button');
@@ -670,7 +691,7 @@ import '../styles/tenant-dashboard.css';
                             return;
                         }
                         confirmReject.disabled = true;
-                        await updateOrder(order, 'Dibatalkan', rejectionReason);
+                        await updateOrder(order, 'Dibatalkan', rejectionReason, confirmReject);
                         confirmReject.disabled = false;
                     });
                     rejectButton.addEventListener('click', () => {
@@ -683,21 +704,21 @@ import '../styles/tenant-dashboard.css';
                     action.type = 'button';
                     action.className = 'tenant-order-action';
                     action.textContent = 'Terima Pesanan';
-                    action.addEventListener('click', () => updateOrder(order, 'Diproses'));
+                    action.addEventListener('click', () => updateOrder(order, 'Diproses', undefined, action));
                     actions.append(action);
                 } else if (order.status === 'Diproses') {
                     const action = document.createElement('button');
                     action.type = 'button';
                     action.className = 'tenant-order-action';
                     action.textContent = 'Siap Diambil';
-                    action.addEventListener('click', () => updateOrder(order, 'Siap diambil'));
+                    action.addEventListener('click', () => updateOrder(order, 'Siap diambil', undefined, action));
                     actions.append(action);
                 } else if (order.status === 'Siap diambil') {
                     const action = document.createElement('button');
                     action.type = 'button';
                     action.className = 'tenant-order-action bg-emerald-600 hover:bg-emerald-700';
                     action.textContent = 'Selesaikan Pesanan';
-                    action.addEventListener('click', () => updateOrder(order, 'Selesai'));
+                    action.addEventListener('click', () => updateOrder(order, 'Selesai', undefined, action));
                     actions.append(action);
                 }
                 row.append(actions);
