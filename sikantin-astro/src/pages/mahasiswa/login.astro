@@ -67,6 +67,7 @@ import logo from '../../assets/logo-uym.png';
 					password: document.getElementById('studentPassword').value,
 				});
 				if (error) throw new Error(error.message);
+				if (!data.user) throw new Error('Login berhasil tetapi data akun tidak ditemukan.');
 
 				const { data: profile, error: profileError } = await db
 					.from('profiles')
@@ -74,18 +75,28 @@ import logo from '../../assets/logo-uym.png';
 					.eq('id', data.user.id)
 					.single();
 				if (profileError) throw new Error(`Profil gagal dimuat: ${profileError.message}`);
-				if (profile.peran !== 'mahasiswa') throw new Error('Akun ini bukan akun mahasiswa.');
+				if (profile.peran !== 'mahasiswa') {
+					const { data: { session }, error: sessionError } = await db.auth.getSession();
+					if (sessionError) throw new Error(`Sesi gagal diverifikasi: ${sessionError.message}`);
+					if (session?.user.id === data.user.id) {
+						const { error: signOutError } = await db.auth.signOut();
+						if (signOutError) console.error('Sesi akun non-mahasiswa gagal ditutup:', signOutError);
+					}
+					throw new Error('Akun ini bukan akun mahasiswa.');
+				}
+				const { data: { session }, error: sessionError } = await db.auth.getSession();
+				if (sessionError) throw new Error(`Sesi gagal diverifikasi: ${sessionError.message}`);
+				if (session?.user.id !== data.user.id) {
+					throw new Error('Sesi login berubah sebelum dashboard dibuka. Silakan coba login kembali.');
+				}
 				if (data.user.user_metadata?.is_temp_password === true) {
 					window.location.assign('/profile?change_password=1');
 					return;
 				}
 				window.location.assign('/mahasiswa/dashboard');
 			} catch (error) {
-				const { error: signOutError } = await db.auth.signOut();
 				const errorMessage = error instanceof Error ? error.message : String(error);
-				showMessage(signOutError
-					? `${errorMessage} Sesi gagal ditutup: ${signOutError.message}`
-					: errorMessage, true);
+				showMessage(errorMessage, true);
 			} finally {
 				button.disabled = false;
 			}

@@ -7,4 +7,8 @@ if (!supabaseUrl || !supabaseKey) {
 	throw new Error('PUBLIC_SUPABASE_URL dan PUBLIC_SUPABASE_ANON_KEY wajib dikonfigurasi.');
 }
 
-export const db = createClient(supabaseUrl, supabaseKey);
+const authOptions = typeof window === 'undefined'
+	? undefined
+	: { storage: window.sessionStorage };
+
+export const db = createClient(supabaseUrl, supabaseKey, authOptions ? { auth: authOptions } : undefined);

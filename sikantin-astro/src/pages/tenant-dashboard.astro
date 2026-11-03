@@ -522,7 +522,16 @@ import '../styles/tenant-dashboard.css';
                 return;
             }
             if (error) {
-                console.error(`Update status pesanan ${order.id} gagal:`, error);
+                console.error('Update status pesanan gagal.', {
+                    orderId: order.id,
+                    tenantId: activeTenantId,
+                    requestedStatus: status,
+                    code: error.code,
+                    message: error.message,
+                    details: error.details,
+                    hint: error.hint,
+                    error,
+                });
                 if (actionButton) actionButton.disabled = false;
                 const errorDetails = [error.message, error.details, error.hint, error.code && `Kode: ${error.code}`]
                     .filter(Boolean)
@@ -531,10 +540,16 @@ import '../styles/tenant-dashboard.css';
                 return;
             }
             if (!updatedOrder) {
-                console.error(`Pesanan ${order.id} tidak ditemukan atau akses update ditolak oleh kebijakan database.`);
+                console.error('Update tidak mengembalikan baris pesanan.', {
+                    orderId: order.id,
+                    tenantId: activeTenantId,
+                    requestedStatus: status,
+                    currentStatus: order.status,
+                    explanation: 'ID/tenant tidak cocok, atau policy UPDATE/SELECT RLS tidak mengizinkan baris.',
+                });
                 if (actionButton) actionButton.disabled = false;
                 showMessage(
-                    `Status pesanan ${order.nomor_pesanan} tidak berubah. Pesanan tidak ditemukan untuk tenant ini atau akses UPDATE ditolak RLS. Pastikan policy orders_update_tenant_owner sudah diterapkan dan pengguna adalah pemilik tenant.`,
+                    `Status pesanan ${order.nomor_pesanan} tidak berubah: database tidak mengembalikan baris yang cocok. Periksa ID pesanan, tenant, dan policy SELECT/UPDATE RLS yang aktif.`,
                     true
                 );
                 await loadOrders();

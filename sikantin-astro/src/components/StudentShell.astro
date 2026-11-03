@@ -283,7 +283,18 @@ const { title, profileInSidebar = false } = Astro.props;
 				return;
 			}
 			if (profile.peran !== 'mahasiswa') {
-				window.location.replace('/');
+				const dashboardByRole = {
+					pemilik_tenant: '/tenant-dashboard',
+					tenant: '/tenant-dashboard',
+					admin: '/admin/dashboard',
+				};
+				const dashboard = dashboardByRole[profile.peran];
+				if (dashboard) {
+					window.location.replace(dashboard);
+					return;
+				}
+				shellMessage.textContent = 'Akun ini tidak memiliki role mahasiswa yang valid. Hubungi administrator.';
+				shellMessage.classList.remove('hidden');
 				return;
 			}
 
