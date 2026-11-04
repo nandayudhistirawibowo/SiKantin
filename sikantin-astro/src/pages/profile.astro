@@ -1,5 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import { Image } from 'astro:assets';
 import logo from '../assets/logo-uym.png';
 import '../styles/profile.css';
 ---
@@ -26,7 +27,7 @@ import '../styles/profile.css';
                 <div>
                     <label class="mb-2 block text-sm font-bold" for="avatarFile">Foto profil</label>
                     <div class="flex flex-wrap items-center gap-4">
-                        <img id="avatarPreview" src={logo.src} alt="Pratinjau foto profil" class="h-20 w-20 rounded-full border border-slate-200 bg-slate-50 object-cover">
+                        <Image id="avatarPreview" src={logo} alt="Pratinjau foto profil" width={80} height={80} format="webp" loading="eager" class="h-20 w-20 rounded-full border border-slate-200 bg-slate-50 object-cover" />
                         <div class="min-w-0 flex-1">
                             <input id="avatarFile" type="file" accept="image/*" class="block w-full text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-blue-50 file:px-3 file:py-2 file:font-bold file:text-blue-700">
                             <p class="mt-2 text-xs text-slate-500">Pilih gambar maksimal 5 MB. File disimpan di bucket avatars.</p>

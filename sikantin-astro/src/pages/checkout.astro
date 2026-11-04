@@ -1,5 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import { Image } from 'astro:assets';
 import logo from '../assets/logo-uym.png';
 import { supabaseServer } from '../lib/supabase-server.js';
 import '../styles/tenant-guest.css';
@@ -43,7 +44,7 @@ const tenantIsOpen = isTenantOpen(tenant?.status_buka);
   <header class="site-header border-b border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-900">
     <div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
       <a href="/" class="flex items-center gap-3 text-slate-800 dark:text-white">
-        <img src={logo.src} alt="" class="h-10 w-10 rounded-full border border-slate-200 bg-white object-cover dark:border-slate-700" />
+        <Image src={logo} alt="" width={40} height={40} format="webp" loading="eager" class="h-10 w-10 rounded-full border border-slate-200 bg-white object-cover dark:border-slate-700" />
         <span class="uym-brand-text font-extrabold">SiKantin UYM</span>
       </a>
       <div class="flex items-center gap-2">
@@ -108,7 +109,7 @@ const tenantIsOpen = isTenantOpen(tenant?.status_buka);
               <span class="rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-bold text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200">Login</span>
             </div>
             <div class="flex min-w-0 items-center gap-3">
-              <img id="checkoutStudentAvatar" src="" alt="" class="h-12 w-12 rounded-full bg-white object-cover" />
+              <img id="checkoutStudentAvatar" src="" alt="" width="48" height="48" class="h-12 w-12 rounded-full bg-white object-cover" />
               <div class="min-w-0">
                 <p id="checkoutStudentName" class="truncate font-extrabold text-slate-800 dark:text-white"></p>
                 <p id="checkoutStudentPhone" class="mt-0.5 text-sm text-slate-800 dark:text-slate-400"></p>
@@ -141,7 +142,7 @@ const tenantIsOpen = isTenantOpen(tenant?.status_buka);
             <p class="text-xs font-extrabold uppercase tracking-[0.16em] text-blue-800 dark:text-blue-300">Pembayaran</p>
             <h2 id="guestQrisHeading" class="mt-1 text-xl font-extrabold text-slate-800 dark:text-white">Pembayaran QRIS</h2>
             {tenant.qris_image_url ? (
-              <img src={tenant.qris_image_url} alt={`QRIS pembayaran ${tenant.nama_tenant}`} loading="lazy" class="mx-auto mt-4 max-h-64 w-full rounded-xl border border-slate-100 bg-white object-contain p-3" />
+              <img src={tenant.qris_image_url} alt={`QRIS pembayaran ${tenant.nama_tenant}`} width="512" height="512" loading="lazy" class="mx-auto mt-4 max-h-64 w-full rounded-xl border border-slate-100 bg-white object-contain p-3" />
             ) : (
               <p class="mt-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-900 dark:bg-amber-950 dark:text-amber-200">QRIS tenant belum tersedia.</p>
             )}

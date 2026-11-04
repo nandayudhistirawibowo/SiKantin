@@ -1,4 +1,5 @@
 ---
+import { Image } from 'astro:assets';
 import TenantCatalogShell from './TenantCatalogShell.astro';
 import { supabaseServer } from '../lib/supabase-server.js';
 import '../styles/tenant-guest.css';
@@ -155,13 +156,27 @@ const menuCategories = [...new Set((menuItems ?? []).map((item) => item.kategori
                     data-menu-price={item.harga}
                   >
                     <div class="menu-photo-frame relative aspect-[4/3] overflow-hidden">
-                      <img
-                        src={item.foto_url || logo.src}
-                        alt={item.nama_menu}
-                        loading="eager"
-                        data-fallback-on-error={item.foto_url ? true : undefined}
-                        class="menu-photo absolute inset-0 h-full w-full bg-slate-100 object-cover transition duration-500 group-hover:scale-105"
-                      />
+                      {item.foto_url ? (
+                        <img
+                          src={item.foto_url}
+                          alt={item.nama_menu}
+                          width="640"
+                          height="480"
+                          loading="lazy"
+                          data-fallback-on-error
+                          class="menu-photo absolute inset-0 h-full w-full bg-slate-100 object-cover transition duration-500 group-hover:scale-105"
+                        />
+                      ) : (
+                        <Image
+                          src={logo}
+                          alt={item.nama_menu}
+                          width={480}
+                          height={480}
+                          format="webp"
+                          loading="lazy"
+                          class="menu-photo absolute inset-0 h-full w-full bg-slate-100 object-cover transition duration-500 group-hover:scale-105"
+                        />
+                      )}
                       <span class="menu-category-badge absolute left-3 top-3 rounded-full border px-3 py-1 text-[11px] font-extrabold shadow-sm backdrop-blur">
                         {item.kategori || 'Menu kantin'}
                       </span>

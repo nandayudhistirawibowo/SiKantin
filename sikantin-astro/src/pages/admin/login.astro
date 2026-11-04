@@ -1,5 +1,6 @@
 ---
 import Layout from '../../layouts/Layout.astro';
+import { Image } from 'astro:assets';
 import logo from '../../assets/logo-uym.png';
 import '../../styles/login.css';
 ---
@@ -9,7 +10,7 @@ import '../../styles/login.css';
 		<div class="grid w-full overflow-hidden rounded-[2rem] border border-white/10 bg-slate-950/30 shadow-2xl shadow-slate-950/30 backdrop-blur-xl lg:min-h-[690px] lg:grid-cols-2">
 			<section class="flex flex-col justify-center p-6 sm:p-10 lg:p-14">
 				<a href="/" class="mb-10 inline-flex w-fit items-center gap-3" aria-label="SiKantin UYM">
-					<img src={logo.src} alt="" class="h-12 w-12 rounded-full border border-slate-200 bg-white object-cover shadow-lg dark:border-slate-700" />
+					<Image src={logo} alt="" width={48} height={48} format="webp" loading="eager" class="h-12 w-12 rounded-full border border-slate-200 bg-white object-cover shadow-lg dark:border-slate-700" />
 					<span>
 						<span class="block text-lg font-extrabold tracking-wide">SiKantin UYM</span>
 						<span class="uym-brand-text block text-xs">Universitas Yatsi Madani</span>

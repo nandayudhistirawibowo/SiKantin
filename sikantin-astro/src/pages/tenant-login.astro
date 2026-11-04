@@ -1,5 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import { Image } from 'astro:assets';
 import logo from '../assets/logo-uym.png';
 import '../styles/tenant-login.css';
 ---
@@ -9,7 +10,7 @@ import '../styles/tenant-login.css';
 <main class="w-full max-w-md rounded-[1.75rem] border border-white/15 bg-slate-900/50 p-6 shadow-2xl backdrop-blur-xl sm:p-10">
         <a href="/" class="arrow-action arrow-left mb-8 inline-flex items-center gap-2 text-sm font-semibold text-blue-100/75 hover:text-white"><span class="arrow-icon" aria-hidden="true">←</span>Kembali ke katalog</a>
         <div class="mb-7 text-center">
-            <img src={logo.src} alt="Logo Universitas Yatsi Madani" class="mx-auto mb-4 h-16 w-16 rounded-full border border-slate-200 bg-white object-cover shadow dark:border-slate-700">
+            <Image src={logo} alt="Logo Universitas Yatsi Madani" width={64} height={64} format="webp" loading="eager" class="mx-auto mb-4 h-16 w-16 rounded-full border border-slate-200 bg-white object-cover shadow dark:border-slate-700" />
             <p class="uym-brand-text text-xs font-bold uppercase tracking-[0.2em]">SiKantin UYM</p>
             <h1 class="mt-2 text-3xl font-extrabold">Login Pemilik Tenant</h1>
         </div>

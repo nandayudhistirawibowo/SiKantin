@@ -1,5 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import { Image } from 'astro:assets';
 import logo from '../assets/logo-uym.png';
 import '../styles/tenant-dashboard.css';
 ---
@@ -10,7 +11,7 @@ import '../styles/tenant-dashboard.css';
     <header class="site-header tenant-dashboard-header">
         <div class="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-4 sm:px-6">
             <div class="flex min-w-0 items-center gap-3">
-                <img src={logo.src} alt="Logo Universitas Yatsi Madani" class="h-10 w-10 rounded-full border border-slate-200 bg-white object-cover dark:border-slate-700">
+                <Image src={logo} alt="Logo Universitas Yatsi Madani" width={40} height={40} format="webp" loading="eager" class="h-10 w-10 rounded-full border border-slate-200 bg-white object-cover dark:border-slate-700" />
                 <div>
                     <p class="font-extrabold text-slate-900">SiKantin <span class="font-medium text-slate-400">/ Tenant</span></p>
                     <p id="tenantName" class="text-xs text-slate-500"><span class="skeleton-line inline-block w-24 align-middle" role="status" aria-label="Memuat kantin"></span></p>

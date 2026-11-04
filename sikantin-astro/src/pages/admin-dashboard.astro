@@ -1,5 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import { Image } from 'astro:assets';
 import logo from '../assets/logo-uym.png';
 import '../styles/admin-dashboard.css';
 ---
@@ -9,7 +10,7 @@ import '../styles/admin-dashboard.css';
 <div class="min-h-screen lg:flex">
         <aside id="adminSidebar" class="fixed inset-y-0 left-0 z-30 w-64 -translate-x-full border-r border-slate-200 bg-white p-5 transition-transform lg:static lg:min-h-screen lg:translate-x-0">
             <a href="/admin/dashboard" class="flex items-center gap-3">
-                <img src={logo.src} alt="Logo Universitas Yatsi Madani" class="h-11 w-11 rounded-full border border-slate-200 bg-white object-cover dark:border-slate-700">
+                <Image src={logo} alt="Logo Universitas Yatsi Madani" width={44} height={44} format="webp" loading="eager" class="h-11 w-11 rounded-full border border-slate-200 bg-white object-cover dark:border-slate-700" />
                 <span><span class="block font-extrabold text-slate-900">SiKantin</span><span class="text-xs text-slate-500">Administrator</span></span>
             </a>
             <nav class="mt-8 space-y-1" aria-label="Navigasi admin">
