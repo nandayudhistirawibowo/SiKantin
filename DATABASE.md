@@ -1,4 +1,4 @@
-# Database Schema — SiKantin
+# Database Schema — SiKantin UYM
 
 Dokumen ini merangkum skema yang dapat diverifikasi dari SQL migrations dan query aplikasi dalam repository. Dokumen ini **bukan dump skema live** dan tidak boleh digunakan sebagai DDL pemulihan tanpa membandingkan database Supabase target.
 

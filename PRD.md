@@ -1,6 +1,6 @@
-# Product Requirements Document (PRD) — SiKantin
+# Product Requirements Document (PRD) — SiKantin UYM
 
-**Produk:** SiKantin — Sistem Informasi Kantin Universitas Yatsi Madani
+**Produk:** SiKantin UYM — Sistem Informasi Kantin Universitas Yatsi Madani
 
 **Jenis dokumen:** Ringkasan kebutuhan produk dan kondisi implementasi
 
@@ -10,7 +10,7 @@
 
 ## 1. Ringkasan Produk
 
-SiKantin adalah aplikasi web untuk menemukan tenant kantin kampus, melihat katalog menu, membuat pesanan, dan mengikuti status pesanan. Pengunjung dapat memilih menu di katalog lalu melanjutkan ke halaman Checkout terpisah sebagai guest; mahasiswa yang login memperoleh checkout dengan data profil, favorit, riwayat, dan akses untuk memberi rating serta saran opsional setelah pesanan selesai. Tenant menangani pesanan dan operasional kantinnya. Admin mengelola akun, tenant, menu, dan jadwal.
+SiKantin UYM adalah aplikasi web untuk menemukan tenant kantin kampus, melihat katalog menu, membuat pesanan, dan mengikuti status pesanan. Pengunjung dapat memilih menu di katalog lalu melanjutkan ke halaman Checkout terpisah sebagai guest; mahasiswa yang login memperoleh checkout dengan data profil, favorit, riwayat, dan akses untuk memberi rating serta saran opsional setelah pesanan selesai. Tenant menangani pesanan dan operasional kantinnya. Admin mengelola akun, tenant, menu, dan jadwal.
 
 Transaksi disimpan pada Supabase. Bukti QRIS diperiksa manusia; aplikasi tidak mengonfirmasi pembayaran dari jaringan pembayaran. Tenant dapat melihat rating dan saran/masukan pada riwayat order selesai. WhatsApp digunakan sebagai kanal notifikasi tambahan melalui gateway terpisah yang menggunakan Baileys. Status pesanan dan token pelacakan tetap bersumber dari database.
 
@@ -18,7 +18,7 @@ Transaksi disimpan pada Supabase. Bukti QRIS diperiksa manusia; aplikasi tidak m
 
 Pemesanan langsung di kantin berpotensi menimbulkan antrean pada jam istirahat. Mahasiswa juga perlu mengetahui tenant yang tersedia, harga/menu, dan status pesanan tanpa harus mendatangi setiap kantin. Bagi tenant, pesanan dari beberapa pembeli perlu ditata agar antrean, pembayaran, dan proses penyiapan lebih mudah dikelola.
 
-SiKantin menyatukan katalog tenant dan menu dengan alur pemesanan web. Setelah checkout, pembeli menerima nomor pesanan, nomor antrean, dan token untuk melihat status. Tenant mengelola order dari dashboard; WhatsApp dapat membantu menyampaikan informasi status tanpa menjadi satu-satunya sumber informasi.
+SiKantin UYM menyatukan katalog tenant dan menu dengan alur pemesanan web. Setelah checkout, pembeli menerima nomor pesanan, nomor antrean, dan token untuk melihat status. Tenant mengelola order dari dashboard; WhatsApp dapat membantu menyampaikan informasi status tanpa menjadi satu-satunya sumber informasi.
 
 ## 3. Tujuan Produk
 

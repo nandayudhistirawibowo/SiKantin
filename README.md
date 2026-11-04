@@ -1,4 +1,4 @@
-Produk: SiKantin — Sistem Informasi Kantin Universitas Yatsi Madani
+Produk: SiKantin UYM — Sistem Informasi Kantin Universitas Yatsi Madani
 
 Jenis dokumen: Ringkasan kebutuhan produk dan kondisi implementasi
 

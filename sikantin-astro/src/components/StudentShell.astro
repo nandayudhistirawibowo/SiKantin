@@ -10,7 +10,7 @@ interface Props {
 const { title, profileInSidebar = false } = Astro.props;
 ---
 
-<Layout title={`${title} | SiKantin Mahasiswa`} themeColor="#172b40" bodyClass="student-portal min-h-screen bg-slate-50 text-slate-800" noIndex>
+<Layout title={title} themeColor="#172b40" bodyClass="student-portal min-h-screen bg-slate-50 text-slate-800" noIndex>
 	<div id="studentFlashMessage" role="status" aria-live="polite" class="fixed left-1/2 top-4 z-[100] hidden w-[min(90vw,32rem)] -translate-x-1/2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-center text-sm font-semibold text-emerald-800 shadow-lg"></div>
 	<div class="min-h-screen md:flex">
 		<button id="studentSidebarBackdrop" type="button" aria-label="Tutup menu" class="fixed inset-0 z-40 hidden bg-slate-950/60 backdrop-blur-sm md:hidden"></button>
@@ -21,7 +21,7 @@ const { title, profileInSidebar = false } = Astro.props;
 						<img src={logo.src} alt="" class="h-full w-full rounded-full object-cover" />
 					</span>
 					<span>
-						<span class="block text-sm font-black tracking-wide text-slate-900">SIKANTIN</span>
+						<span class="block text-sm font-black tracking-wide text-slate-900">SiKantin</span>
 						<span class="block text-[11px] text-slate-500">Portal Mahasiswa</span>
 					</span>
 				</a>

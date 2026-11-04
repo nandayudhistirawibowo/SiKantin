@@ -16,12 +16,17 @@ const {
 	title,
 	themeColor = '#172b40',
 	bodyClass = '',
-	description = 'SiKantin Universitas Yatsi Madani.',
-	keywords = 'SiKantin, kantin kampus, Universitas Yatsi Madani, pesan makanan',
+	description = 'Temukan tenant, menu, dan informasi pemesanan kantin kampus Universitas Yatsi Madani.',
+	keywords = 'SiKantin UYM, kantin kampus, Universitas Yatsi Madani, pesan makanan',
 	ogImage,
 	noIndex = false,
 } = Astro.props;
 
+const pageTitle = title.replace(/\s*[|–—-]\s*SiKantin(?:\s+UYM|\s+Mahasiswa)?$/i, '');
+const seoTitle = `SiKantin UYM - ${pageTitle}`;
+const metaDescription = description.startsWith('SiKantin UYM')
+	? description
+	: `SiKantin UYM — ${description}`;
 const siteUrl = 'https://sikantin.ndhistira.my.id';
 const canonicalPath = Astro.url.pathname.replace(/\/+$/, '') || '/';
 const canonicalUrl = new URL(canonicalPath, siteUrl).href;
@@ -34,31 +39,31 @@ const socialImage = new URL(ogImage || logo.src, siteUrl).href;
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<meta name="theme-color" content={themeColor} />
-		<meta name="description" content={description} />
+		<meta name="description" content={metaDescription} />
 		<meta name="keywords" content={keywords} />
 		<meta name="robots" content={noIndex ? 'noindex, nofollow' : 'index, follow'} />
 		<link rel="canonical" href={canonicalUrl} />
-		<meta property="og:title" content={title} />
-		<meta property="og:description" content={description} />
+		<meta property="og:title" content={seoTitle} />
+		<meta property="og:description" content={metaDescription} />
 		<meta property="og:image" content={socialImage} />
-		<meta property="og:image:alt" content={`SiKantin UYM - ${title}`} />
+		<meta property="og:image:alt" content={seoTitle} />
 		<meta property="og:image:secure_url" content={socialImage} />
 		<meta property="og:type" content="website" />
 		<meta property="og:url" content={canonicalUrl} />
 		<meta property="og:site_name" content="SiKantin UYM" />
 		<meta property="og:locale" content="id_ID" />
 		<meta name="twitter:card" content="summary_large_image" />
-		<meta name="twitter:title" content={title} />
-		<meta name="twitter:description" content={description} />
+		<meta name="twitter:title" content={seoTitle} />
+		<meta name="twitter:description" content={metaDescription} />
 		<meta name="twitter:image" content={socialImage} />
-		<meta name="twitter:image:alt" content={`SiKantin UYM - ${title}`} />
+		<meta name="twitter:image:alt" content={seoTitle} />
 		<script is:inline>
 			try {
 				const savedTheme = localStorage.getItem('sikantin-theme');
 				const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
 				document.documentElement.classList.toggle('dark', savedTheme ? savedTheme === 'dark' : prefersDark);
 			} catch (error) {
-				console.error('Preferensi tema SiKantin gagal dibaca:', error);
+				console.error('Preferensi tema SiKantin UYM gagal dibaca:', error);
 			}
 		</script>
 		<link rel="icon" type="image/png" sizes="512x512" href="/favicon.png" />
@@ -68,7 +73,7 @@ const socialImage = new URL(ogImage || logo.src, siteUrl).href;
 			href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
 			rel="stylesheet"
 		/>
-		<title>{title}</title>
+		<title>{seoTitle}</title>
 	</head>
 	<body class={bodyClass} data-logo-url={logo.src}>
 		<slot />
@@ -106,7 +111,7 @@ const socialImage = new URL(ogImage || logo.src, siteUrl).href;
 				try {
 					localStorage.setItem('sikantin-theme', isDark ? 'dark' : 'light');
 				} catch (error) {
-					console.error('Preferensi tema SiKantin gagal disimpan:', error);
+					console.error('Preferensi tema SiKantin UYM gagal disimpan:', error);
 				}
 				syncThemeToggle();
 			});

@@ -1,4 +1,4 @@
-# SiKantin Astro
+# SiKantin UYM Astro
 
 ## Astro application
 

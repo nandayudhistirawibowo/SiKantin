@@ -58,13 +58,13 @@ const menuCategories = [...new Set((menuItems ?? []).map((item) => item.kategori
 
 <TenantCatalogShell
   student={student}
-  title={tenant ? `Menu ${tenant.nama_tenant} | SiKantin` : 'Kantin tidak ditemukan | SiKantin'}
+  title={tenant ? `Menu ${tenant.nama_tenant}` : 'Kantin tidak ditemukan'}
   description={tenant
-    ? `Jelajahi menu ${tenant.nama_tenant}, pilih add-on, dan pesan melalui SiKantin.`
-    : 'Tenant yang Anda cari tidak ditemukan di SiKantin.'}
+    ? `Jelajahi menu ${tenant.nama_tenant}, pilih add-on, dan pesan melalui SiKantin UYM.`
+    : 'Tenant yang Anda cari tidak ditemukan di SiKantin UYM.'}
   keywords={tenant
-    ? `SiKantin, ${tenant.nama_tenant}, menu ${tenant.nama_tenant}, pesan makanan kampus, kantin UYM`
-    : 'SiKantin, kantin UYM, menu kantin kampus'}
+    ? `SiKantin UYM, ${tenant.nama_tenant}, menu ${tenant.nama_tenant}, pesan makanan kampus, kantin UYM`
+    : 'SiKantin UYM, kantin UYM, menu kantin kampus'}
   ogImage={tenant ? menuItems?.find((item) => item.foto_url)?.foto_url : undefined}
   themeColor="#172b40"
   bodyClass="tenant-guest min-h-screen"

@@ -17,7 +17,7 @@ const { student, title, description, keywords, ogImage, themeColor, bodyClass } 
 ---
 
 {student ? (
-  <StudentShell title={title.replace(' | SiKantin', '')}>
+  <StudentShell title={title}>
     <slot />
   </StudentShell>
 ) : (

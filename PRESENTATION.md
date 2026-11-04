@@ -1,4 +1,4 @@
-# Panduan Presentasi SiKantin
+# Panduan Presentasi SiKantin UYM
 
 Panduan ini membantu tim mempresentasikan produk dalam sekitar **7–10 menit**. Spesifikasi kebutuhan ada di [PRD.md](./PRD.md), alur sistem pada [FLOWCHART.md](./FLOWCHART.md), struktur data/RLS pada [DATABASE.md](./DATABASE.md), dan pembagian anggota tim pada [ROLES.md](./ROLES.md).
 
@@ -8,7 +8,7 @@ Tunjukkan masalah pemesanan kantin, peragakan alur pembeli sampai tenant, lalu j
 
 **Narasi pembuka yang disarankan:**
 
-> “SiKantin membantu mahasiswa Universitas Yatsi Madani menemukan menu kantin dan memesan lebih awal, baik sebagai guest maupun mahasiswa login. Tenant mengelola pesanan, verifikasi bukti QRIS, dan status melalui dashboard; token dan database tetap menjadi sumber informasi order, sedangkan WhatsApp hanya kanal tambahan. Pembayaran QRIS masih diperiksa manual, Baileys bukan API resmi, dan konfigurasi Supabase live harus diverifikasi sebelum menyatakan seluruh kontrol produksi aktif.”
+> “SiKantin UYM membantu mahasiswa Universitas Yatsi Madani menemukan menu kantin dan memesan lebih awal, baik sebagai guest maupun mahasiswa login. Tenant mengelola pesanan, verifikasi bukti QRIS, dan status melalui dashboard; token dan database tetap menjadi sumber informasi order, sedangkan WhatsApp hanya kanal tambahan. Pembayaran QRIS masih diperiksa manual, Baileys bukan API resmi, dan konfigurasi Supabase live harus diverifikasi sebelum menyatakan seluruh kontrol produksi aktif.”
 
 ## 2. Persiapan Demo
 
@@ -103,7 +103,7 @@ Baileys menyediakan integrasi WhatsApp melalui gateway Node.js yang sudah terpis
 
 ### 2. Mengapa pembayaran QRIS masih manual?
 
-SiKantin saat ini menerima bukti transfer untuk diperiksa tenant; belum ada koneksi payment gateway atau callback pembayaran otomatis. Pendekatan manual membatasi ruang lingkup awal, tetapi status “bukti diunggah” tidak sama dengan “pembayaran terkonfirmasi”.
+SiKantin UYM saat ini menerima bukti transfer untuk diperiksa tenant; belum ada koneksi payment gateway atau callback pembayaran otomatis. Pendekatan manual membatasi ruang lingkup awal, tetapi status “bukti diunggah” tidak sama dengan “pembayaran terkonfirmasi”.
 
 ### 3. Bagaimana hosting dan arsitekturnya?
 

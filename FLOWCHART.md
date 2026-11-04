@@ -1,4 +1,4 @@
-# Flowchart SiKantin
+# Flowchart SiKantin UYM
 
 Diagram berikut membedakan alur yang tersedia saat ini dari kondisi eksternal yang harus disiapkan (Supabase dan gateway WhatsApp). QRIS adalah proses manual. Verifikasi pembayaran saat ini dilakukan tenant; aksi verifikasi admin belum tersedia di dashboard.
 
@@ -6,7 +6,7 @@ Diagram berikut membedakan alur yang tersedia saat ini dari kondisi eksternal ya
 
 ```mermaid
 flowchart TD
-    A[Buka beranda SiKantin] --> B[Pilih tenant yang buka]
+    A[Buka beranda SiKantin UYM] --> B[Pilih tenant yang buka]
     B --> C[Lihat, cari, dan pilih menu]
     C --> D[Atur jumlah dan add-on di katalog]
     D --> E[Simpan keranjang dan asal tenant di sessionStorage]
