@@ -10,6 +10,7 @@ interface Props {
 }
 
 import '../styles/global.css';
+import plusJakartaSansFont from '@fontsource-variable/plus-jakarta-sans/files/plus-jakarta-sans-latin-wght-normal.woff2?url';
 import { getImage } from 'astro:assets';
 import logo from '../assets/logo-uym.png';
 
@@ -69,12 +70,7 @@ const optimizedLogo = await getImage({ src: logo, width: 80, height: 80, format:
 			}
 		</script>
 		<link rel="icon" type="image/png" sizes="512x512" href="/favicon.png" />
-		<link rel="preconnect" href="https://fonts.googleapis.com" />
-		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-		<link
-			href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
-			rel="stylesheet"
-		/>
+		<link rel="preload" href={plusJakartaSansFont} as="font" type="font/woff2" crossorigin />
 		<title>{seoTitle}</title>
 	</head>
 	<body class={bodyClass} data-logo-url={optimizedLogo.src}>

@@ -156,7 +156,7 @@ tenantRatings?.forEach((rating) => {
 					</div>
 					<p class="text-sm text-blue-100/70"><span id="tenantCount">{tenants?.length ?? 0}</span> tenant</p>
 				</div>
-				<p id="tenantRealtimeStatus" class="mb-4 text-xs text-blue-100/60" role="status" aria-live="polite">Menghubungkan status kantin realtime...</p>
+				<p id="tenantRealtimeStatus" class="mb-4 text-xs text-blue-100/60" role="status" aria-live="polite">Buka daftar tenant untuk menghubungkan status realtime.</p>
 				{error ? (
 					<p role="alert" class="rounded-xl border border-rose-300/30 bg-rose-950/30 p-4 text-sm text-rose-100">
 						Daftar tenant gagal dimuat. Coba muat ulang halaman.
@@ -233,11 +233,31 @@ tenantRatings?.forEach((rating) => {
 		</footer>
 	</main>
 	<script>
-		import { db } from '../scripts/supabase.js';
-
 		const showTenantDiscoveryButton = document.getElementById('showTenantDiscovery');
 		const tenantDiscovery = document.getElementById('tenant-discovery');
 		const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+		const tenantCards = document.querySelectorAll('[data-tenant-card]');
+		const tenantRealtimeStatus = document.getElementById('tenantRealtimeStatus');
+		let tenantStatusDbPromise;
+		let tenantStatusChannel;
+		let tenantStatusStartPromise;
+		let tenantStatusPageActive = true;
+		const tenantStatusRevisions = new Map();
+
+		async function loadTenantStatusDb() {
+			if (!tenantStatusDbPromise) {
+				tenantRealtimeStatus.textContent = 'Memuat koneksi realtime...';
+				tenantStatusDbPromise = import('../scripts/supabase.js')
+					.then(({ db }) => db)
+					.catch((error) => {
+						tenantStatusDbPromise = undefined;
+						tenantRealtimeStatus.textContent = `Gagal memuat realtime status kantin: ${error.message || error}`;
+						console.error('Gagal memuat client Supabase status tenant:', error);
+						return null;
+					});
+			}
+			return tenantStatusDbPromise;
+		}
 
 		showTenantDiscoveryButton?.addEventListener('click', () => {
 			if (!tenantDiscovery) return;
@@ -259,9 +279,13 @@ tenantRatings?.forEach((rating) => {
 				};
 				if (prefersReducedMotion.matches) {
 					showAndScroll();
+					window.requestAnimationFrame(() => void startTenantStatusRealtime());
 				} else {
 					window.requestAnimationFrame(() => {
-						window.requestAnimationFrame(showAndScroll);
+						window.requestAnimationFrame(() => {
+							showAndScroll();
+							window.requestAnimationFrame(() => void startTenantStatusRealtime());
+						});
 					});
 				}
 				return;
@@ -291,11 +315,6 @@ tenantRatings?.forEach((rating) => {
 		document.addEventListener('keydown', (event) => {
 			if (event.key === 'Escape') setCatalogMenuOpen(false);
 		});
-
-		const tenantCards = document.querySelectorAll('[data-tenant-card]');
-		const tenantRealtimeStatus = document.getElementById('tenantRealtimeStatus');
-		let tenantStatusChannel;
-		const tenantStatusRevisions = new Map();
 
 		function parseTenantOpenStatus(value) {
 			if (value === true || value === 1) return true;
@@ -337,7 +356,8 @@ tenantRatings?.forEach((rating) => {
 
 		const tenantIds = [...tenantCards].map((card) => card.dataset.tenantId).filter(Boolean);
 		async function refreshTenantStatuses() {
-			if (!tenantIds.length) return;
+			const db = await loadTenantStatusDb();
+			if (!db || !tenantIds.length) return;
 			const revisionsAtRequest = new Map(tenantStatusRevisions);
 			const { data, error: snapshotError } = await db
 				.from('tenants')
@@ -355,47 +375,71 @@ tenantRatings?.forEach((rating) => {
 			});
 		}
 
-		function subscribeToTenantStatus() {
-			if (!tenantIds.length) return;
-			if (tenantStatusChannel) db.removeChannel(tenantStatusChannel);
-			tenantStatusChannel = db
-				.channel('tenant-directory-status')
-				.on('postgres_changes', {
-					event: 'UPDATE',
-					schema: 'public',
-					table: 'tenants',
-				}, ({ new: tenant }) => {
-					if (tenant?.id && Object.prototype.hasOwnProperty.call(tenant, 'status_buka')) {
-						tenantStatusRevisions.set(tenant.id, (tenantStatusRevisions.get(tenant.id) || 0) + 1);
-						applyTenantStatus(tenant.id, tenant.status_buka);
-					}
-				})
-				.subscribe((status, error) => {
-					tenantRealtimeStatus.textContent = status === 'SUBSCRIBED'
-						? 'Status kantin diperbarui realtime.'
-						: error
-							? `Realtime status kantin gagal: ${error.message}`
-							: `Realtime status kantin: ${status}`;
-					if (status !== 'SUBSCRIBED') console.error('Realtime status tenant:', status, error);
-					if (status === 'SUBSCRIBED') refreshTenantStatuses();
-				});
+		function startTenantStatusRealtime() {
+			if (!tenantIds.length || tenantStatusChannel || !tenantStatusPageActive) return Promise.resolve();
+			if (tenantStatusStartPromise) return tenantStatusStartPromise;
+
+			tenantStatusStartPromise = (async () => {
+				const db = await loadTenantStatusDb();
+				if (!db || !tenantStatusPageActive || document.visibilityState === 'hidden') return;
+				tenantStatusChannel = db
+					.channel('tenant-directory-status')
+					.on('postgres_changes', {
+						event: 'UPDATE',
+						schema: 'public',
+						table: 'tenants',
+					}, ({ new: tenant }) => {
+						if (tenant?.id && Object.prototype.hasOwnProperty.call(tenant, 'status_buka')) {
+							tenantStatusRevisions.set(tenant.id, (tenantStatusRevisions.get(tenant.id) || 0) + 1);
+							applyTenantStatus(tenant.id, tenant.status_buka);
+						}
+					})
+					.subscribe((status, error) => {
+						tenantRealtimeStatus.textContent = status === 'SUBSCRIBED'
+							? 'Status kantin diperbarui realtime.'
+							: error
+								? `Realtime status kantin gagal: ${error.message}`
+								: `Realtime status kantin: ${status}`;
+						if (status !== 'SUBSCRIBED') console.error('Realtime status tenant:', status, error);
+						if (status === 'SUBSCRIBED') refreshTenantStatuses();
+					});
+			})().catch((error) => {
+				tenantStatusChannel = undefined;
+				tenantRealtimeStatus.textContent = `Gagal menghubungkan status kantin realtime: ${error.message || error}`;
+				console.error('Gagal memulai realtime status tenant:', error);
+			}).finally(() => {
+				tenantStatusStartPromise = undefined;
+			});
+			return tenantStatusStartPromise;
 		}
 
-		if (tenantIds.length) {
-			subscribeToTenantStatus();
-			window.addEventListener('pageshow', (event) => {
-				if (event.persisted) subscribeToTenantStatus();
-			});
-			document.addEventListener('visibilitychange', () => {
-				if (document.visibilityState === 'visible') refreshTenantStatuses();
-			});
-		} else if (tenantRealtimeStatus) {
+		if (!tenantIds.length && tenantRealtimeStatus) {
 			tenantRealtimeStatus.textContent = 'Belum ada tenant untuk dipantau.';
 		}
 
+		if (tenantIds.length) {
+			window.addEventListener('pageshow', (event) => {
+				tenantStatusPageActive = true;
+				if (event.persisted && !tenantDiscovery.classList.contains('hidden')) {
+					void startTenantStatusRealtime();
+				}
+			});
+			document.addEventListener('visibilitychange', () => {
+				if (document.visibilityState !== 'visible' || tenantDiscovery.classList.contains('hidden')) return;
+				if (tenantStatusChannel) void refreshTenantStatuses();
+				else void startTenantStatusRealtime();
+			});
+		}
+
 		window.addEventListener('pagehide', () => {
-			if (tenantStatusChannel) db.removeChannel(tenantStatusChannel);
+			tenantStatusPageActive = false;
+			const channel = tenantStatusChannel;
 			tenantStatusChannel = undefined;
+			if (channel) {
+				void loadTenantStatusDb().then((db) => {
+					if (db) return db.removeChannel(channel);
+				});
+			}
 		});
 	</script>
 </Layout>
